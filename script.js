@@ -484,23 +484,76 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.prekvkGovCountSelect.addEventListener('change', () => renderKingdomAnalysis());
     }
 
-    // --- Other Render Functions (Comparison, Overview, Charts) ---
+    function renderKingdomTabs() {
+        if (!elements.mainTabs) return;
+        elements.mainTabs.querySelectorAll('[data-tab^="kingdom-"]').forEach(t => t.remove());
+
+        AppState.loadedKingdoms.forEach(kId => {
+            const btn = document.createElement('button');
+            btn.className = 'tab-btn';
+            btn.dataset.tab = `kingdom-${kId}`;
+            btn.textContent = `Kingdom ${kId}`;
+            elements.mainTabs.appendChild(btn);
+
+            if (!document.getElementById(`kingdom-${kId}`)) createKingdomContent(kId);
+        });
+        updatePrekvkDropdown();
+    }
 
     function renderKingdomComparison() {
         const tbody = document.querySelector('#kingdomComparisonTable tbody');
         if (!tbody) return;
         tbody.innerHTML = '';
 
+        const limitSelect = document.getElementById('kingdomComparisonLimit');
+        const limitVal = limitSelect ? limitSelect.value : 'all';
+
+        // Check if we have any kingdoms
+        if (AppState.loadedKingdoms.size === 0) {
+            tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;">No kingdoms loaded. Upload scans to begin.</td></tr>';
+            return;
+        }
+
+        let hasData = false;
+
         AppState.loadedKingdoms.forEach(kingdomId => {
             const kState = AppState.kingdoms[kingdomId];
-            if (!kState || !kState.calculatedData || kState.calculatedData.length === 0) return;
+            if (!kState) return;
 
-            // Note: calculatedData is already filtered if calculateKingdom was called with filter on.
-            // But if we are just viewing results, we rely on calculateKingdom having been run.
-            // If the user toggles filter, we re-run calculateKingdom.
+            // Check for missing data
+            if (!kState.calculatedData || kState.calculatedData.length === 0) {
+                const tr = document.createElement('tr');
+                let statusMsg = 'No Data';
+                if (kState.startData.length === 0 && kState.endData.length === 0) statusMsg = 'No Data';
+                else if (kState.startData.length === 0) statusMsg = 'Missing Start Scan';
+                else if (kState.endData.length === 0) statusMsg = 'Missing End Scan';
+                else statusMsg = 'Calculation Pending'; // Should ideally not happen if calc was run
+
+                tr.innerHTML = `
+                    <td>${kingdomId}</td>
+                    <td colspan="8" style="text-align:center; color: var(--text-secondary); font-style: italic;">
+                        ${statusMsg} - Upload missing file to see results
+                    </td>
+                `;
+                tbody.appendChild(tr);
+                return;
+            }
+
+            hasData = true;
+
+            // Clone data to avoid mutating original
+            let processedData = [...kState.calculatedData];
+
+            // Apply Top N Filter
+            if (limitVal !== 'all') {
+                const limit = parseInt(limitVal);
+                // Sort by Starting Power descending
+                processedData.sort((a, b) => (b.startPower || 0) - (a.startPower || 0));
+                processedData = processedData.slice(0, limit);
+            }
 
             let stats = { startPower: 0, powerDiff: 0, troopPower: 0, t4: 0, t5: 0, deads: 0, kp: 0, dkp: 0 };
-            kState.calculatedData.forEach(p => {
+            processedData.forEach(p => {
                 stats.startPower += p.startPower || 0;
                 stats.powerDiff += p.powerDiff || 0;
                 stats.troopPower += p.troopPowerDiff || 0;
@@ -527,22 +580,18 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
             tbody.appendChild(tr);
         });
+
+        if (!hasData && tbody.innerHTML === '') {
+            tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;">No valid comparisons available.</td></tr>';
+        }
     }
 
-    function renderKingdomTabs() {
-        if (!elements.mainTabs) return;
-        elements.mainTabs.querySelectorAll('[data-tab^="kingdom-"]').forEach(t => t.remove());
-
-        AppState.loadedKingdoms.forEach(kId => {
-            const btn = document.createElement('button');
-            btn.className = 'tab-btn';
-            btn.dataset.tab = `kingdom-${kId}`;
-            btn.textContent = `Kingdom ${kId}`;
-            elements.mainTabs.appendChild(btn);
-
-            if (!document.getElementById(`kingdom-${kId}`)) createKingdomContent(kId);
+    // Add event listener for the limit selector
+    const limitSelect = document.getElementById('kingdomComparisonLimit');
+    if (limitSelect) {
+        limitSelect.addEventListener('change', () => {
+            renderKingdomComparison();
         });
-        updatePrekvkDropdown();
     }
 
     function createKingdomContent(kingdomId) {
@@ -694,7 +743,9 @@ document.addEventListener('DOMContentLoaded', () => {
     function calculateOverviewDiff(startData, endData) {
         const startMap = new Map(startData.map(row => [row['Governor ID'], row]));
         const endMap = new Map(endData.map(row => [row['Governor ID'], row]));
-        const allIds = new Set([...startMap.keys(), ...endMap.keys()]);
+        // Strict matching: Only include IDs present in BOTH scans
+        const allIds = new Set([...startMap.keys()].filter(id => endMap.has(id)));
+
         const headers = Object.keys(startData[0] || endData[0] || {});
 
         const staticColumns = new Set([
@@ -751,7 +802,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const startMap = new Map(startFiltered.map(row => [row['Governor ID'], row]));
         const endMap = new Map(endFiltered.map(row => [row['Governor ID'], row]));
-        const allIds = new Set([...startMap.keys(), ...endMap.keys()]);
+        // Strict matching: Only include IDs present in BOTH scans
+        const allIds = new Set([...startMap.keys()].filter(id => endMap.has(id)));
 
         kState.calculatedData = [];
 
