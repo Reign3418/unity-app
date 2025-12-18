@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unity</title>
+    <link rel="stylesheet" href="style.css?v=23">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script
+        src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pca-js@1.0.0/pca.min.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <div class="logo-container">
+                    <img src="logo.png" alt="Unity Logo" class="app-logo">
+                    <h1>Unity</h1>
+                </div>
+                <p>Kingdom vs Kingdom Performance Analysis</p>
+            </div>
+            <div class="header-controls">
+                <div class="filter-control">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="townHallFilter"> Town Hall 25 Only
+                    </label>
+                </div>
+                <button id="resetDataBtn" class="secondary-btn danger-btn">Reset Data</button>
+            </div>
+        </header>
+
+        <div class="tabs" id="mainTabs">
+            <button class="tab-btn active" data-tab="welcome"
+                data-tooltip="Upload your Kingdom Scan files to get started.">Welcome</button>
+            <button class="tab-btn" data-tab="upload"
+                data-tooltip="Upload Start (Pre-KvK) and End (Post-KvK) scans here.">Upload Scans</button>
+            <button class="tab-btn" data-tab="prekvk-analysis"
+                data-tooltip="Start-Scan data analysis (Kingdom, Alliance, Governor profiles).">Prekvk
+                analysis</button>
+            <button class="tab-btn" data-tab="prekvk-ranking"
+                data-tooltip="Rank kingdoms based on Start Scan power.">PreKVK Ranking</button>
+            <button class="tab-btn" data-tab="new-phone-who-dis" data-tooltip="Identify new and departed players.">New
+                Phone Who Dis</button>
+            <button class="tab-btn" data-tab="all-kingdom-results"
+                data-tooltip="Comparison leaderboard for multiple kingdoms.">All Kingdom DKP results</button>
+            <!-- Dynamic Kingdom Tabs will be inserted here -->
+        </div>
+
+        <div class="content-area">
+            <!-- Welcome Tab -->
+            <div id="welcome" class="tab-content active">
+                <div class="card text-center">
+                    <h2>Welcome to Unity</h2>
+                    <p>Upload your Kingdom Scan files to get started.</p>
+                    <p>Supported formats: .xlsx, .csv</p>
+                    <button class="primary-btn" onclick="document.querySelector('[data-tab=\'upload\']').click()">Get
+                        Started</button>
+                </div>
+            </div>
+
+            <!-- Upload Tab -->
+            <!-- Upload Tab -->
+            <div id="upload" class="tab-content">
+                <div class="card">
+                    <div class="results-header">
+                        <h2>Upload Scans</h2>
+                    </div>
+
+                    <div class="upload-grid">
+                        <!-- Start Scan -->
+                        <div class="upload-zone" id="startScanZone">
+                            <div class="zone-icon">📁</div>
+                            <h3>Start Scan (Pre-KvK)</h3>
+                            <p>Drag & drop or click to upload</p>
+                            <input type="file" id="startScanInput" accept=".xlsx, .csv" multiple hidden>
+                            <div id="startScanDetails" class="file-details" style="display: none;"></div>
+
+                            <!-- Profile Controls -->
+                            <div class="profile-controls">
+                                <div class="input-group">
+                                    <input type="text" id="startProfileName" placeholder="Profile Name (Optional)"
+                                        class="profile-input">
+                                    <button id="saveStartScanBtn" class="secondary-btn small-btn">Save Profile</button>
+                                </div>
+                                <div class="input-group">
+                                    <select id="startProfileSelect" class="profile-select">
+                                        <option value="">Load Saved Profile...</option>
+                                    </select>
+                                    <button id="loadStartScanBtn" class="primary-btn small-btn">Load</button>
+                                    <button id="deleteStartScanBtn" class="danger-btn small-btn"
+                                        title="Delete Selected">🗑️</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- End Scan -->
+                        <div class="upload-zone" id="endScanZone">
+                            <div class="zone-icon">📂</div>
+                            <h3>End Scan (Post-KvK)</h3>
+                            <p>Drag & drop or click to upload</p>
+                            <input type="file" id="endScanInput" accept=".xlsx, .csv" multiple hidden>
+                            <div id="endScanDetails" class="file-details" style="display: none;"></div>
+
+                            <!-- Profile Controls -->
+                            <div class="profile-controls">
+                                <div class="input-group">
+                                    <input type="text" id="endProfileName" placeholder="Profile Name (Optional)"
+                                        class="profile-input">
+                                    <button id="saveEndScanBtn" class="secondary-btn small-btn">Save Profile</button>
+                                </div>
+                                <div class="input-group">
+                                    <select id="endProfileSelect" class="profile-select">
+                                        <option value="">Load Saved Profile...</option>
+                                    </select>
+                                    <button id="loadEndScanBtn" class="primary-btn small-btn">Load</button>
+                                    <button id="deleteEndScanBtn" class="danger-btn small-btn"
+                                        title="Delete Selected">🗑️</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Healing Check (Formerly Mid Scan) -->
+                        <div class="upload-zone" id="midScanZone">
+                            <div class="zone-icon">🧪</div>
+                            <h3>Healing Check (Mid Scan)</h3>
+                            <p>Drop <strong>Lowest Power</strong> scan here.</p>
+                            <input type="file" id="midScanInput" accept=".xlsx, .csv" multiple hidden>
+                            <div id="midScanDetails" class="file-details" style="display: none;"></div>
+
+                            <!-- Profile Controls -->
+                            <div class="profile-controls">
+                                <div class="input-group">
+                                    <input type="text" id="midProfileName" placeholder="Profile Name (Optional)"
+                                        class="profile-input">
+                                    <button id="saveMidScanBtn" class="secondary-btn small-btn">Save Profile</button>
+                                </div>
+                                <div class="input-group">
+                                    <select id="midProfileSelect" class="profile-select">
+                                        <option value="">Load Saved Profile...</option>
+                                    </select>
+                                    <button id="loadMidScanBtn" class="primary-btn small-btn">Load</button>
+                                    <button id="deleteMidScanBtn" class="danger-btn small-btn"
+                                        title="Delete Selected">🗑️</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Prekvk Analysis Tab -->
+            <div id="prekvk-analysis" class="tab-content">
+                <div class="card">
+                    <div class="prekvk-subtabs">
+                        <button class="subtab-btn active" data-subtab="kingdom-analysis">Kingdom Analysis</button>
+                        <button class="subtab-btn" data-subtab="alliance-analysis">Alliance Analysis</button>
+                        <button class="subtab-btn" data-subtab="governor-analysis">Governor Profiles</button>
+                    </div>
+
+                    <div class="controls"
+                        style="margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px;">
+                        <div class="input-group">
+                            <label>Select Kingdom</label>
+                            <select id="prekvkKingdomSelect" class="prekvk-select hidden">
+                                <!-- Populated by JS -->
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label>Governor Count</label>
+                            <select id="prekvkGovCountSelect" class="prekvk-select">
+                                <option value="all">All Governors</option>
+                                <option value="100">Top 100</option>
+                                <option value="300">Top 300</option>
+                                <option value="400">Top 400</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="subtab-content active" data-content="kingdom-analysis">
+
+                        <div id="kingdomAnalysisContainer" class="prekvk-wrapper"></div>
+                    </div>
+
+                    <div class="subtab-content" data-content="alliance-analysis">
+                        <div id="allianceAnalysisContainer" class="prekvk-wrapper"></div>
+                    </div>
+
+                    <div class="subtab-content" data-content="governor-analysis">
+                        <div id="governorAnalysisContainer" class="prekvk-wrapper"></div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+    </div> <!-- End Prekvk Analysis -->
+
+    <!-- PreKVK Ranking Tab -->
+    <div id="prekvk-ranking" class="tab-content">
+        <div class="card">
+            <div class="results-header">
+                <h2>PreKVK Ranking (Start Scan)</h2>
+                <div class="input-group" style="flex-direction: row; align-items: center; gap: 10px;">
+                    <label style="margin: 0;">Governor Count:</label>
+                    <select id="rankingGovCountSelect" class="prekvk-select" style="width: 150px;">
+                        <option value="100">Top 100</option>
+                        <option value="300" selected>Top 300</option>
+                        <option value="400">Top 400</option>
+                        <option value="all">All Governors</option>
+                    </select>
+                </div>
+            </div>
+            <div class="table-container">
+                <table class="dkp-table" id="rankingTable">
+                    <thead>
+                        <tr>
+                            <th data-sort="rank" class="sortable">Rank</th>
+                            <th data-sort="kingdom" class="sortable">Kingdom</th>
+                            <th data-sort="power" class="sortable">Top <span id="rankingCountLabel">300</span> Power
+                            </th>
+                            <th data-sort="kp" class="sortable">Total KP</th>
+                            <th data-sort="powerRank" class="sortable">Power Rank</th>
+                            <th data-sort="kpRank" class="sortable">KP Rank</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Phone Who Dis Tab -->
+    <div id="new-phone-who-dis" class="tab-content">
+        <div class="card">
+            <div class="results-header">
+                <h2 data-tooltip="Identify new players and those who have left.">New Phone Who Dis?</h2>
+            </div>
+
+            <div class="controls"
+                style="margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px;">
+                <div class="input-group">
+                    <label>Select Kingdom</label>
+                    <select id="npwdKingdomSelect" class="prekvk-select">
+                        <!-- Populated by JS -->
+                    </select>
+                </div>
+            </div>
+
+            <div class="npwd-container" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div class="npwd-column">
+                    <h3 style="color: var(--success-color); margin-bottom: 15px;">New Arrivals (In End, Not Start)</h3>
+                    <div id="newArrivalsContainer" class="prekvk-wrapper"></div>
+                </div>
+                <div class="npwd-column">
+                    <h3 style="color: var(--danger-color); margin-bottom: 15px;">Departures (In Start, Not End)</h3>
+                    <div id="departuresContainer" class="prekvk-wrapper"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- All Kingdom DKP Results Tab -->
+    <div id="all-kingdom-results" class="tab-content">
+        <div class="card">
+            <div class="results-header">
+                <h2 data-tooltip="Final calculated DKP Report comparing all loaded kingdoms.">All Kingdom DKP results
+                </h2>
+                <div class="input-group" style="margin-left: auto;">
+                    <label>Governor Count</label>
+                    <select id="kingdomComparisonLimit" class="prekvk-select">
+                        <option value="all">All Governors</option>
+                        <option value="100">Top 100</option>
+                        <option value="300">Top 300</option>
+                        <option value="400">Top 400</option>
+                        <option value="650">Top 650</option>
+                        <option value="1000">Top 1000</option>
+                    </select>
+                </div>
+            </div>
+            <div class="table-container">
+                <table class="dkp-table" id="kingdomComparisonTable">
+                    <thead>
+                        <tr>
+                            <th>Kingdom</th>
+                            <th>Total Power</th>
+                            <th>Power +/-</th>
+                            <th>Troop Power</th>
+                            <th>Total T4 Kills</th>
+                            <th>Total T5 Kills</th>
+                            <th>Total Deads</th>
+                            <th>Total Healed</th>
+                            <th>Total KP</th>
+                            <th>Total DKP</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Rows will be populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    </div> <!-- End content-area -->
+
+    <!-- Container for Dynamic Kingdom Content -->
+    <div id="kingdomsContainer"></div>
+
+    <!-- Template for Kingdom Content (Hidden) -->
+    <div id="kingdomContentTemplate" style="display: none;">
+        <div class="kingdom-subtabs">
+            <button class="subtab-btn active" data-subtab="overview"
+                data-tooltip="Searchable table of raw stats from the End Scan.">Overview</button>
+            <button class="subtab-btn" data-subtab="scatter"
+                data-tooltip="Plots Power (X) vs Kill Points (Y).&#013;&#010;• Heroes: High KP, Low Deads (Efficient)&#013;&#010;• Warriors: High KP, High Deads (Sacrificial)&#013;&#010;• Feeders: Low KP, High Deads (Taking losses)&#013;&#010;• Slackers: Low KP, Low Deads (Low activity)">Scatter</button>
+            <button class="subtab-btn" data-subtab="efficiency"
+                data-tooltip="Answers: 'Did this player pull their weight?'&#013;&#010;• X-Axis: Starting Power | Y-Axis: DKP Score %&#013;&#010;• Green: >100% (Overperformers)&#013;&#010;• Yellow: 80-100% (Meeting Expectations)&#013;&#010;• Red: <80% (Underperformers)">Power
+                Efficiency</button>
+            <button class="subtab-btn" data-subtab="roster-analysis"
+                data-tooltip="Analyzes Lifetime Stats (Start Scan) to predict player types.&#013;&#010;Helps spot 'Farmers' (High Power, Low Kills) vs 'Fighters'.">Roster
+                Analysis</button>
+            <button class="subtab-btn" data-subtab="config">Configuration</button>
+            <button class="subtab-btn" data-subtab="results"
+                data-tooltip="Final DKP calculations, targets, and bonuses.">Results</button>
+        </div>
+
+        <div class="subtab-content active" data-content="overview">
+            <div class="card">
+                <h2>Overview</h2>
+                <div class="search-container">
+                    <input type="text" class="overview-search" placeholder="Search by Governor Name or ID...">
+                </div>
+                <div class="top-scroll-wrapper">
+                    <div class="top-scroll-content"></div>
+                </div>
+                <div class="table-container">
+                    <table class="overview-table">
+                        <thead></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="subtab-content" data-content="scatter">
+            <div class="card">
+                <h2 data-tooltip="Plots Power (X) vs Kill Points (Y).">Performance Scatter Plot</h2>
+                <div class="search-container">
+                    <input type="text" class="scatter-search" placeholder="Search by Governor Name or ID...">
+                </div>
+                <div class="chart-container">
+                    <canvas class="scatter-chart"></canvas>
+                </div>
+                <div class="chart-legend">
+                    <div class="legend-item"><span class="dot hero"></span> Heroes (High KP, Low Deads)</div>
+                    <div class="legend-item"><span class="dot warrior"></span> Warriors (High KP, High Deads)
+                    </div>
+                    <div class="legend-item"><span class="dot feeder"></span> Feeders (Low KP, High Deads)</div>
+                    <div class="legend-item"><span class="dot slacker"></span> Slackers (Low KP, Low Deads)
+                    </div>
+                </div>
+                <div class="chart-guide"
+                    style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-color); color: var(--text-secondary); font-size: 0.9em; line-height: 1.6;">
+                    <h3 style="color: var(--text-primary); margin-bottom: 10px;">How to Read This Chart</h3>
+                    <p><strong>Data Source:</strong> Using Overview Data (Start Scan vs End Scan differences).</p>
+
+                    <h4 style="color: var(--text-primary); margin: 15px 0 5px;">Visualization (PCA) & Color Coding</h4>
+                    <p>Instead of a simple "KP vs Deads" chart, we use <strong>Principal Component Analysis
+                            (PCA)</strong> to analyze multiple metrics (Power, Troops, Kills, Deads) simultaneously. The
+                        chart clusters players based on combat behavior:</p>
+                    <ul style="list-style-type: none; padding-left: 0; margin-top: 5px;">
+                        <li><span style="color: #3b82f6;">●</span> <strong>Heroes (Blue):</strong> High KP, Low Deads
+                            (Efficient).</li>
+                        <li><span style="color: #10b981;">●</span> <strong>Warriors (Green):</strong> High KP, High
+                            Deads (Heavy fighters).</li>
+                        <li><span style="color: #ef4444;">●</span> <strong>Feeders (Red):</strong> Low KP, High Deads
+                            (Negative trades).</li>
+                        <li><span style="color: #94a3b8;">●</span> <strong>Slackers (Gray):</strong> Low KP, Low Deads
+                            (Inactive).</li>
+                    </ul>
+
+                    <h4 style="color: var(--text-primary); margin: 15px 0 5px;">Understanding the Axes</h4>
+                    <p>The numbers represent <strong>Standard Deviations</strong> from the Kingdom Average (0).</p>
+                    <ul style="padding-left: 20px;">
+                        <li><strong>X-Axis (Activity Volume):</strong>
+                            <br>0 = Average. <span style="color: #10b981;">Positive (+10/20)</span> = Whales/Grinders.
+                            <span style="color: #ef4444;">Negative</span> = Inactive.
+                        </li>
+                        <li><strong>Y-Axis (Efficiency):</strong>
+                            <br>0 = Average style. <span style="color: #ef4444;">Positive</span> = High Cost (Many
+                            Deads). <span style="color: #10b981;">Negative</span> = High Efficiency.
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="subtab-content" data-content="efficiency">
+            <div class="card">
+                <h2 data-tooltip="Answers: 'Did this player pull their weight?'">Power Efficiency (Return on Power)</h2>
+                <p class="chart-description">Visualizing <strong>DKP Score %</strong> vs <strong>Starting
+                        Power</strong>. Bubble size represents <strong>Dead Troops</strong>.</p>
+                <div class="search-container">
+                    <input type="text" class="efficiency-search" placeholder="Search by Governor Name or ID...">
+                </div>
+                <div class="chart-container">
+                    <canvas class="efficiency-chart"></canvas>
+                </div>
+                <div class="chart-legend">
+                    <div class="legend-item"><span class="dot warrior"></span> Overperformers (>100% DKP)</div>
+                    <div class="legend-item"><span class="dot yellow"></span> Meeting Expectations (80-100% DKP)
+                    </div>
+                    <div class="legend-item"><span class="dot feeder"></span> Underperformers (<80% DKP)</div>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="subtab-content" data-content="roster-analysis">
+                <div class="card">
+                    <h2 data-tooltip="Analyzes Lifetime Stats (Start Scan) to predict player types.">Roster Analysis
+                        (Fortune Teller)</h2>
+                    <p class="chart-description">Analyzing <strong>Lifetime Statistics</strong> from Start Scan
+                        to
+                        infer player types.</p>
+                    <div class="analysis-grid" style="margin-bottom: 20px;">
+                        <div class="chart-wrapper" style="height: 500px;">
+                            <div class="chart-header"
+                                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <h3 style="margin: 0;">Lifetime Performance (KP vs Power)</h3>
+                                <div style="display: flex; gap: 15px; align-items: center;">
+                                    <select class="roster-limit-select"
+                                        style="padding: 4px; border-radius: 4px; background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-color);">
+                                        <option value="300">Top 300</option>
+                                        <option value="400">Top 400</option>
+                                        <option value="500">Top 500</option>
+                                        <option value="0">All Governors</option>
+                                    </select>
+                                    <label
+                                        data-tooltip="Compresses the chart to better see small and large players together (e.g. Whales vs F2P)."
+                                        style="display: flex; align-items: center; gap: 8px; font-size: 0.9rem; cursor: pointer; user-select: none;">
+                                        <input type="checkbox" class="roster-log-toggle">
+                                        Log Scale
+                                    </label>
+                                </div>
+                            </div>
+                            <canvas class="roster-scatter-chart"></canvas>
+                        </div>
+                    </div>
+                    <div class="insights-section">
+                        <h3>Roster Insights</h3>
+                        <div id="rosterInsights" class="insights-text">
+                            <p>Load a Start Scan to generate insights.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="subtab-content" data-content="config">
+                <div class="card">
+                    <h2>Configuration</h2>
+                    <div class="controls">
+                        <div class="input-group"><label>Deads Multiplier</label><input type="number"
+                                class="config-input" name="deadsMultiplier" value="0.02" step="0.01"></div>
+                        <div class="input-group"><label>Deads Weight</label><input type="number" class="config-input"
+                                name="deadsWeight" value="50"></div>
+                        <div class="input-group"><label>KP Power Divisor</label><input type="number"
+                                class="config-input" name="kpPowerDivisor" value="3" step="0.1"></div>
+                        <div class="input-group"><label>T5 Mix Ratio</label><input type="number" class="config-input"
+                                name="t5MixRatio" value="0.7" step="0.1"></div>
+                        <div class="input-group"><label>KP Multiplier</label><input type="number" class="config-input"
+                                name="kpMultiplier" value="1.25" step="0.05"></div>
+                        <div class="input-group"><label>T4 Points</label><input type="number" class="config-input"
+                                name="t4Points" value="10"></div>
+                        <div class="input-group"><label>T5 Points</label><input type="number" class="config-input"
+                                name="t5Points" value="20"></div>
+                    </div>
+                    <div class="action-buttons">
+                        <button class="primary-btn next-btn">Next: Calculate Results</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="subtab-content" data-content="results">
+                <div class="card">
+                    <div class="results-header">
+                        <h2>Calculation Results</h2>
+                        <div class="action-buttons">
+                            <button class="primary-btn calculate-btn">Calculate DKP</button>
+                            <button class="secondary-btn export-btn">Export CSV</button>
+                        </div>
+                    </div>
+                    <div class="search-container">
+                        <input type="text" class="results-search" placeholder="Search by Governor Name or ID...">
+                    </div>
+                    <div class="results-section hidden">
+                        <div class="table-container">
+                            <table class="dkp-table">
+                                <thead>
+                                    <tr>
+                                        <th data-sort="id">Governor ID</th>
+                                        <th data-sort="name">Governor Name</th>
+                                        <th data-sort="status">Status</th>
+                                        <th data-sort="startPower">Starting Power</th>
+                                        <th data-sort="powerDiff">Power +/-</th>
+                                        <th data-sort="troopPowerDiff">Troop Power</th>
+                                        <th data-sort="t1">T1 Kills</th>
+                                        <th data-sort="t2">T2 Kills</th>
+                                        <th data-sort="t3">T3 Kills</th>
+                                        <th data-sort="t4">T4 Kills</th>
+                                        <th data-sort="t5">T5 Kills</th>
+                                        <th data-sort="t4t5">T4+T5 Combined</th>
+                                        <th data-sort="deads">Kvk Deads</th>
+                                        <th data-sort="rssGathered">RSS Gathered</th>
+                                        <th data-sort="kvkKP">KVK KP</th>
+                                        <th data-sort="targetKP">Target KP</th>
+                                        <th data-sort="kpPercent">KP % Complete</th>
+                                        <th data-sort="targetDeads">Target Deads</th>
+                                        <th data-sort="deadPercent">Dead% Complete</th>
+                                        <th data-sort="totalDKPPercent">Total DKP %</th>
+                                        <th data-sort="bonus">Bonus/Punishment</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="script.js?v=34"></script>
+</body>
+
+</html>
