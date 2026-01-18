@@ -1,0 +1,133 @@
+// ==========================================
+// SERVICE: GITHUB
+// ==========================================
+class GitHubService {
+    constructor() {
+        this.baseUrl = 'https://api.github.com';
+        // Default to public repo if no local config found
+        const defaults = { owner: 'reign3418', repo: 'unity-app', token: '' };
+        this.config = JSON.parse(localStorage.getItem('unity_gh_config')) || defaults;
+        // Ensure defaults are populated if partial config exists (except token)
+        if (!this.config.owner) this.config.owner = defaults.owner;
+        if (!this.config.repo) this.config.repo = defaults.repo;
+    }
+
+    saveConfig(owner, repo, token) {
+        // Enforce defaults if empty
+        const effectiveOwner = owner ? owner.trim() : 'reign3418';
+        const effectiveRepo = repo ? repo.trim() : 'unity-app';
+
+        this.config = {
+            owner: effectiveOwner,
+            repo: effectiveRepo,
+            token: token ? token.trim() : ''
+        };
+        localStorage.setItem('unity_gh_config', JSON.stringify(this.config));
+        return true;
+    }
+
+    getHeaders() {
+        const headers = {
+            'Accept': 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json'
+        };
+        // 1. Prioritize User's Private Token (from Settings)
+        if (this.config.token) {
+            headers['Authorization'] = `Bearer ${this.config.token}`;
+        }
+        // 2. Fallback to Shared Community Token (from Config)
+        else if (Config.GITHUB_ACCESS_TOKEN) {
+            headers['Authorization'] = `Bearer ${Config.GITHUB_ACCESS_TOKEN}`;
+        }
+        // 3. Otherwise: Public Read-Only (No Header)
+        return headers;
+    }
+
+    async uploadFile(path, content, message) {
+        // Ensure we have some form of authorization
+        if (!this.config.token && !Config.GITHUB_ACCESS_TOKEN) {
+            throw new Error("⛔ Write Access Denied.\n\nGitHub requires authorization to upload files.\n\nADMIN: Please add a 'Shared Token' to js/core/config.js.\nUSER: Or add a Personal Token in Settings.");
+        }
+
+        const url = `${this.baseUrl}/repos/${this.config.owner}/${this.config.repo}/contents/${path}`;
+
+        // Check if file exists to get SHA (for update)
+        let sha = null;
+        try {
+            const existing = await fetch(url, { headers: this.getHeaders() });
+            if (existing.ok) {
+                const data = await existing.json();
+                sha = data.sha;
+            }
+        } catch (e) { /* Ignore if not exists */ }
+
+        const body = {
+            message: message,
+            content: btoa(unescape(encodeURIComponent(JSON.stringify(content, null, 2)))), // Base64 encode
+            branch: 'main' // Default branch
+        };
+        if (sha) body.sha = sha;
+
+        console.log(`[GitHub] Uploading to: ${url}`);
+        console.log(`[GitHub] Config: Owner=${this.config.owner}, Repo=${this.config.repo}, Branch=${body.branch}`);
+        console.log(`[GitHub] Auth: ${this.config.token ? 'Personal Token (Settings)' : (Config.GITHUB_ACCESS_TOKEN ? 'Shared Token (Config)' : 'NONE')}`);
+
+        let response;
+        try {
+            response = await fetch(url, {
+                method: 'PUT',
+                headers: this.getHeaders(),
+                body: JSON.stringify(body)
+            });
+        } catch (netErr) {
+            console.error("[GitHub] Network Error:", netErr);
+            throw new Error(`Connection Failed: ${netErr.message}. Check Internet, CORS, or if the Repository '${this.config.owner}/${this.config.repo}' actually exists.`);
+        }
+
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.message || 'Upload failed');
+        }
+        return await response.json();
+    }
+
+    async getFiles(folderPath) {
+        // Allow public access: Don't return empty if no token.
+        // The fetch request will simply lack the Authorization header.
+        const url = `${this.baseUrl}/repos/${this.config.owner}/${this.config.repo}/contents/${folderPath}`;
+        const response = await fetch(url, { headers: this.getHeaders() });
+
+        if (!response.ok) {
+            if (response.status === 404) {
+                // Determine if it's Authentication issue or truly 404
+                if (!this.config.token) throw new Error("Folder not found. (If Private Repo, check Settings)");
+                throw new Error("Folder not found.");
+            }
+            const err = await response.json();
+            throw new Error(err.message || 'Failed to list files');
+        }
+        return await response.json();
+    }
+
+    async getFileContent(path) {
+        const url = `${this.baseUrl}/repos/${this.config.owner}/${this.config.repo}/contents/${path}`;
+        const headers = this.getHeaders();
+        // Request raw content directly to handle large files and private repos correctly
+        headers['Accept'] = 'application/vnd.github.v3.raw';
+
+        console.log(`Fetching RAW content from: ${url}`);
+        const response = await fetch(url, { headers });
+
+        if (!response.ok) {
+            const errText = await response.text();
+            console.error('GitHub Fetch Error:', errText);
+            if (response.status === 404) {
+                if (!this.config.token) throw new Error('File not found. (Note: Private Repos require a Token in Settings)');
+                throw new Error('File not found.');
+            }
+            throw new Error(`Could not fetch file: ${response.status} ${response.statusText}`);
+        }
+
+        return await response.json();
+    }
+}
