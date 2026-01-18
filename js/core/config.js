@@ -3,7 +3,7 @@
 // ==========================================
 const Config = {
     APP_VERSION: 'v2.0 (Mobile Overhaul)',
-    GITHUB_ACCESS_TOKEN: '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', // SHARED COMMUNITY TOKEN (Admin: Paste Fine-grained Token here)
+    GITHUB_ACCESS_TOKEN: '', // SHARED COMMUNITY TOKEN (Admin: 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)
     DEFAULT_KINGDOM_SETTINGS: {
         deadsMultiplier: 0.02,
         deadsWeight: 50,
@@ -32,4 +32,5 @@ const Config = {
         'Kingdom': ['kingdom', 'kdm', 'kid', 'server', 'kd', 'origin server', 'current server', 'home kingdom']
     }
 };
+
 
