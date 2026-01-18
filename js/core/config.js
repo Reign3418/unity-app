@@ -9,7 +9,7 @@ const Config = {
     // To allow "Public Write" (uploads without user login), you MUST provide
     // a Fine-grained Personal Access Token here with 'Contents: Read & Write'.
     // -------------------------------------------------------------------------
-    GITHUB_ACCESS_TOKEN: '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', // <--- PASTE YOUR TOKEN HERE
+    GITHUB_ACCESS_TOKEN: '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', // <--- PASTE YOUR TOKEN HERE
     DEFAULT_KINGDOM_SETTINGS: {
         deadsMultiplier: 0.02,
         deadsWeight: 50,
@@ -38,3 +38,4 @@ const Config = {
         'Kingdom': ['kingdom', 'kdm', 'kid', 'server', 'kd', 'origin server', 'current server', 'home kingdom']
     }
 };
+
