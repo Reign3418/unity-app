@@ -1,0 +1,1353 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unity</title>
+    <link rel="stylesheet" href="style.css?v=26">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script
+        src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pca-js@1.0.0/pca.min.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <div class="logo-container">
+                    <img src="logo.png" alt="Unity Logo" class="app-logo">
+                    <h1>Unity</h1>
+                </div>
+                <p>Kingdom vs Kingdom Performance Analysis</p>
+            </div>
+        </header>
+
+        <div class="tabs" id="mainTabs">
+            <button class="tab-btn active" data-tab="welcome"
+                data-tooltip="Upload your Kingdom Scan files to get started.">Welcome</button>
+            <button class="tab-btn" data-tab="upload"
+                data-tooltip="Upload Start (Pre-KvK) and End (Post-KvK) scans here.">Upload Scans</button>
+            <button class="tab-btn" data-tab="prekvk-analysis"
+                data-tooltip="Start-Scan data analysis (Kingdom, Alliance, Governor profiles).">Prekvk
+                analysis</button>
+            <button class="tab-btn" data-tab="prekvk-ranking"
+                data-tooltip="Rank kingdoms based on Start Scan power.">PreKVK Ranking</button>
+            <button class="tab-btn" data-tab="new-phone-who-dis" data-tooltip="Identify new and departed players.">New
+                Phone Who Dis</button>
+            <button class="tab-btn" data-tab="all-kingdom-results"
+                data-tooltip="Comparison leaderboard for multiple kingdoms.">All Kingdom DKP results</button>
+            <button class="tab-btn" data-tab="soc" data-tooltip="Season of Conquest Modes">SOC ⚔️</button>
+            <button class="tab-btn" data-tab="command-center"
+                data-tooltip="Operational Tools: Report Cards & Squad Builder.">Command Center 🛡️</button>
+            <button class="tab-btn" data-tab="mail" data-tooltip="Create fancy in-game mails.">Mail Generator
+                ✉️</button>
+            <button class="tab-btn" data-tab="settings" data-tooltip="Configure weights and settings.">Settings
+                ⚙️</button>
+        </div>
+
+        <div class="tabs hidden" id="kingdomTabs" style="margin-top: 1rem;">
+            <!-- Dynamic Kingdom Tabs will be inserted here -->
+        </div>
+
+        <div class="content-area">
+            <!-- Welcome Tab -->
+            <div id="welcome" class="tab-content active">
+                <div class="card text-center">
+                    <h2>Welcome to Unity</h2>
+                    <p>Upload your Kingdom Scan files to get started.</p>
+                    <p>Supported formats: .xlsx, .csv</p>
+                    <button class="primary-btn" onclick="document.querySelector('[data-tab=\'upload\']').click()">Get
+                        Started</button>
+                </div>
+            </div>
+
+            <!-- Upload Tab -->
+            <!-- Upload Tab -->
+            <div id="upload" class="tab-content">
+                <div class="card">
+                    <div class="results-header">
+                        <div>
+                            <h2>Upload Scans</h2>
+                            <p style="color:var(--text-secondary); margin-top:5px; font-size:0.9rem;">
+                                Follow the pipeline below. <strong style="color:var(--accent-primary)">Start
+                                    Scan</strong> and <strong style="color:var(--accent-primary)">End Scan</strong> are
+                                required.
+                                <br>The <span
+                                    style="color:var(--text-muted); border-bottom:1px dashed currentColor">Healing
+                                    Scan</span> is optional if you want accurate dead troop recovery stats.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="upload-grid pipeline-mode">
+                        <div class="pipeline-connector"></div>
+
+                        <!-- Start Scan -->
+                        <div class="upload-zone split-card" id="startScanZone">
+                            <div class="card-header">
+                                <div class="zone-label">Pre-KvK</div>
+                                <div class="zone-title">Start Scan</div>
+                            </div>
+                            <div class="card-body">
+                                <button class="action-btn upload-btn" id="startUploadBtn">
+                                    <span class="icon">📁</span> Upload File
+                                </button>
+                                <div class="or-divider">OR</div>
+                                <button class="action-btn cloud-btn" data-type="start">
+                                    <span class="icon">☁️</span> Load from Cloud
+                                </button>
+                            </div>
+                            <div class="card-footer hidden" id="startSaveContainer">
+                                <button class="footer-btn save-btn" id="cloudUploadStartBtn">💾 Save to Cloud</button>
+                            </div>
+                            <input type="file" id="startScanInput" accept=".xlsx, .csv, .json" multiple hidden>
+                            <div id="startScanDetails" class="file-details" style="display: none;"></div>
+                        </div>
+
+                        <div class="pipeline-arrow">➔</div>
+
+                        <!-- Healing Check (Optional) -->
+                        <div class="upload-zone split-card optional-card" id="midScanZone">
+                            <div class="card-header">
+                                <div class="zone-label">Optional</div>
+                                <div class="zone-title">Healing/Mid Scan</div>
+                            </div>
+                            <div class="card-body">
+                                <button class="action-btn upload-btn" id="midUploadBtn">
+                                    <span class="icon">🧪</span> Upload File
+                                </button>
+                                <div class="or-divider">OR</div>
+                                <button class="action-btn cloud-btn" data-type="mid">
+                                    <span class="icon">☁️</span> Load from Cloud
+                                </button>
+                            </div>
+                            <div class="card-footer hidden" id="midSaveContainer">
+                                <button class="footer-btn save-btn" id="cloudUploadMidBtn">💾 Save to Cloud</button>
+                            </div>
+                            <input type="file" id="midScanInput" accept=".xlsx, .csv, .json" multiple hidden>
+                            <div id="midScanDetails" class="file-details" style="display: none;"></div>
+                        </div>
+
+                        <div class="pipeline-arrow">➔</div>
+
+                        <!-- End Scan -->
+                        <div class="upload-zone split-card" id="endScanZone">
+                            <div class="card-header">
+                                <div class="zone-label">Post-KvK</div>
+                                <div class="zone-title">End Scan</div>
+                            </div>
+                            <div class="card-body">
+                                <button class="action-btn upload-btn" id="endUploadBtn">
+                                    <span class="icon">📁</span> Upload File
+                                </button>
+                                <div class="or-divider">OR</div>
+                                <button class="action-btn cloud-btn" data-type="end">
+                                    <span class="icon">☁️</span> Load from Cloud
+                                </button>
+                            </div>
+                            <div class="card-footer hidden" id="endSaveContainer">
+                                <button class="footer-btn save-btn" id="cloudUploadEndBtn">💾 Save to Cloud</button>
+                            </div>
+                            <input type="file" id="endScanInput" accept=".xlsx, .csv, .json" multiple hidden>
+                            <div id="endScanDetails" class="file-details" style="display: none;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Prekvk Analysis Tab -->
+            <div id="prekvk-analysis" class="tab-content">
+                <div class="card">
+                    <div class="prekvk-subtabs">
+                        <button class="subtab-btn active" data-subtab="kingdom-analysis">Kingdom Analysis</button>
+                        <button class="subtab-btn" data-subtab="alliance-analysis">Alliance Analysis</button>
+                        <button class="subtab-btn" data-subtab="governor-analysis">Governor Profiles</button>
+                    </div>
+
+                    <div class="controls"
+                        style="margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px;">
+                        <div class="input-group">
+                            <label>Select Kingdom</label>
+                            <select id="prekvkKingdomSelect" class="prekvk-select hidden">
+                                <!-- Populated by JS -->
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label>Governor Count</label>
+                            <select id="prekvkGovCountSelect" class="prekvk-select">
+                                <option value="all">All Governors</option>
+                                <option value="100">Top 100</option>
+                                <option value="300">Top 300</option>
+                                <option value="400">Top 400</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="subtab-content active" data-content="kingdom-analysis">
+
+                        <div id="kingdomAnalysisContainer" class="prekvk-wrapper"></div>
+                    </div>
+
+                    <div class="subtab-content" data-content="alliance-analysis">
+                        <div id="allianceAnalysisContainer" class="prekvk-wrapper"></div>
+                    </div>
+
+                    <div class="subtab-content" data-content="governor-analysis">
+                        <div id="governorAnalysisContainer" class="prekvk-wrapper"></div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+    </div> <!-- End Prekvk Analysis -->
+
+    <!-- PreKVK Ranking Tab -->
+    <div id="prekvk-ranking" class="tab-content">
+        <div class="card">
+            <div class="results-header">
+                <h2>PreKVK Ranking (Start Scan)</h2>
+                <div class="input-group ranking-header-controls">
+                    <label style="margin: 0;">Governor Count:</label>
+                    <select id="rankingGovCountSelect" class="prekvk-select" style="width: 150px;">
+                        <option value="100">Top 100</option>
+                        <option value="300" selected>Top 300</option>
+                        <option value="400">Top 400</option>
+                        <option value="all">All Governors</option>
+                    </select>
+                </div>
+            </div>
+            <div class="table-container">
+                <table class="dkp-table" id="rankingTable">
+                    <thead>
+                        <tr>
+                            <th data-sort="rank" class="sortable">Rank</th>
+                            <th data-sort="kingdom" class="sortable">Kingdom</th>
+                            <th data-sort="power" class="sortable">Top <span id="rankingCountLabel">300</span> Power
+                            </th>
+                            <th data-sort="kp" class="sortable">Total KP</th>
+                            <th data-sort="powerRank" class="sortable">Power Rank</th>
+                            <th data-sort="kpRank" class="sortable">KP Rank</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Phone Who Dis Tab -->
+    <div id="new-phone-who-dis" class="tab-content">
+        <div class="card">
+            <div class="results-header">
+                <h2 data-tooltip="Identify new players and those who have left.">New Phone Who Dis?</h2>
+            </div>
+
+            <div class="controls"
+                style="margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px;">
+                <div class="input-group">
+                    <label>Select Kingdom</label>
+                    <select id="npwdKingdomSelect" class="prekvk-select">
+                        <!-- Populated by JS -->
+                    </select>
+                </div>
+            </div>
+
+            <div class="npwd-container" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div class="npwd-column">
+                    <h3 style="color: var(--success-color); margin-bottom: 15px;">New Arrivals (In End, Not Start)</h3>
+                    <div id="newArrivalsContainer" class="prekvk-wrapper"></div>
+                </div>
+                <div class="npwd-column">
+                    <h3 style="color: var(--danger-color); margin-bottom: 15px;">Departures (In Start, Not End)</h3>
+                    <div id="departuresContainer" class="prekvk-wrapper"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- All Kingdom DKP Results Tab -->
+    <div id="all-kingdom-results" class="tab-content">
+        <div class="card">
+            <div class="results-header">
+                <h2 data-tooltip="Final calculated DKP Report comparing all loaded kingdoms.">All Kingdom DKP results
+                </h2>
+                <div class="input-group" style="margin-left: auto;">
+                    <label>Governor Count</label>
+                    <select id="kingdomComparisonLimit" class="prekvk-select">
+                        <option value="all">All Governors</option>
+                        <option value="100">Top 100</option>
+                        <option value="300">Top 300</option>
+                        <option value="400">Top 400</option>
+                        <option value="650">Top 650</option>
+                        <option value="1000">Top 1000</option>
+                    </select>
+                </div>
+            </div>
+            <div class="table-container">
+                <table class="dkp-table" id="kingdomComparisonTable">
+                    <thead>
+                        <tr>
+                            <th>Kingdom</th>
+                            <th>Total Power</th>
+                            <th>Power +/-</th>
+                            <th>Troop Power</th>
+                            <th>Total T4 Kills</th>
+                            <th>Total T5 Kills</th>
+                            <th>Total Deads</th>
+                            <th>Total Healed</th>
+                            <th>Total KP</th>
+                            <th>Total DKP</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Rows will be populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- SOC Tab -->
+    <div id="soc" class="tab-content">
+        <div class="card">
+            <div class="results-header">
+                <h2>Season of Conquest ⚔️</h2>
+            </div>
+
+            <div class="soc-layout">
+                <!-- Sidebar Nav -->
+                <div class="soc-sidebar">
+                    <button class="soc-nav-btn active" data-subtab="heroic-anthem">Heroic Anthem</button>
+                    <button class="soc-nav-btn" data-subtab="storm-of-stratagems">Storm of Stratagems</button>
+                    <button class="soc-nav-btn" data-subtab="king-of-britain">King of All Britain</button>
+                    <button class="soc-nav-btn" data-subtab="king-of-nile">King of the Nile</button>
+                    <button class="soc-nav-btn" data-subtab="siege-of-orleans">Siege of Orleans</button>
+                    <button class="soc-nav-btn" data-subtab="strife-of-eight">Strife of the Eight</button>
+                    <button class="soc-nav-btn" data-subtab="warriors-unbound">Warriors Unbound</button>
+                    <button class="soc-nav-btn" data-subtab="tides-of-war">Tides of War</button>
+                    <button class="soc-nav-btn" data-subtab="alliance-invictus">Alliance Invictus</button>
+                    <button class="soc-nav-btn" data-subtab="keener-blades">Keener Blades</button>
+                    <button class="soc-nav-btn" data-subtab="shifting-gears">Shifting Gears</button>
+                    <button class="soc-nav-btn" data-subtab="song-of-troy">Song of Troy</button>
+                </div>
+
+                <!-- Content Area -->
+                <div class="soc-content-area">
+                    <!-- Storm of Stratagems (Specific Logic) -->
+                    <div id="storm-of-stratagems-ui" class="soc-section">
+                        <h3>Storm of Stratagems: Zone Analysis</h3>
+                        <div class="alert-box">
+                            Upload scans corresponding to Pass openings to track DKP per Zone.
+                        </div>
+
+                        <div class="upload-grid">
+                            <!-- Start -->
+                            <div class="upload-zone" id="socStartZone">
+                                <div class="zone-label">Start of KvK</div>
+                                <div class="upload-icon">📁</div>
+                                <div class="upload-text">Start Scan</div>
+                                <div class="cloud-link" data-type="socStart" title="Import from GitHub">☁️ Cloud</div>
+                                <input type="file" id="socStartInput" class="file-input" accept=".xlsx, .csv, .json">
+                                <div class="upload-status" id="socStartStatus">Not Loaded</div>
+                            </div>
+
+                            <div class="arrow-separator">➔</div>
+
+                            <!-- Pass 4 -->
+                            <div class="upload-zone" id="socPass4Zone">
+                                <div class="zone-label">Pass 4 Opens (Zone 4)</div>
+                                <div class="upload-icon">📁</div>
+                                <div class="upload-text">Pass 4 Scan</div>
+                                <div class="cloud-link" data-type="socPass4" title="Import from GitHub">☁️ Cloud</div>
+                                <input type="file" id="socPass4Input" class="file-input" accept=".xlsx, .csv, .json">
+                                <div class="upload-status" id="socPass4Status">Not Loaded</div>
+                            </div>
+
+                            <div class="arrow-separator">➔</div>
+
+                            <!-- Pass 5 -->
+                            <div class="upload-zone" id="socPass5Zone">
+                                <div class="zone-label">Pass 5 Opens (Zone 5)</div>
+                                <div class="upload-icon">📁</div>
+                                <div class="upload-text">Pass 5 Scan</div>
+                                <div class="cloud-link" data-type="socPass5" title="Import from GitHub">☁️ Cloud</div>
+                                <input type="file" id="socPass5Input" class="file-input" accept=".xlsx, .csv, .json">
+                                <div class="upload-status" id="socPass5Status">Not Loaded</div>
+                            </div>
+
+                            <div class="arrow-separator">➔</div>
+
+                            <!-- Pass 6 -->
+                            <div class="upload-zone" id="socPass6Zone">
+                                <div class="zone-label">Pass 6 Opens (Zone 6)</div>
+                                <div class="upload-icon">📁</div>
+                                <div class="upload-text">Pass 6 Scan</div>
+                                <div class="cloud-link" data-type="socPass6" title="Import from GitHub">☁️ Cloud</div>
+                                <input type="file" id="socPass6Input" class="file-input" accept=".xlsx, .csv, .json">
+                                <div class="upload-status" id="socPass6Status">Not Loaded</div>
+                            </div>
+
+                            <div class="arrow-separator">➔</div>
+
+                            <!-- Pass 7 -->
+                            <div class="upload-zone" id="socPass7Zone">
+                                <div class="zone-label">Pass 7 Opens (Zone 7)</div>
+                                <div class="upload-icon">📁</div>
+                                <div class="upload-text">Pass 7 Scan</div>
+                                <div class="cloud-link" data-type="socPass7" title="Import from GitHub">☁️ Cloud</div>
+                                <input type="file" id="socPass7Input" class="file-input" accept=".xlsx, .csv, .json">
+                                <div class="upload-status" id="socPass7Status">Not Loaded</div>
+                            </div>
+
+                            <div class="arrow-separator">➔</div>
+
+                            <!-- Pass 8 -->
+                            <div class="upload-zone" id="socPass8Zone">
+                                <div class="zone-label">Pass 8 (Kingsland)</div>
+                                <div class="upload-icon">📁</div>
+                                <div class="upload-text">Pass 8 Scan</div>
+                                <div class="cloud-link" data-type="socPass8" title="Import from GitHub">☁️ Cloud</div>
+                                <input type="file" id="socPass8Input" class="file-input" accept=".xlsx, .csv, .json">
+                                <div class="upload-status" id="socPass8Status">Not Loaded</div>
+                            </div>
+
+                            <div class="arrow-separator">➔</div>
+
+                            <!-- End -->
+                            <div class="upload-zone" id="socEndZone">
+                                <div class="zone-label">End of KvK</div>
+                                <div class="upload-icon">📁</div>
+                                <div class="upload-text">End Scan</div>
+                                <div class="cloud-link" data-type="socEnd" title="Import from GitHub">☁️ Cloud</div>
+                                <input type="file" id="socEndInput" class="file-input" accept=".xlsx, .csv, .json">
+                                <div class="upload-status" id="socEndStatus">Not Loaded</div>
+                            </div>
+                        </div>
+
+                        <div class="action-bar"
+                            style="margin-top: 1rem; justify-content: space-between; display: flex;">
+                            <div>
+                                <button class="mode-btn active" id="btnSocSummary"
+                                    onclick="document.getElementById('socSummaryTable').classList.remove('hidden'); document.getElementById('socDetailTable').classList.add('hidden'); document.getElementById('socTimelineView').classList.add('hidden'); this.classList.add('active'); document.getElementById('btnSocDetail').classList.remove('active'); document.getElementById('btnSocTimeline').classList.remove('active');">Kingdom
+                                    Summary 🏰</button>
+                                <button class="mode-btn" id="btnSocDetail"
+                                    onclick="document.getElementById('socDetailTable').classList.remove('hidden'); document.getElementById('socSummaryTable').classList.add('hidden'); document.getElementById('socTimelineView').classList.add('hidden'); this.classList.add('active'); document.getElementById('btnSocSummary').classList.remove('active'); document.getElementById('btnSocTimeline').classList.remove('active');">All
+                                    Governors 👥</button>
+                                <button class="mode-btn" id="btnSocTimeline"
+                                    onclick="document.getElementById('socTimelineView').classList.remove('hidden'); document.getElementById('socSummaryTable').classList.add('hidden'); document.getElementById('socDetailTable').classList.add('hidden'); this.classList.add('active'); document.getElementById('btnSocSummary').classList.remove('active'); document.getElementById('btnSocDetail').classList.remove('active');"
+                                    style="margin-left: 5px;">Timeline 📅</button>
+
+                                <select id="socFilterSelect" class="mode-btn"
+                                    style="margin-left: 10px; background: #2c2f36; color: white; border: 1px solid #444;">
+                                    <option value="all">All Governors</option>
+                                    <option value="top300">Top 300</option>
+                                    <option value="top400">Top 400</option>
+                                    <option value="top650">Top 650</option>
+                                </select>
+                            </div>
+                            <button id="calcStratagemsBtn" class="primary-btn">Calculate Zone Stats</button>
+                        </div>
+
+                        <div id="socSummaryTable" style="margin-top: 1.5rem;"></div>
+                        <div id="socDetailTable" class="hidden" style="margin-top: 1.5rem;"></div>
+                        <div id="socTimelineView" class="hidden" style="margin-top: 1.5rem;">
+                            <div class="card timeline-card">
+                                <div class="timeline-header"
+                                    style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px;">
+                                    <h3>KVK Schedule</h3>
+                                    <div class="input-group"
+                                        style="flex-direction: row; align-items: center; margin: 0;">
+                                        <label style="margin: 0; margin-right: 10px;">Season Start Date:</label>
+                                        <input type="datetime-local" id="socStartDateInput" class="config-input"
+                                            style="width: auto;">
+                                        <button id="generateTimelineBtn" class="primary-btn"
+                                            style="margin-left: 10px;">Generate Timeline 🚀</button>
+                                    </div>
+                                </div>
+                                <div class="timeline-container" id="socTimelineList">
+                                    <!-- Timeline items will be injected here -->
+                                    <p class="text-muted">Select a start date to generate the timeline.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Placeholders for others (preserved structure) -->
+                    <div id="heroic-anthem-ui" class="soc-section hidden">
+                        <h3>Heroic Anthem</h3>
+                        <p>Select "Storm of Stratagems" for Zone Tracking demo.</p>
+                    </div>
+                    <div id="king-of-britain-ui" class="soc-section hidden">
+                        <h3>King of All Britain</h3>
+                    </div>
+                    <div id="king-of-nile-ui" class="soc-section hidden">
+                        <h3>King of the Nile</h3>
+                    </div>
+                    <div id="siege-of-orleans-ui" class="soc-section hidden">
+                        <h3>Siege of Orleans</h3>
+                    </div>
+                    <div id="strife-of-eight-ui" class="soc-section hidden">
+                        <h3>Strife of the Eight</h3>
+                    </div>
+                    <div id="warriors-unbound-ui" class="soc-section hidden">
+                        <h3>Warriors Unbound</h3>
+                    </div>
+                    <div id="tides-of-war-ui" class="soc-section hidden">
+                        <h3>Tides of War</h3>
+                    </div>
+                    <div id="alliance-invictus-ui" class="soc-section hidden">
+                        <h3>Alliance Invictus</h3>
+                    </div>
+                    <div id="keener-blades-ui" class="soc-section hidden">
+                        <h3>Keener Blades</h3>
+                    </div>
+                    <div id="shifting-gears-ui" class="soc-section hidden">
+                        <h3>Shifting Gears</h3>
+                    </div>
+                    <div id="song-of-troy-ui" class="soc-section hidden">
+                        <h3>Song of Troy</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="command-center" class="tab-content">
+        <div class="card">
+            <div class="results-header">
+                <h2>Command Center 🛡️</h2>
+
+                <div class="input-group" style="margin: 0 1rem;">
+                    <select id="commandKingdomSelect" class="prekvk-select">
+                        <!-- Populated by JS -->
+                    </select>
+                </div>
+
+                <div class="mode-selector">
+                    <button class="mode-btn active" data-mode="report-card">Governor Report Card 🎴</button>
+                    <button class="mode-btn" data-mode="squad-builder">Squad Builder ⚖️</button>
+                </div>
+            </div>
+
+            <!-- Feature 1: Governor Report Card -->
+            <div id="report-card-ui" class="command-section">
+                <div class="input-group" style="max-width: 400px; margin: 0 auto 2rem auto;">
+                    <label>Search Governor (Name or ID)</label>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" id="reportCardSearch" class="profile-input" placeholder="Type name...">
+                        <button id="generateCardBtn" class="primary-btn">Generate</button>
+                    </div>
+                </div>
+
+                <div id="reportCardContainer" class="report-card-wrapper">
+                    <!-- Report Card will be injected here -->
+                    <div class="empty-state">Select a governor to generate their report card.</div>
+                </div>
+            </div>
+
+            <!-- Feature 2: Squad Builder -->
+            <div id="squad-builder-ui" class="command-section hidden">
+                <div class="controls-grid">
+                    <div class="input-group">
+                        <label>Pool Selection</label>
+                        <select id="squadPoolSelect" class="prekvk-select">
+                            <option value="top30">Top 30 Power</option>
+                            <option value="top60">Top 60 Power</option>
+                            <option value="top90">Top 90 Power</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Number of Squads</label>
+                        <select id="squadCountSelect" class="prekvk-select">
+                            <option value="2">2 Squads (Sun/Moon)</option>
+                            <option value="3">3 Squads</option>
+                            <option value="4">4 Squads</option>
+                            <option value="5">5 Squads</option>
+                        </select>
+                    </div>
+                    <div class="input-group" style="justify-content: flex-end;">
+                        <button id="generateSquadsBtn" class="primary-btn">Balance Squads ⚖️</button>
+                    </div>
+                </div>
+
+                <div id="squadsOutput" class="squads-container">
+                    <!-- Squads will be injected here -->
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Smart Welcome Modal -->
+    <div id="welcomeModal" class="modal-overlay hidden">
+        <div class="modal-content glass-panel" style="max-width: 500px; text-align: center;">
+            <div class="modal-header">
+                <h2>Welcome Back!</h2>
+            </div>
+            <div class="modal-body" style="padding: 2rem;">
+                <p class="text-secondary" style="margin-bottom: 1.5rem;">
+                    We found saved data from a previous session.
+                </p>
+
+                <div style="margin-bottom: 2rem;">
+                    <label for="welcomeKingdomSelect"
+                        style="display:block; margin-bottom:0.5rem; text-align:left;">Continue with Kingdom:</label>
+                    <select id="welcomeKingdomSelect" class="form-select" style="width:100%; padding: 0.8rem;">
+                        <!-- Options populated by JS -->
+                    </select>
+                </div>
+
+                <div class="welcome-actions" style="display: flex; gap: 1rem; flex-direction: column;">
+                    <button id="btnResumeSession" class="action-btn"
+                        style="background: var(--accent-primary); border:none; color:white; justify-content: center;">
+                        🚀 Resume Session
+                    </button>
+                    <button id="btnNewSession" class="action-btn"
+                        style="background: transparent; border: 1px solid var(--text-muted); color: var(--text-muted); justify-content: center;">
+                        🔄 Start Fresh (Upload New)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Settings Tab -->
+    <div id="settings" class="tab-content">
+        <div class="card">
+            <div class="results-header">
+                <h2>Application Settings</h2>
+            </div>
+
+            <div class="results-header" style="margin-top: 2rem;">
+                <h3>☁️ Cloud Integration (GitHub)
+                    <span style="font-size: 0.8em; margin-left: 10px; opacity: 0.8;"
+                        data-tooltip="Configure GitHub cloud storage.">
+                        ℹ️
+                    </span>
+                </h3>
+            </div>
+
+            <div class="controls">
+                <div class="input-group">
+                    <label>GitHub Username</label>
+                    <input type="text" id="ghOwner" class="config-input">
+                </div>
+                <div class="input-group">
+                    <label>Repository Name</label>
+                    <input type="text" id="ghRepo" class="config-input">
+                </div>
+                <div class="input-group">
+                    <label>Personal Access Token</label>
+                    <input type="password" id="ghToken" class="config-input">
+                </div>
+                <div class="input-group" style="justify-content: flex-end;">
+                    <label>&nbsp;</label>
+                    <button id="saveGhConfigBtn" class="primary-btn">Save Cloud Settings</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="results-header" style="margin-top: 2rem;">
+            <h3>💾 Data Management</h3>
+        </div>
+        <div class="controls" style="flex-direction: column; gap: 15px;">
+            <p style="color: var(--text-muted); font-size: 0.9em;">
+                <strong>Clear Loaded Scans:</strong> Removes all currently loaded scan data from memory and the active
+                session. Use this to switch tasks without mixing data. Your cloud saves and settings remain safe.<br>
+                <strong>Factory Reset:</strong> Wipes EVERYTHING (Data, Settings, Local Cache). Use with caution.
+            </p>
+            <div class="input-group" style="justify-content: space-between;">
+                <button id="resetDataBtn" class="primary-btn"
+                    style="background: var(--warning-color); border-color: var(--warning-color);">🧹 Clear Loaded
+                    Scans</button>
+                <button id="factoryResetBtn" class="primary-btn danger-btn">⚠️ Factory Reset</button>
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <!-- Mail Generator Tab -->
+    <div id="mail" class="tab-content">
+        <div class="mail-layout">
+            <!-- Editor Panel -->
+            <div class="panel mail-panel">
+                <div class="panel-header">
+                    <span>Editor</span>
+                    <button id="copy-btn" class="tool-btn">Make Copy</button>
+                </div>
+
+                <div class="toolbar">
+                    <div class="tool-group">
+                        <button class="tool-btn" data-tag="b" title="Bold"><b>B</b></button>
+                        <button class="tool-btn" data-tag="i" title="Italic"><i>I</i></button>
+                        <button class="tool-btn" id="btn-caps" title="Uppercase">TT</button>
+                    </div>
+
+                    <div class="tool-group">
+                        <input type="color" id="color-picker" value="#ffffff" title="Text Color">
+                        <button class="tool-btn" id="apply-color">Apply Color</button>
+                    </div>
+
+                    <div class="tool-group">
+                        <select id="size-select" class="tool-btn">
+                            <option value="">Size</option>
+                            <option value="20">Small (20)</option>
+                            <option value="24">Normal (24)</option>
+                            <option value="32">Large (32)</option>
+                            <option value="40">Header (40)</option>
+                            <option value="50">Huge (50)</option>
+                        </select>
+                    </div>
+
+                    <div class="tool-group">
+                        <button class="tool-btn" id="btn-symbols" title="Symbols & Brackets">★ Library</button>
+                        <!-- Symbol Picker Dropdown -->
+                        <div id="symbol-menu" class="symbol-dropdown hidden">
+                            <div class="symbol-tabs">
+                                <button class="tab-btn active" data-tab="frames">Frames</button>
+                                <button class="tab-btn" data-tab="shapes">Shapes</button>
+                                <button class="tab-btn" data-tab="icons">Icons</button>
+                                <button class="tab-btn" data-tab="presets">Presets</button>
+                            </div>
+
+                            <!-- Content - Frames -->
+                            <div id="tab-frames" class="symbol-content active">
+                                <div class="symbol-grid wide-grid">
+                                    <button class="symbol-btn" data-insert="╔">╔</button><button class="symbol-btn"
+                                        data-insert="═">═</button><button class="symbol-btn" data-insert="╗">╗</button>
+                                    <button class="symbol-btn" data-insert="║">║</button><button class="symbol-btn"
+                                        data-insert="╚">╚</button><button class="symbol-btn" data-insert="╝">╝</button>
+                                    <button class="symbol-btn" data-insert="╠">╠</button><button class="symbol-btn"
+                                        data-insert="╣">╣</button><button class="symbol-btn" data-insert="┌">┌</button>
+                                    <button class="symbol-btn" data-insert="─">─</button><button class="symbol-btn"
+                                        data-insert="┐">┐</button><button class="symbol-btn" data-insert="│">│</button>
+                                    <button class="symbol-btn" data-insert="└">└</button><button class="symbol-btn"
+                                        data-insert="┘">┘</button><button class="symbol-btn"
+                                        data-insert="┘">┘</button><button class="symbol-btn" data-insert="├">├</button>
+                                    <button class="symbol-btn" data-insert="┤">┤</button>
+                                </div>
+                            </div>
+                            <!-- Content - Shapes -->
+                            <div id="tab-shapes" class="symbol-content hidden">
+                                <div class="symbol-grid">
+                                    <button class="symbol-btn" data-insert="◈">◈</button><button class="symbol-btn"
+                                        data-insert="◇">◇</button>
+                                    <button class="symbol-btn" data-insert="◆">◆</button><button class="symbol-btn"
+                                        data-insert="●">●</button>
+                                    <button class="symbol-btn" data-insert="○">○</button><button class="symbol-btn"
+                                        data-insert="■">■</button>
+                                    <button class="symbol-btn" data-insert="□">□</button><button class="symbol-btn"
+                                        data-insert="▲">▲</button>
+                                    <button class="symbol-btn" data-insert="▼">▼</button><button class="symbol-btn"
+                                        data-insert="★">★</button>
+                                    <button class="symbol-btn" data-insert="☆">☆</button><button class="symbol-btn"
+                                        data-insert="⚜">⚜</button>
+                                </div>
+                            </div>
+                            <!-- Content - Icons -->
+                            <div id="tab-icons" class="symbol-content hidden">
+                                <div class="symbol-grid">
+                                    <button class="symbol-btn" data-insert="⚔️">⚔️</button><button class="symbol-btn"
+                                        data-insert="🛡️">🛡️</button>
+                                    <button class="symbol-btn" data-insert="🏹">🏹</button><button class="symbol-btn"
+                                        data-insert="🐎">🐎</button>
+                                    <button class="symbol-btn" data-insert="👑">👑</button><button class="symbol-btn"
+                                        data-insert="💰">💰</button>
+                                    <button class="symbol-btn" data-insert="💎">💎</button><button class="symbol-btn"
+                                        data-insert="📜">📜</button>
+                                    <button class="symbol-btn" data-insert="📅">📅</button><button class="symbol-btn"
+                                        data-insert="⚠️">⚠️</button>
+                                    <button class="symbol-btn" data-insert="✅">✅</button><button class="symbol-btn"
+                                        data-insert="❌">❌</button>
+                                </div>
+                            </div>
+                            <!-- Content - Presets -->
+                            <div id="tab-presets" class="symbol-content hidden">
+                                <div class="symbol-list">
+                                    <button class="symbol-btn full-width" data-insert="╔═══════ ◈ ═══════╗">Header
+                                        Frame</button>
+                                    <button class="symbol-btn full-width" data-insert="╚═══════ ◈ ═══════╝">Footer
+                                        Frame</button>
+                                    <button class="symbol-btn full-width"
+                                        data-insert="─── ❖ ── ✦ ── ❖ ───">Separator</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tool-group">
+                        <button class="tool-btn" id="clear-btn" title="Clear All">🗑️</button>
+                    </div>
+                </div>
+
+                <textarea id="mail-input"
+                    placeholder="Type your mail here... use the toolbar or type RoK tags manually.&#10;Example: <size=40><color=#FF0000>Urgent!</color></size>"></textarea>
+            </div>
+
+            <!-- Preview Panel -->
+            <div class="panel mail-panel">
+                <div class="panel-header">
+                    <span>Live Preview</span>
+                </div>
+                <div id="preview-content"
+                    style="background-color: #2c2925; padding: 2rem; position: relative; overflow-y: auto;">
+                    <div class="rok-preview-container" id="preview-render"
+                        style="border: 2px solid #5c4e3e; border-radius: 4px; padding: 10px; background-color: rgba(0,0,0,0.3); min-height: 100%; font-family: 'Segoe UI', serif; white-space: pre-wrap;">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    </div> <!-- End content-area -->
+
+    <!-- Container for Dynamic Kingdom Content -->
+    <div id="kingdomsContainer"></div>
+
+    <!-- Template for Kingdom Content (Hidden) -->
+    <div id="kingdomContentTemplate" style="display: none;">
+        <div class="kingdom-subtabs">
+            <button class="subtab-btn active" data-subtab="overview"
+                data-tooltip="Searchable table of raw stats from the End Scan.">Overview</button>
+            <button class="subtab-btn" data-subtab="growth"
+                data-tooltip="AI-driven analysis of player growth, activity, and archetypes.">Growth Analysis</button>
+            <button class="subtab-btn" data-subtab="governance"
+                data-tooltip="Risk Analysis & Contribution Scores.">Governance</button>
+            <button class="subtab-btn" data-subtab="scatter" data-tooltip="Plots Power (X) vs Kill Points (Y).">Scatter
+                Plot</button>
+            <button class="subtab-btn" data-subtab="efficiency"
+                data-tooltip="Power Efficiency Analysis (DKP vs Power).">Power Efficiency</button>
+            <button class="subtab-btn" data-subtab="roster-analysis"
+                data-tooltip="Analyzes Lifetime Stats (Start Scan).">Roster Analysis</button>
+            <button class="subtab-btn" data-subtab="results"
+                data-tooltip="Final DKP calculations, targets, and bonuses.">Results</button>
+            <button class="subtab-btn" data-subtab="config">Configuration</button>
+        </div>
+
+        <div class="subtab-content active" data-content="overview">
+            <div class="card">
+                <h2>Overview</h2>
+                <div class="search-container" style="display: flex; gap: 10px; align-items: center;">
+                    <input type="text" class="overview-search" placeholder="Search by Gov Name or ID..."
+                        style="flex: 1;">
+                    <select class="overview-alliance-filter" style="min-width: 150px;">
+                        <option value="">All Alliances</option>
+                    </select>
+                    <button class="overview-export-btn primary-btn" style="padding: 0.6rem 1rem;">Export CSV</button>
+                </div>
+                <div class="top-scroll-wrapper">
+                    <div class="top-scroll-content"></div>
+                </div>
+                <!-- Overview Table Injected Here -->
+                <div class="table-container header-scroll-sync" id="overview-table-container">
+                    <table class="dkp-table overview-table">
+                        <thead></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- GROWTH TAB -->
+        <div class="subtab-content" data-content="growth">
+            <div class="card">
+                <h2>Growth & Grading 📈</h2>
+                <p class="text-secondary mb-4">AI-driven analysis of player growth, activity, and archetypes.</p>
+
+                <!-- Leaderboards / Summary -->
+                <div class="growth-summary-grid">
+                    <div class="growth-card grade-s-u">
+                        <h3>S-Tier (Gods) 🏆</h3>
+                        <div class="growth-stat count-s">0</div>
+                    </div>
+                    <div class="growth-card grade-a-u">
+                        <h3>A-Tier (Elite) ⚔️</h3>
+                        <div class="growth-stat count-a">0</div>
+                    </div>
+                    <div class="growth-card grade-b-u">
+                        <h3>B-Tier (Active) 🛡️</h3>
+                        <div class="growth-stat count-b">0</div>
+                    </div>
+                    <div class="growth-card grade-c-u">
+                        <h3>C/D/F (Issues) ⚠️</h3>
+                        <div class="growth-stat count-c">0</div>
+                    </div>
+                </div>
+
+                <!-- Main Growth Table -->
+                <div class="table-container" style="margin-top: 2rem;">
+                    <table class="growth-table dkp-table" style="width: 100%;">
+                        <thead>
+                            <tr>
+                                <th>Governor</th>
+                                <th>Alliance</th>
+                                <th>Growth Score</th>
+                                <th>Grade</th>
+                                <th>Archetype</th>
+                                <th>Power Δ</th>
+                                <th>Kill Points Δ</th>
+                                <th>Deads (T4/T5)</th>
+                                <th>Assistance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="subtab-content" data-content="scatter">
+            <div class="card">
+                <h2 data-tooltip="Plots Power (X) vs Kill Points (Y).">Performance Scatter Plot</h2>
+                <div class="search-container">
+                    <input type="text" class="scatter-search" placeholder="Search by Governor Name or ID...">
+                </div>
+                <div class="chart-container">
+                    <canvas class="scatter-chart"></canvas>
+                </div>
+                <div class="chart-legend">
+                    <div class="legend-item"><span class="dot hero"></span> Heroes (High KP, Low Deads)</div>
+                    <div class="legend-item"><span class="dot warrior"></span> Warriors (High KP, High Deads)
+                    </div>
+                    <div class="legend-item"><span class="dot feeder"></span> Feeders (Low KP, High Deads)</div>
+                    <div class="legend-item"><span class="dot slacker"></span> Slackers (Low KP, Low Deads)
+                    </div>
+                </div>
+                <div class="chart-guide"
+                    style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-color); color: var(--text-secondary); font-size: 0.9em; line-height: 1.6;">
+                    <h3 style="color: var(--text-primary); margin-bottom: 10px;">How to Read This Chart</h3>
+                    <p><strong>Data Source:</strong> Using Overview Data (Start Scan vs End Scan differences).</p>
+
+                    <h4 style="color: var(--text-primary); margin: 15px 0 5px;">Visualization (PCA) & Color Coding</h4>
+                    <p>Instead of a simple "KP vs Deads" chart, we use <strong>Principal Component Analysis
+                            (PCA)</strong> to analyze multiple metrics (Power, Troops, Kills, Deads) simultaneously. The
+                        chart clusters players based on combat behavior:</p>
+                    <ul style="list-style-type: none; padding-left: 0; margin-top: 5px;">
+                        <li><span style="color: #3b82f6;">●</span> <strong>Heroes (Blue):</strong> High KP, Low Deads
+                            (Efficient).</li>
+                        <li><span style="color: #10b981;">●</span> <strong>Warriors (Green):</strong> High KP, High
+                            Deads (Heavy fighters).</li>
+                        <li><span style="color: #ef4444;">●</span> <strong>Feeders (Red):</strong> Low KP, High Deads
+                            (Negative trades).</li>
+                        <li><span style="color: #94a3b8;">●</span> <strong>Slackers (Gray):</strong> Low KP, Low Deads
+                            (Inactive).</li>
+                    </ul>
+
+                    <h4 style="color: var(--text-primary); margin: 15px 0 5px;">Understanding the Axes</h4>
+                    <p>The numbers represent <strong>Standard Deviations</strong> from the Kingdom Average (0).</p>
+                    <ul style="padding-left: 20px;">
+                        <li><strong>X-Axis (Activity Volume):</strong>
+                            <br>0 = Average. <span style="color: #10b981;">Positive (+10/20)</span> = Whales/Grinders.
+                            <span style="color: #ef4444;">Negative</span> = Inactive.
+                        </li>
+                        <li><strong>Y-Axis (Efficiency):</strong>
+                            <br>0 = Average style. <span style="color: #ef4444;">Positive</span> = High Cost (Many
+                            Deads). <span style="color: #10b981;">Negative</span> = High Efficiency.
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="subtab-content" data-content="efficiency">
+            <div class="card">
+                <h2 data-tooltip="Answers: 'Did this player pull their weight?'">Power Efficiency (Return on Power)</h2>
+                <p class="chart-description">Visualizing <strong>DKP Score %</strong> vs <strong>Starting
+                        Power</strong>. Bubble size represents <strong>Dead Troops</strong>.</p>
+                <div class="search-container">
+                    <input type="text" class="efficiency-search" placeholder="Search by Governor Name or ID...">
+                </div>
+                <div class="chart-container">
+                    <canvas class="efficiency-chart"></canvas>
+                </div>
+                <div class="chart-legend">
+                    <div class="legend-item"><span class="dot warrior"></span> Overperformers (>100% DKP)</div>
+                    <div class="legend-item"><span class="dot yellow"></span> Meeting Expectations (80-100% DKP)
+                    </div>
+                    <div class="legend-item"><span class="dot feeder"></span> Underperformers (<80% DKP)</div>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="subtab-content" data-content="roster-analysis">
+                <div class="card">
+                    <h2 data-tooltip="Analyzes Lifetime Stats (Start Scan) to predict player types.">Roster Analysis
+                        (Fortune Teller)</h2>
+                    <p class="chart-description">Analyzing <strong>Lifetime Statistics</strong> from Start Scan
+                        to
+                        infer player types.</p>
+                    <div class="analysis-grid" style="margin-bottom: 20px;">
+                        <div class="chart-wrapper" style="height: 500px;">
+                            <div class="chart-header"
+                                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <h3 style="margin: 0;">Lifetime Performance (KP vs Power)</h3>
+                                <div style="display: flex; gap: 15px; align-items: center;">
+                                    <select class="roster-limit-select"
+                                        style="padding: 4px; border-radius: 4px; background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-color);">
+                                        <option value="300">Top 300</option>
+                                        <option value="400">Top 400</option>
+                                        <option value="500">Top 500</option>
+                                        <option value="0">All Governors</option>
+                                    </select>
+                                    <label
+                                        data-tooltip="Compresses the chart to better see small and large players together (e.g. Whales vs F2P)."
+                                        style="display: flex; align-items: center; gap: 8px; font-size: 0.9rem; cursor: pointer; user-select: none;">
+                                        <input type="checkbox" class="roster-log-toggle">
+                                        Log Scale
+                                    </label>
+                                </div>
+                            </div>
+                            <canvas class="roster-scatter-chart"></canvas>
+                        </div>
+                    </div>
+                    <div class="insights-section">
+                        <h3>Roster Insights</h3>
+                        <div id="rosterInsights" class="insights-text">
+                            <p>Load a Start Scan to generate insights.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="subtab-content" data-content="governance">
+                <div class="card">
+                    <h2>Governance & Deadweight Analysis
+                        <span style="font-size: 0.8em; margin-left: 10px; opacity: 0.8;"
+                            data-tooltip="Analysis based on contribution relative to power.&#10;• Score (0-100): Higher is better.&#10;• Penalties: -100 for Sleepers, -50 for Selfish Growth.&#10;• Support Pts: Awarded for RSS & Healing (protects farmers/fillers).&#10;• Risk Levels:&#10;  🟢 Safe: >80&#10;  🔵 Monitor: 40-79&#10;  🟠 Warning: 0-39&#10;  🔴 Critical: <0 (Potential Deadweight)">
+                            ℹ️
+                        </span>
+                    </h2>
+                    <p class="chart-description">Analyze player contribution beyond simple stats. Identify deadweight
+                        and potential leadership.</p>
+                    <div class="table-container">
+                        <table class="dkp-table governance-table">
+                            <thead>
+                                <tr>
+                                    <th data-sort="id">ID</th>
+                                    <th data-sort="name">Name</th>
+                                    <th data-sort="governanceScore">Score</th>
+                                    <th data-sort="riskLevel">Risk Level</th>
+                                    <th data-sort="mainContribution">Contribution</th>
+                                    <th data-sort="governanceNotes">Notes</th>
+                                    <th data-sort="combatPts">Combat Pts</th>
+                                    <th data-sort="supportPts">Support Pts</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="subtab-content" data-content="config">
+                <div class="card">
+                    <h2>Configuration</h2>
+                    <div class="controls">
+                        <div class="input-group"><label>Deads Multiplier</label><input type="number"
+                                class="config-input" name="deadsMultiplier" value="0.02" step="0.01"></div>
+                        <div class="input-group"><label>Deads Weight</label><input type="number" class="config-input"
+                                name="deadsWeight" value="50"></div>
+                        <div class="input-group"><label>KP Power Divisor</label><input type="number"
+                                class="config-input" name="kpPowerDivisor" value="3" step="0.1"></div>
+                        <div class="input-group"><label>T5 Mix Ratio</label><input type="number" class="config-input"
+                                name="t5MixRatio" value="0.7" step="0.1"></div>
+                        <div class="input-group"><label>KP Multiplier</label><input type="number" class="config-input"
+                                name="kpMultiplier" value="1.25" step="0.05"></div>
+                        <div class="input-group"><label>T4 Points</label><input type="number" class="config-input"
+                                name="t4Points" value="10"></div>
+                        <div class="input-group"><label>T5 Points</label><input type="number" class="config-input"
+                                name="t5Points" value="20"></div>
+                    </div>
+
+                    <!-- Cloud Config Removed from here -->
+
+                    <div
+                        style="margin-top: 1.5rem; padding: 1rem; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 8px;">
+                        <h3
+                            style="font-size: 1rem; color: #3b82f6; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                            📚 Documentation
+                        </h3>
+                        <p style="font-size: 0.9rem; margin-bottom: 0.5rem; color: var(--text-secondary);">
+                            Want to understand how these multipliers impact the final DKP score?
+                        </p>
+                        <a href="Unity DKP System_ Deep Dive Guide.pdf" target="_blank"
+                            style="display: inline-flex; align-items: center; gap: 0.5rem; color: var(--text-primary); text-decoration: none; padding: 0.5rem 1rem; background: rgba(255,255,255,0.05); border-radius: 4px; transition: all 0.2s; border: 1px solid var(--border-color); font-weight: 500;">
+                            <span>📄</span> View / Download Deep Dive Guide
+                        </a>
+                    </div>
+
+                    <div class="action-buttons">
+                        <button class="primary-btn next-btn">Next: Calculate Results</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="subtab-content" data-content="results">
+                <div class="card">
+                    <div class="results-header">
+                        <h2>Calculation Results</h2>
+                        <div class="action-buttons">
+                            <button class="primary-btn calculate-btn">Calculate DKP</button>
+                            <button class="secondary-btn export-btn">Export CSV</button>
+                        </div>
+                    </div>
+                    <div class="search-container">
+                        <input type="text" class="results-search" placeholder="Search by Governor Name or ID...">
+                        <!-- Kingdom Summary Table (Aggregated) -->
+
+                        <div class="results-section hidden">
+                            <div class="table-container">
+                                <table class="dkp-table">
+                                    <thead>
+                                        <tr>
+                                            <th data-sort="id">Governor ID</th>
+                                            <th data-sort="name">Governor Name</th>
+                                            <th data-sort="status">Status</th>
+                                            <th data-sort="startPower">Starting Power</th>
+                                            <th data-sort="powerDiff">Power +/-</th>
+                                            <th data-sort="troopPowerDiff">Troop Power</th>
+                                            <th data-sort="t1">T1 Kills</th>
+                                            <th data-sort="t2">T2 Kills</th>
+                                            <th data-sort="t3">T3 Kills</th>
+                                            <th data-sort="t4">T4 Kills</th>
+                                            <th data-sort="t5">T5 Kills</th>
+                                            <th data-sort="t4t5">T4+T5 Combined</th>
+                                            <th data-sort="deads">Kvk Deads</th>
+                                            <th data-sort="rssGathered">RSS Gathered</th>
+                                            <th data-sort="kvkKP">KVK KP</th>
+                                            <th data-sort="targetKP">Target DKP</th>
+                                            <th data-sort="kpPercent">KP % Complete</th>
+                                            <th data-sort="targetDeads">Target Deads</th>
+                                            <th data-sort="deadPercent">Dead% Complete</th>
+                                            <th data-sort="totalDKPPercent">Total DKP %</th>
+                                            <th data-sort="bonus">Bonus/Punishment</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- End Results Subtab -->
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Mail Generator Tab (LEGACY/MISPLACED) -->
+    <div id="mail-legacy" class="tab-content" style="display: none !important;">
+        <div class="mail-layout"
+            style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; height: calc(100vh - 200px);">
+
+            <!-- Editor Panel -->
+            <div class="panel mail-panel">
+                <div class="panel-header">
+                    <span>Editor</span>
+                    <button id="copy-btn" class="tool-btn">Make Copy</button>
+                </div>
+
+                <div class="toolbar">
+                    <div class="tool-group">
+                        <button class="tool-btn" data-tag="b" title="Bold"><b>B</b></button>
+                        <button class="tool-btn" data-tag="i" title="Italic"><i>I</i></button>
+                        <button class="tool-btn" id="btn-caps" title="Uppercase">TT</button>
+                    </div>
+
+                    <div class="tool-group">
+                        <input type="color" id="color-picker" value="#ffffff" title="Text Color">
+                        <button class="tool-btn" id="apply-color">Apply Color</button>
+                    </div>
+
+                    <div class="tool-group">
+                        <select id="size-select" class="tool-btn">
+                            <option value="">Size</option>
+                            <option value="20">Small (20)</option>
+                            <option value="24">Normal (24)</option>
+                            <option value="32">Large (32)</option>
+                            <option value="40">Header (40)</option>
+                            <option value="50">Huge (50)</option>
+                        </select>
+                    </div>
+
+                    <div class="tool-group">
+                        <button class="tool-btn" id="btn-symbols" title="Symbols & Brackets">★ Library</button>
+                        <!-- Symbol Picker Dropdown -->
+                        <div id="symbol-menu" class="symbol-dropdown hidden">
+                            <div class="symbol-tabs">
+                                <button class="tab-btn active" data-tab="frames">Frames</button>
+                                <button class="tab-btn" data-tab="shapes">Shapes</button>
+                                <button class="tab-btn" data-tab="icons">Icons</button>
+                                <button class="tab-btn" data-tab="presets">Presets</button>
+                            </div>
+
+                            <!-- Content - Frames -->
+                            <div id="tab-frames" class="symbol-content active">
+                                <div class="symbol-grid wide-grid">
+                                    <button class="symbol-btn" data-insert="╔">╔</button><button class="symbol-btn"
+                                        data-insert="═">═</button><button class="symbol-btn" data-insert="╗">╗</button>
+                                    <button class="symbol-btn" data-insert="║">║</button><button class="symbol-btn"
+                                        data-insert="╚">╚</button><button class="symbol-btn" data-insert="╝">╝</button>
+                                    <button class="symbol-btn" data-insert="╠">╠</button><button class="symbol-btn"
+                                        data-insert="╣">╣</button><button class="symbol-btn" data-insert="┌">┌</button>
+                                    <button class="symbol-btn" data-insert="─">─</button><button class="symbol-btn"
+                                        data-insert="┐">┐</button><button class="symbol-btn" data-insert="│">│</button>
+                                    <button class="symbol-btn" data-insert="└">└</button><button class="symbol-btn"
+                                        data-insert="┘">┘</button><button class="symbol-btn" data-insert="├">├</button>
+                                    <button class="symbol-btn" data-insert="┤">┤</button>
+                                </div>
+                            </div>
+                            <!-- Content - Shapes -->
+                            <div id="tab-shapes" class="symbol-content hidden">
+                                <div class="symbol-grid">
+                                    <button class="symbol-btn" data-insert="◈">◈</button><button class="symbol-btn"
+                                        data-insert="◇">◇</button>
+                                    <button class="symbol-btn" data-insert="◆">◆</button><button class="symbol-btn"
+                                        data-insert="●">●</button>
+                                    <button class="symbol-btn" data-insert="○">○</button><button class="symbol-btn"
+                                        data-insert="■">■</button>
+                                    <button class="symbol-btn" data-insert="□">□</button><button class="symbol-btn"
+                                        data-insert="▲">▲</button>
+                                    <button class="symbol-btn" data-insert="▼">▼</button><button class="symbol-btn"
+                                        data-insert="★">★</button>
+                                    <button class="symbol-btn" data-insert="☆">☆</button><button class="symbol-btn"
+                                        data-insert="⚜">⚜</button>
+                                </div>
+                            </div>
+                            <!-- Content - Icons -->
+                            <div id="tab-icons" class="symbol-content hidden">
+                                <div class="symbol-grid">
+                                    <button class="symbol-btn" data-insert="⚔️">⚔️</button><button class="symbol-btn"
+                                        data-insert="🛡️">🛡️</button>
+                                    <button class="symbol-btn" data-insert="🏹">🏹</button><button class="symbol-btn"
+                                        data-insert="🐎">🐎</button>
+                                    <button class="symbol-btn" data-insert="👑">👑</button><button class="symbol-btn"
+                                        data-insert="💰">💰</button>
+                                    <button class="symbol-btn" data-insert="💎">💎</button><button class="symbol-btn"
+                                        data-insert="📜">📜</button>
+                                    <button class="symbol-btn" data-insert="📅">📅</button><button class="symbol-btn"
+                                        data-insert="⚠️">⚠️</button>
+                                    <button class="symbol-btn" data-insert="✅">✅</button><button class="symbol-btn"
+                                        data-insert="❌">❌</button>
+                                </div>
+                            </div>
+                            <!-- Content - Presets -->
+                            <div id="tab-presets" class="symbol-content hidden">
+                                <div class="symbol-list">
+                                    <button class="symbol-btn full-width" data-insert="╔═══════ ◈ ═══════╗">Header
+                                        Frame</button>
+                                    <button class="symbol-btn full-width" data-insert="╚═══════ ◈ ═══════╝">Footer
+                                        Frame</button>
+                                    <button class="symbol-btn full-width"
+                                        data-insert="─── ❖ ── ✦ ── ❖ ───">Separator</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tool-group">
+                        <button class="tool-btn" id="clear-btn" title="Clear All">🗑️</button>
+                    </div>
+                </div>
+
+                <textarea id="mail-input"
+                    placeholder="Type your mail here... use the toolbar or type RoK tags manually.&#10;Example: <size=40><color=#FF0000>Urgent!</color></size>"></textarea>
+            </div>
+
+            <!-- Preview Panel -->
+            <div class="panel mail-panel">
+                <div class="panel-header">
+                    <span>Live Preview</span>
+                </div>
+                <div id="preview-content"
+                    style="background-color: #2c2925; padding: 2rem; position: relative; overflow-y: auto;">
+                    <!-- The container that simulates RoK mail styling -->
+                    <div class="rok-preview-container" id="preview-render"
+                        style="border: 2px solid #5c4e3e; border-radius: 4px; padding: 10px; background-color: rgba(0,0,0,0.3); min-height: 100%; font-family: 'Segoe UI', serif; white-space: pre-wrap;">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    </div> <!-- End content-area -->
+
+    </div> <!-- End container -->
+
+    <!-- Bottom Controls -->
+    <div class="bottom-controls">
+        <div class="filter-control">
+            <label class="checkbox-label">
+                <input type="checkbox" id="townHallFilter"> Town Hall 25 Only
+            </label>
+        </div>
+
+    </div>
+    </div>
+    <!-- Cloud File Picker Modal -->
+    <div id="cloudFileModal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2 id="cloudModalTitle">Select Scan File ☁️</h2>
+            <div id="cloudBrowser" class="file-browser">
+                <div class="loader">Loading files from GitHub...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dependencies -->
+    <!-- Core -->
+    <script src="js/core/config.js"></script>
+    <script src="js/core/utils.js"></script>
+
+    <!-- Services -->
+    <script src="js/services/GitHubService.js"></script>
+    <script src="js/services/StorageService.js"></script>
+    <script src="js/services/CalculationService.js"></script>
+    <script src="js/services/DataService.js"></script>
+
+    <!-- UI Services -->
+    <script src="js/services/UIService.js"></script>
+    <script src="js/services/ui/UIEvents.js"></script>
+    <script src="js/services/ui/UINavigation.js"></script>
+    <script src="js/services/ui/UIRenderers.js"></script>
+    <script src="js/services/ui/UICharts.js"></script>
+    <script src="js/services/ui/UIExports.js"></script>
+    <script src="js/services/ui/UISOC.js"></script>
+    <script src="js/services/ui/UIGrowth.js"></script>
+    <script src="js/services/MailService.js"></script>
+
+    <!-- Dynamic Version Footer -->
+    <div style="text-align: center; padding: 20px; color: var(--text-muted); font-size: 0.8rem; opacity: 0.7;">
+        Unity Dashboard <span id="appVersionDisplay"></span>
+    </div>
+
+    <div style="text-align: center; padding-bottom: 20px;">
+        <a href="https://www.buymeacoffee.com/ReignsPlace" target="_blank">
+            <img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=☕&slug=ReignsPlace&button_colour=FFDD00&font_colour=000000&font_family=Poppins&outline_colour=000000&coffee_colour=ffffff"
+                style="height: 35px;" alt="Buy me a coffee" />
+        </a>
+    </div>
+
+    <!-- Main -->
+    <script src="js/main.js"></script>
+    <script>
+        // Simple inline script to display version from Config
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof Config !== 'undefined' && Config.APP_VERSION) {
+                const el = document.getElementById('appVersionDisplay');
+                if (el) el.textContent = Config.APP_VERSION;
+            }
+        });
+    </script>
+</body>
+
+</html>
