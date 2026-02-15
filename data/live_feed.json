@@ -1,4 +1,7 @@
 {
-  "status": "calibration",
-  "timestamp": "2026-02-15 16:27:10.191170"
+  "id": 12345678,
+  "name": "Governor_634",
+  "power": 41511563,
+  "kp": 6528923,
+  "timestamp": 1771190866
 }
