@@ -42,14 +42,16 @@
             <button class="tab-btn" data-tab="all-kingdom-results"
                 data-tooltip="Comparison leaderboard for multiple kingdoms.">All Kingdom DKP results</button>
             <button class="tab-btn" data-tab="soc" data-tooltip="Season of Conquest Modes">SOC ⚔️</button>
-            <button class="tab-btn" data-tab="command-center"
-                data-tooltip="Operational Tools: Report Cards & Squad Builder.">Command Center 🛡️</button>
+            <button class="tab-btn" data-tab="governance"
+                data-tooltip="The Audit: Roster Management & War Potential.">Governance ⚖️</button>
             <button class="tab-btn" data-tab="mail" data-tooltip="Create fancy in-game mails.">Mail Generator
                 ✉️</button>
             <button class="tab-btn" data-tab="live-feed" data-tooltip="Real-time view of Companion App data.">Live Feed
                 📡</button>
             <button class="tab-btn" data-tab="settings" data-tooltip="Configure weights and settings.">Settings
                 ⚙️</button>
+            <button class="tab-btn" data-tab="race-to-glory" data-tooltip="Animated Bar Chart Race.">Race to Glory
+                🏁</button>
         </div>
 
         <div class="tabs hidden" id="kingdomTabs" style="margin-top: 1rem;">
@@ -519,66 +521,70 @@
             </div>
         </div>
     </div>
-    <div id="command-center" class="tab-content">
+    <div id="governance" class="tab-content">
         <div class="card">
             <div class="results-header">
-                <h2>Command Center 🛡️</h2>
-
+                <h2>Governance Dashboard ⚖️</h2>
                 <div class="input-group" style="margin: 0 1rem;">
-                    <select id="commandKingdomSelect" class="prekvk-select">
+                    <select id="govKingdomSelect" class="prekvk-select">
                         <!-- Populated by JS -->
                     </select>
                 </div>
+            </div>
 
-                <div class="mode-selector">
-                    <button class="mode-btn active" data-mode="report-card">Governor Report Card 🎴</button>
-                    <button class="mode-btn" data-mode="squad-builder">Squad Builder ⚖️</button>
+            <!-- Tab Navigation within Governance -->
+            <div class="subtabs-container" style="margin-bottom: 20px;">
+                <button class="subtab-btn active" data-subtab="audit">The Audit 📉</button>
+                <button class="subtab-btn" data-subtab="purge">The Purge List 📋</button>
+                <button class="subtab-btn" data-subtab="war-potential">War Potential ⚔️</button>
+            </div>
+
+            <!-- 1. The Audit (Quadrant Analysis) -->
+            <div id="audit-ui" class="gov-section">
+                <div class="chart-container" style="height: 500px; position: relative;">
+                    <canvas id="auditChart"></canvas>
+                </div>
+                <div id="audit-details" class="audit-panel hidden"
+                    style="margin-top: 20px; padding: 15px; background: rgba(0,0,0,0.2); border-radius: 8px;">
+                    <!-- Filled by JS on click -->
+                    <h3 id="ad-name">Player Name</h3>
+                    <div id="ad-stats" style="display: flex; gap: 20px;"></div>
+                    <div id="ad-badge" style="margin-top: 10px; font-weight: bold;"></div>
                 </div>
             </div>
 
-            <!-- Feature 1: Governor Report Card -->
-            <div id="report-card-ui" class="command-section">
-                <div class="input-group" style="max-width: 400px; margin: 0 auto 2rem auto;">
-                    <label>Search Governor (Name or ID)</label>
-                    <div style="display: flex; gap: 10px;">
-                        <input type="text" id="reportCardSearch" class="profile-input" placeholder="Type name...">
-                        <button id="generateCardBtn" class="primary-btn">Generate</button>
+            <!-- 2. The Purge List -->
+            <div id="purge-ui" class="gov-section hidden">
+                <div class="control-bar" style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+                    <div class="filters">
+                        <label>Threshold (KP/Power): <select id="purgeThreshold">
+                                <option value="0.5">Below 0.5</option>
+                                <option value="1">Below 1.0</option>
+                                <option value="2">Below 2.0</option>
+                            </select></label>
                     </div>
+                    <button id="copyPurgeListBtn" class="secondary-btn">Copy List 📋</button>
                 </div>
-
-                <div id="reportCardContainer" class="report-card-wrapper">
-                    <!-- Report Card will be injected here -->
-                    <div class="empty-state">Select a governor to generate their report card.</div>
+                <div class="table-container">
+                    <table class="unity-table" id="purgeTable">
+                        <thead>
+                            <tr>
+                                <th>Governor</th>
+                                <th>Power</th>
+                                <th>Period KP ⚔️</th>
+                                <th>Efficiency</th>
+                                <th>Archetype</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
                 </div>
             </div>
 
-            <!-- Feature 2: Squad Builder -->
-            <div id="squad-builder-ui" class="command-section hidden">
-                <div class="controls-grid">
-                    <div class="input-group">
-                        <label>Pool Selection</label>
-                        <select id="squadPoolSelect" class="prekvk-select">
-                            <option value="top30">Top 30 Power</option>
-                            <option value="top60">Top 60 Power</option>
-                            <option value="top90">Top 90 Power</option>
-                        </select>
-                    </div>
-                    <div class="input-group">
-                        <label>Number of Squads</label>
-                        <select id="squadCountSelect" class="prekvk-select">
-                            <option value="2">2 Squads (Sun/Moon)</option>
-                            <option value="3">3 Squads</option>
-                            <option value="4">4 Squads</option>
-                            <option value="5">5 Squads</option>
-                        </select>
-                    </div>
-                    <div class="input-group" style="justify-content: flex-end;">
-                        <button id="generateSquadsBtn" class="primary-btn">Balance Squads ⚖️</button>
-                    </div>
-                </div>
-
-                <div id="squadsOutput" class="squads-container">
-                    <!-- Squads will be injected here -->
+            <!-- 3. War Potential -->
+            <div id="war-potential-ui" class="gov-section hidden">
+                <div class="stats-grid" id="warStatsGrid">
+                    <!-- Cards injected by JS -->
                 </div>
             </div>
         </div>
@@ -885,6 +891,10 @@
                 data-tooltip="Analyzes Lifetime Stats (Start Scan).">Roster Analysis</button>
             <button class="subtab-btn" data-subtab="results"
                 data-tooltip="Final DKP calculations, targets, and bonuses.">Results</button>
+            <button class="subtab-btn" data-subtab="hall-of-legends"
+                data-tooltip="View the top performers and kingdom achievements.">Hall of Legends 🏆</button>
+            <button class="subtab-btn" data-subtab="war-council" data-tooltip="Build and manage squads for KvK.">War
+                Council ⚔️</button>
             <button class="subtab-btn" data-subtab="config">Configuration</button>
         </div>
 
@@ -1148,6 +1158,64 @@
                 </div>
             </div>
 
+            <div class="subtab-content" data-content="hall-of-legends">
+                <div class="card" style="border:none; background:transparent;">
+                    <div class="hol-container">
+                        <div class="hol-header">
+                            <div class="hol-dates"></div>
+                            <div class="hol-controls">
+                                <select class="hol-alliance-filter">
+                                    <option value="">All Alliances</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Badge Grid (Top) -->
+                        <div class="hol-badges">
+                            <!-- Injected by JS -->
+                        </div>
+
+                        <!-- Podium Section (Bottom) -->
+                        <div class="hol-podium-section">
+                            <h3 class="hol-category-title">Select a Badge to see the Legend</h3>
+                            <div class="hol-podium">
+                                <!-- Injected by JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="subtab-content" data-content="war-council">
+                <div class="wc-container">
+                    <!-- Sidebar: Player Pool -->
+                    <div class="wc-sidebar">
+                        <div class="wc-header">
+                            <h3>Player Pool</h3>
+                            <input type="text" placeholder="Search Players..." class="wc-search-input wc-search">
+                            <select class="wc-search-input wc-alliance-filter" style="margin-top: 5px;">
+                                <option value="">All Alliances</option>
+                            </select>
+                        </div>
+                        <div class="wc-pool-list wc-pool" ondrop="UIWarCouncil.drop(event)"
+                            ondragover="UIWarCouncil.allowDrop(event)">
+                            <!-- Draggable Players Injected Here -->
+                        </div>
+                    </div>
+
+                    <!-- Main Area: Squads -->
+                    <div class="wc-main">
+                        <div class="wc-toolbar">
+                            <button class="wc-btn" onclick="UIWarCouncil.createSquad()">+ New Squad</button>
+                            <button class="wc-btn wc-btn-secondary" onclick="UIWarCouncil.clearAll()">Clear All</button>
+                        </div>
+                        <div class="wc-workspace wc-squad-container">
+                            <!-- Squad Containers Injected Here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="subtab-content" data-content="config">
                 <div class="card">
                     <h2>Configuration</h2>
@@ -1244,8 +1312,8 @@
         </div>
     </div>
 
-    <!-- Mail Generator Tab (LEGACY/MISPLACED) -->
-    <div id="mail-legacy" class="tab-content" style="display: none !important;">
+    <!-- Mail Generator Tab -->
+    <div id="mail" class="tab-content">
         <div class="mail-layout"
             style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; height: calc(100vh - 200px);">
 
@@ -1368,11 +1436,9 @@
                 <div class="panel-header">
                     <span>Live Preview</span>
                 </div>
-                <div id="preview-content"
-                    style="background-color: #2c2925; padding: 2rem; position: relative; overflow-y: auto;">
+                <div id="preview-content" class="mail-preview-wrapper">
                     <!-- The container that simulates RoK mail styling -->
-                    <div class="rok-preview-container" id="preview-render"
-                        style="border: 2px solid #5c4e3e; border-radius: 4px; padding: 10px; background-color: rgba(0,0,0,0.3); min-height: 100%; font-family: 'Segoe UI', serif; white-space: pre-wrap;">
+                    <div class="rok-preview-container" id="preview-render">
                     </div>
                 </div>
             </div>
@@ -1380,6 +1446,60 @@
     </div>
 
 
+
+    <!-- Race to Glory Tab -->
+    <div id="race-to-glory" class="tab-content">
+        <div class="card" style="padding: 20px;">
+            <div class="race-header"
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2>Race to Glory 🏁</h2>
+                <div class="race-progress-info">
+                    <span id="race-date-display"
+                        style="font-size: 1.2rem; font-weight: bold; color: var(--accent-primary);">Progress: 0%</span>
+                </div>
+            </div>
+
+            <div class="race-controls"
+                style="display: flex; gap: 20px; align-items: center; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px; margin-bottom: 20px; flex-wrap: wrap;">
+                <div class="control-group" style="display: flex; align-items: center; gap: 10px;">
+                    <label style="font-weight: 600;">Alliance:</label>
+                    <select id="race-alliance-filter" class="select-css">
+                        <option value="">All Alliances</option>
+                    </select>
+                </div>
+
+                <div class="control-group" style="display: flex; align-items: center; gap: 10px;">
+                    <label style="font-weight: 600;">Metric:</label>
+                    <select id="race-metric" class="select-css">
+                        <option value="power">⚔️ Power</option>
+                        <option value="kp">☠️ Kill Points</option>
+                        <option value="deads">⚰️ Deads</option>
+                    </select>
+                </div>
+
+                <div class="control-group" style="display: flex; gap: 10px;">
+                    <button id="race-btn-play" class="primary-btn">▶ Play</button>
+                    <button id="race-btn-pause" class="secondary-btn">⏸ Pause</button>
+                    <button id="race-btn-reset" class="secondary-btn">⏮ Reset</button>
+                </div>
+
+                <div class="control-group" style="display: flex; align-items: center; gap: 10px;">
+                    <label style="font-weight: 600;">Speed:</label>
+                    <select id="race-speed" class="select-css">
+                        <option value="0.5">0.5x (Slow)</option>
+                        <option value="1" selected>1x (Normal)</option>
+                        <option value="2">2x (Fast)</option>
+                        <option value="5">5x (Turbo)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="race-chart-container"
+                style="position: relative; height: 600px; width: 100%; filter: drop-shadow(0 0 10px rgba(0,0,0,0.5));">
+                <canvas id="raceChart"></canvas>
+            </div>
+        </div>
+    </div>
 
     </div> <!-- End content-area -->
 
@@ -1426,6 +1546,9 @@
     <script src="js/services/ui/UIExports.js"></script>
     <script src="js/services/ui/UISOC.js"></script>
     <script src="js/services/ui/UIGrowth.js"></script>
+    <script src="js/services/ui/UIWarCouncil.js"></script>
+    <script src="js/services/ui/UIRaceChart.js"></script>
+    <script src="js/services/ui/UIGovernance.js"></script>
     <script src="js/services/MailService.js"></script>
 
     <!-- Dynamic Version Footer -->

@@ -261,4 +261,35 @@ class CalculationService {
 
         return detailedData;
     }
+
+    static calculateAchievements(data) {
+        if (!data || data.length === 0) return {};
+
+        const getTop = (metricKey, count = 3) => {
+            return [...data]
+                .sort((a, b) => {
+                    const valA = typeof a[metricKey] === 'number' ? a[metricKey] : Utils.parseNumber(a[metricKey]);
+                    const valB = typeof b[metricKey] === 'number' ? b[metricKey] : Utils.parseNumber(b[metricKey]);
+                    return valB - valA;
+                })
+                .slice(0, count)
+                .map(r => ({
+                    name: r['Governor Name'],
+                    id: r['Governor ID'],
+                    alliance: r['Alliance Tag'],
+                    value: typeof r[metricKey] === 'number' ? r[metricKey] : Utils.parseNumber(r[metricKey])
+                }));
+        };
+
+        return {
+            butcher: getTop('_raw_Kill Points_Delta', 3), // Top KP
+            shield: getTop('_raw_Deads_Delta', 3), // Top Deads
+            warlord: getTop('_raw_Commander Power_Delta', 3),
+            architect: getTop('_raw_Building Power_Delta', 3),
+            scientist: getTop('_raw_Tech Power_Delta', 3),
+            titan: getTop('_raw_Power_Delta', 3), // Top Growth
+            healer: getTop('_raw_Assistance_Delta', 3), // Assistance (Heals/Help)
+            broker: getTop('_raw_Resources Gathered_Delta', 3) // RSS Gathering
+        };
+    }
 }

@@ -1006,5 +1006,125 @@ Object.assign(UIService.prototype, {
             ${createCompactBar('Building Power Growth', statsA.building, statsB.building)}
             ${createCompactBar('Active Members', statsA.members, statsB.members, false)}
         `;
+    },
+
+    renderHallOfLegends(kingdomId) {
+        const container = document.getElementById(`kingdom-${kingdomId}`);
+        const badgeGrid = container.querySelector('.hol-badges');
+        const podiumContainer = container.querySelector('.hol-podium');
+        const categoryTitle = container.querySelector('.hol-category-title');
+        const dateEl = container.querySelector('.hol-dates');
+        const allianceSelect = container.querySelector('.hol-alliance-filter');
+
+        if (!badgeGrid || !podiumContainer) return;
+
+        const kState = this.data.state.kingdoms[kingdomId];
+        const fullData = kState.currentOverviewData;
+
+        if (!fullData || fullData.length === 0) {
+            podiumContainer.innerHTML = '<div style="text-align:center; padding:2rem;">No overview data available. Ensure both Start and End scans are loaded.</div>';
+            return;
+        }
+
+        // Populate Dates
+        if (dateEl) {
+            const start = this.data.state.startScanDate || 'N/A';
+            const end = this.data.state.endScanDate || 'N/A';
+            dateEl.textContent = `Scan Period: ${start} - ${end}`;
+        }
+
+        // Populate Alliance Filter
+        const distinctAlliances = [...new Set(fullData.map(r => r['Alliance Tag']))].filter(a => a).sort();
+        if (allianceSelect && allianceSelect.options.length <= 1) {
+            distinctAlliances.forEach(tag => {
+                allianceSelect.innerHTML += `<option value="${tag}">${tag}</option>`;
+            });
+        }
+
+        let currentBadge = 'butcher';
+
+        const render = () => {
+            const selectedAlliance = allianceSelect ? allianceSelect.value : '';
+            const filteredData = selectedAlliance
+                ? fullData.filter(r => r['Alliance Tag'] === selectedAlliance)
+                : fullData;
+
+            const achievements = CalculationService.calculateAchievements(filteredData);
+
+            const badges = [
+                { id: 'butcher', icon: '⚔️', name: 'The Butcher', desc: 'Highest Kill Points Gained' },
+                { id: 'shield', icon: '🛡️', name: 'The Shield', desc: 'Most Dead Troops' },
+                { id: 'titan', icon: '⚡', name: 'The Titan', desc: 'Highest Power Growth' },
+                { id: 'warlord', icon: '🎖️', name: 'The Warlord', desc: 'Most Commander Power' },
+                { id: 'scientist', icon: '🧪', name: 'The Scientist', desc: 'Most Tech Power' },
+                { id: 'architect', icon: '🏗️', name: 'The Architect', desc: 'Most Building Power' },
+                { id: 'healer', icon: '❤️', name: 'The Healer', desc: 'Most Assistance provided' },
+                { id: 'broker', icon: '💰', name: 'The Broker', desc: 'Most Resources Gathered' }
+            ];
+
+            badgeGrid.innerHTML = badges.map(b => `
+                <div class="hol-badge" data-id="${b.id}" title="${b.desc}">
+                    <div class="hol-badge-icon">${b.icon}</div>
+                    <div class="hol-badge-name">${b.name}</div>
+                </div>
+            `).join('');
+
+            // Preserve active state
+            const newActive = badgeGrid.querySelector(`.hol-badge[data-id="${currentBadge}"]`);
+            if (newActive) newActive.classList.add('active');
+
+            const list = achievements[currentBadge];
+            if (categoryTitle) {
+                const badge = badges.find(b => b.id === currentBadge);
+                categoryTitle.textContent = `${badge.name}: ${badge.desc}`;
+            }
+
+            if (!list || list.length === 0) {
+                podiumContainer.innerHTML = '<div style="padding:2rem;">No candidates found for this category.</div>';
+            } else {
+                const first = list[0];
+                const second = list[1];
+                const third = list[2];
+
+                const createPodium = (player, rank, height) => {
+                    if (!player) return `<div class="hol-step empty" style="height: ${height}px; background:rgba(255,255,255,0.05); border:none;"></div>`;
+                    return `
+                        <div class="hol-step rank-${rank}" style="height: ${height}px;">
+                            <div class="hol-player-card">
+                                <div class="hol-avatar">${player.name.substring(0, 2)}</div>
+                                <div class="hol-info">
+                                    <div class="hol-name">${player.name}</div>
+                                    <div class="hol-alliance">[${player.alliance}]</div>
+                                    <div class="hol-value">${CalculationService.formatNumber(player.value)}</div>
+                                </div>
+                            </div>
+                            <div class="hol-rank-num">${rank}</div>
+                        </div>
+                    `;
+                };
+
+                podiumContainer.innerHTML = `
+                    ${createPodium(second, 2, 160)}
+                    ${createPodium(first, 1, 200)}
+                    ${createPodium(third, 3, 130)}
+                `;
+            }
+
+            // Re-attach listeners
+            badgeGrid.querySelectorAll('.hol-badge').forEach(el => {
+                el.addEventListener('click', () => {
+                    currentBadge = el.dataset.id;
+                    render();
+                });
+            });
+        };
+
+        render();
+
+        if (allianceSelect) {
+            allianceSelect.onchange = () => {
+                render();
+            };
+        }
     }
 });

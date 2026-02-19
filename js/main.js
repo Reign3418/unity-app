@@ -42,6 +42,20 @@ document.addEventListener('DOMContentLoaded', async () => {
                     console.error("UILiveFeed Init Failed:", feedErr);
                 }
 
+                // Initialize Race to Glory
+                try {
+                    if (window.UIRaceChart) window.UIRaceChart.init(dataService);
+                } catch (raceErr) {
+                    console.error("Race Chart Init Failed:", raceErr);
+                }
+
+                // Initialize Governance
+                try {
+                    if (window.UIGovernance) window.UIGovernance.init(dataService);
+                } catch (govErr) {
+                    console.error("UIGovernance Init Failed:", govErr);
+                }
+
                 // Smart Welcome Logic
                 const savedState = await dataService.peekState();
                 const welcomeModal = document.getElementById('welcomeModal');

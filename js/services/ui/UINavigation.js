@@ -56,10 +56,12 @@ Object.assign(UIService.prototype, {
             this.updateNPWDDropdown();
         } else if (tabId === 'prekvk-ranking') {
             this.renderPreKVKRanking();
-        } else if (tabId === 'command-center') {
-            this.renderCommandCenter();
+        } else if (tabId === 'governance') {
+            if (window.UIGovernance) window.UIGovernance.render();
         } else if (tabId === 'soc') {
             this.switchSOCSubTab('storm-of-stratagems');
+        } else if (tabId === 'race-to-glory') {
+            if (window.UIRaceChart) window.UIRaceChart.render();
         }
         this.data.state.activeKingdomId = null;
     },
@@ -117,6 +119,12 @@ Object.assign(UIService.prototype, {
             if (kState.calculatedData.length > 0) this.renderGovernanceTab(kingdomId, kState.calculatedData);
         } else if (subTabId === 'alliance-duel') {
             this.renderAllianceDuel(kingdomId);
+        } else if (subTabId === 'hall-of-legends') {
+            this.renderHallOfLegends(kingdomId);
+        } else if (subTabId === 'war-council') {
+            if (window.UIWarCouncil) {
+                window.UIWarCouncil.init(this.data, kingdomId);
+            }
         }
     },
 
