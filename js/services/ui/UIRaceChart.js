@@ -228,6 +228,10 @@ const UIRaceChart = {
 
         const top10 = this.raceData.slice(0, 15); // Show top 15 on chart
 
+        if (this.chart) {
+            this.chart.destroy();
+        }
+
         this.chart = new Chart(ctx, {
             type: 'bar',
             data: {

@@ -4,7 +4,7 @@
 // ==========================================
 
 class UILiveFeed {
-    constructor() {
+    init() {
         this.pollingInterval = null;
         this.isLive = false;
         this.elements = {
@@ -21,10 +21,10 @@ class UILiveFeed {
         this.elements.repoInput.value = localStorage.getItem('feed_repo') || '';
         this.elements.pathInput.value = localStorage.getItem('feed_path') || 'data/live_feed.json';
 
-        this.init();
+        this.setupListeners();
     }
 
-    init() {
+    setupListeners() {
         if (this.elements.btnConnect) {
             this.elements.btnConnect.addEventListener('click', () => this.toggleConnection());
         }
@@ -166,3 +166,5 @@ class UILiveFeed {
         }
     }
 }
+
+window.uiLiveFeed = new UILiveFeed();

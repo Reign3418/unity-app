@@ -22,6 +22,10 @@ const UIGovernance = {
                 // Show Content
                 document.querySelectorAll('.gov-section').forEach(s => s.classList.add('hidden'));
                 document.getElementById(`${subtab}-ui`).classList.remove('hidden');
+
+                if (subtab === 'squad-builder') {
+                    if (window.UISquadBuilder) window.UISquadBuilder.init();
+                }
             });
         });
 
@@ -175,6 +179,10 @@ const UIGovernance = {
                 });
             }
         };
+
+        if (this.auditChart) {
+            this.auditChart.destroy();
+        }
 
         this.auditChart = new Chart(ctx, {
             type: 'bubble',

@@ -537,6 +537,7 @@
                 <button class="subtab-btn active" data-subtab="audit">The Audit 📉</button>
                 <button class="subtab-btn" data-subtab="purge">The Purge List 📋</button>
                 <button class="subtab-btn" data-subtab="war-potential">War Potential ⚔️</button>
+                <button class="subtab-btn" data-subtab="squad-builder">Squad Builder 🛡️</button>
             </div>
 
             <!-- 1. The Audit (Quadrant Analysis) -->
@@ -585,6 +586,59 @@
             <div id="war-potential-ui" class="gov-section hidden">
                 <div class="stats-grid" id="warStatsGrid">
                     <!-- Cards injected by JS -->
+                </div>
+            </div>
+
+            <!-- 4. Squad Builder -->
+            <div id="squad-builder-ui" class="gov-section hidden">
+                <div class="squad-workspace">
+                    <!-- Left: Commander Pool -->
+                    <div class="commander-pool-panel">
+                        <h3>Commander Pool</h3>
+                        <div class="pool-filters">
+                            <button class="filter-btn active" data-type="all">All</button>
+                            <button class="filter-btn" data-type="Infantry">Inf</button>
+                            <button class="filter-btn" data-type="Cavalry">Cav</button>
+                            <button class="filter-btn" data-type="Archer">Arc</button>
+                            <button class="filter-btn" data-type="Leadership">Ldr</button>
+                        </div>
+                        <div id="commanderPoolGrid" class="pool-grid">
+                            <!-- Commanders injected here -->
+                        </div>
+                    </div>
+
+                    <!-- Right: Squad Canvas -->
+                    <div class="squad-canvas-panel">
+                        <h3>New Squad</h3>
+                        <div class="squad-slots">
+                            <div class="cmd-slot primary" data-slot="primary">
+                                <div class="slot-label">Primary</div>
+                                <div class="slot-content">Select Commander</div>
+                            </div>
+                            <div class="synergy-badge" id="squadSynergy">???</div>
+                            <div class="cmd-slot secondary" data-slot="secondary">
+                                <div class="slot-label">Secondary</div>
+                                <div class="slot-content">Select Commander</div>
+                            </div>
+                        </div>
+
+                        <!-- Skill Sliders -->
+                        <div id="skillConfig" class="skill-config hidden">
+                            <div class="skill-row">
+                                <label>Primary Skills:</label>
+                                <input type="text" id="skillInput1" value="5555" maxlength="4">
+                            </div>
+                            <div class="skill-row">
+                                <label>Secondary Skills:</label>
+                                <input type="text" id="skillInput2" value="5555" maxlength="4">
+                            </div>
+                        </div>
+
+                        <div class="squad-actions">
+                            <button id="saveSquadBtn" class="primary-btn">Save Squad 💾</button>
+                            <button id="resetSquadBtn" class="secondary-btn">Reset ↺</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -879,8 +933,6 @@
                 data-tooltip="Searchable table of raw stats from the End Scan.">Overview</button>
             <button class="subtab-btn" data-subtab="growth"
                 data-tooltip="AI-driven analysis of player growth, activity, and archetypes.">Growth Analysis</button>
-            <button class="subtab-btn" data-subtab="governance"
-                data-tooltip="Risk Analysis & Contribution Scores.">Governance</button>
             <button class="subtab-btn" data-subtab="alliance-duel"
                 data-tooltip="Compare two alliances side-by-side.">Alliance Duel ⚔️</button>
             <button class="subtab-btn" data-subtab="scatter" data-tooltip="Plots Power (X) vs Kill Points (Y).">Scatter
@@ -893,8 +945,8 @@
                 data-tooltip="Final DKP calculations, targets, and bonuses.">Results</button>
             <button class="subtab-btn" data-subtab="hall-of-legends"
                 data-tooltip="View the top performers and kingdom achievements.">Hall of Legends 🏆</button>
-            <button class="subtab-btn" data-subtab="war-council" data-tooltip="Build and manage squads for KvK.">War
-                Council ⚔️</button>
+            <button class="subtab-btn" data-subtab="war-council" data-tooltip="Build and manage squads for KvK.">Team
+                Builder ⚔️</button>
             <button class="subtab-btn" data-subtab="config">Configuration</button>
         </div>
 
@@ -1086,37 +1138,6 @@
                 </div>
             </div>
 
-            <div class="subtab-content" data-content="governance">
-                <div class="card">
-                    <h2>Governance & Deadweight Analysis
-                        <span style="font-size: 0.8em; margin-left: 10px; opacity: 0.8;"
-                            data-tooltip="Analysis based on contribution relative to power.&#10;• Score (0-100): Higher is better.&#10;• Penalties: -100 for Sleepers, -50 for Selfish Growth.&#10;• Support Pts: Awarded for RSS & Healing (protects farmers/fillers).&#10;• Risk Levels:&#10;  🟢 Safe: >80&#10;  🔵 Monitor: 40-79&#10;  🟠 Warning: 0-39&#10;  🔴 Critical: <0 (Potential Deadweight)">
-                            ℹ️
-                        </span>
-                    </h2>
-                    <p class="chart-description">Analyze player contribution beyond simple stats. Identify deadweight
-                        and potential leadership.</p>
-                    <div class="table-container">
-                        <table class="dkp-table governance-table">
-                            <thead>
-                                <tr>
-                                    <th data-sort="id">ID</th>
-                                    <th data-sort="name">Name</th>
-                                    <th data-sort="governanceScore">Score</th>
-                                    <th data-sort="riskLevel">Risk Level</th>
-                                    <th data-sort="mainContribution">Contribution</th>
-                                    <th data-sort="governanceNotes">Notes</th>
-                                    <th data-sort="combatPts">Combat Pts</th>
-                                    <th data-sort="supportPts">Support Pts</th>
-                                </tr>
-                            </thead>
-                            <tbody></tbody>
-                        </table>
-                        <tbody></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
 
             <div class="subtab-content" data-content="alliance-duel">
                 <div class="card" style="border:none; background:transparent;">
@@ -1505,15 +1526,7 @@
 
     </div> <!-- End container -->
 
-    <!-- Bottom Controls -->
-    <div class="bottom-controls">
-        <div class="filter-control">
-            <label class="checkbox-label">
-                <input type="checkbox" id="townHallFilter"> Town Hall 25 Only
-            </label>
-        </div>
-
-    </div>
+    <!-- Bottom Controls Removed -->
     </div>
     <!-- Cloud File Picker Modal -->
     <div id="cloudFileModal" class="modal hidden">
@@ -1546,22 +1559,45 @@
     <script src="js/services/ui/UIExports.js"></script>
     <script src="js/services/ui/UISOC.js"></script>
     <script src="js/services/ui/UIGrowth.js"></script>
+    <script src="js/services/ui/UIHallOfLegends.js"></script>
+    <script src="js/services/ui/UIAllianceDuel.js"></script>
     <script src="js/services/ui/UIWarCouncil.js"></script>
     <script src="js/services/ui/UIRaceChart.js"></script>
     <script src="js/services/ui/UIGovernance.js"></script>
+    <script src="js/services/ui/UISquadBuilder.js"></script>
+    <script src="js/core/commanders.js"></script>
     <script src="js/services/MailService.js"></script>
 
-    <!-- Dynamic Version Footer -->
-    <div style="text-align: center; padding: 20px; color: var(--text-muted); font-size: 0.8rem; opacity: 0.7;">
-        Unity Dashboard <span id="appVersionDisplay"></span>
-    </div>
+    <!-- Global Footer -->
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-brand">
+                <div class="brand-title">Unity</div>
+                <p class="brand-tagline">Data pipelines and analytics for the Rise of Kingdoms community.</p>
+            </div>
 
-    <div style="text-align: center; padding-bottom: 20px;">
-        <a href="https://www.buymeacoffee.com/ReignsPlace" target="_blank">
-            <img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=☕&slug=ReignsPlace&button_colour=FFDD00&font_colour=000000&font_family=Poppins&outline_colour=000000&coffee_colour=ffffff"
-                style="height: 35px;" alt="Buy me a coffee" />
-        </a>
-    </div>
+            <div class="footer-meta">
+                <span class="version-tag">Version <span id="appVersionDisplay"></span></span>
+                <a href="https://www.buymeacoffee.com/ReignsPlace" target="_blank" class="donate-btn-wrapper">
+                    <img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=☕&slug=ReignsPlace&button_colour=FFDD00&font_colour=000000&font_family=Poppins&outline_colour=000000&coffee_colour=ffffff"
+                        alt="Buy me a coffee" />
+                </a>
+            </div>
+
+            <div class="footer-divider"></div>
+
+            <div class="footer-bottom">
+                <p class="copyright">© 2026 Unity Dashboard. All rights reserved.</p>
+                <div class="footer-links">
+                    <a href="about.html">About Us</a>
+                    <a href="contact.html">Contact</a>
+                    <a href="privacy.html">Privacy Policy</a>
+                    <a href="terms.html">Terms of Service</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
 
     <!-- Main -->
     <script src="js/services/ui/UILiveFeed.js"></script>

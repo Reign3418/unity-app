@@ -30,14 +30,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 // Initialize Growth Service
                 try {
-                    window.uiGrowth = new UIGrowth(dataService);
+                    if (window.uiGrowth) window.uiGrowth.init(dataService);
                 } catch (growthErr) {
                     console.error("UIGrowth Init Failed:", growthErr);
                 }
 
                 // Initialize Live Feed Service
                 try {
-                    window.uiLiveFeed = new UILiveFeed();
+                    if (window.uiLiveFeed) window.uiLiveFeed.init();
                 } catch (feedErr) {
                     console.error("UILiveFeed Init Failed:", feedErr);
                 }
@@ -52,6 +52,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // Initialize Governance
                 try {
                     if (window.UIGovernance) window.UIGovernance.init(dataService);
+                    if (window.UISquadBuilder) window.UISquadBuilder.init();
                 } catch (govErr) {
                     console.error("UIGovernance Init Failed:", govErr);
                 }

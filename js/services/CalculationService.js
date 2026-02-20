@@ -34,6 +34,10 @@ class CalculationService {
         const allIds = new Set([...startMap.keys()].filter(id => endMap.has(id)));
         console.log(`[Calc] Intersection IDs: ${allIds.size}`);
 
+        // Memoize static maths to prevent redundant calculation
+        const t4MixRatio = 1 - config.t5MixRatio;
+        const kpTargetMultiplier = (((config.t5MixRatio * config.t5Points) + (t4MixRatio * config.t4Points)) * config.kpMultiplier) / config.kpPowerDivisor;
+
         kState.calculatedData = [];
 
         allIds.forEach(id => {
@@ -43,6 +47,7 @@ class CalculationService {
 
             const name = endRow['Governor Name'] || startRow['Governor Name'] || 'Unknown';
             const kingdom = endRow['_kingdom'] || startRow['_kingdom'] || kingdomId;
+            const alliance = endRow['Alliance Tag'] || startRow['Alliance Tag'] || '-';
 
             const deadsDiff = Math.max(0, Utils.parseNumber(endRow['Deads']) - Utils.parseNumber(startRow['Deads']));
 
@@ -88,8 +93,7 @@ class CalculationService {
             const bldPowerDiff = bldPowerEnd - bldPowerStart;
 
             const kvkKP = (t4Diff * config.t4Points) + (t5Diff * config.t5Points);
-            const t4MixRatio = 1 - config.t5MixRatio;
-            const targetKP = ((startPower / config.kpPowerDivisor) * ((config.t5MixRatio * config.t5Points) + (t4MixRatio * config.t4Points))) * config.kpMultiplier;
+            const targetKP = startPower * kpTargetMultiplier;
             const targetDeads = startPower * config.deadsMultiplier;
 
             const kpPercent = targetKP > 0 ? (kvkKP / targetKP) * 100 : 0;
@@ -108,7 +112,7 @@ class CalculationService {
             else if (powerDiff < 0) status = 'Dropped';
 
             kState.calculatedData.push({
-                id, name, kingdom, startPower, powerDiff, troopPowerDiff, rawKP: rawKPDiff,
+                id, name, kingdom, alliance, startPower, powerDiff, troopPowerDiff, rawKP: rawKPDiff,
                 status, rssGathered: rssDiff,
                 t1: Math.max(0, Utils.parseNumber(endRow['T1 Kills']) - Utils.parseNumber(startRow['T1 Kills'])),
                 t2: Math.max(0, Utils.parseNumber(endRow['T2 Kills']) - Utils.parseNumber(startRow['T2 Kills'])),
@@ -128,70 +132,12 @@ class CalculationService {
             });
         });
 
-        // Run Governance Analysis
-        this.calculateGovernance(kState);
-    }
-
-    static calculateGovernance(kState) {
-        if (!kState || !kState.calculatedData) return;
-
-        // Benchmarks (Simple heuristics for now, could be dynamic later)
-        // Ideally, these would be based on Kingdom Average, but safe defaults work.
-        const BENCHMARK_RSS = 500000000; // 500M RSS = Max Points
-        const BENCHMARK_HEALED = 5000000; // 5M Healed = Max Points
-
-        kState.calculatedData.forEach(row => {
-            let score = 0;
-            let combatPts = 0;
-            let supportPts = 0;
-            let notes = [];
-
-            // 1. Activity Penalties
-            if (row.status === 'Sleeper') { score -= 100; notes.push('Inactive'); }
-            else if (row.status === 'Dropped') { score -= 100; notes.push('Zeroed/Migrated'); }
-            else if (row.status === 'Grower') { score -= 50; notes.push('Selfish Growth'); }
-
-            // 2. Combat Points (Max 80)
-            // KP % (Max 40) - Capped at 150% target for bonus
-            const kpScore = Math.min(1.5, (row.kpPercent || 0) / 100) * 40;
-            // Dead % (Max 40)
-            const deadScore = Math.min(1.5, (row.deadPercent || 0) / 100) * 40;
-
-            combatPts = kpScore + deadScore;
-            score += combatPts;
-
-            // 3. Support Points (Max 20 + Bonus)
-            // RSS (Max 10)
-            const rssScore = Math.min(1, (row.rssGathered || 0) / BENCHMARK_RSS) * 10;
-            // Healed (Max 10)
-            const healedScore = Math.min(1, (row.healed || 0) / BENCHMARK_HEALED) * 10;
-
-            supportPts = rssScore + healedScore;
-            score += supportPts;
-
-            // T1/T2 Bonus (Filling Rallies) - Max 5 pts
-            if ((row.t1 + row.t2) > 100000) { score += 5; supportPts += 5; notes.push('Filler'); }
-
-            // Final Assessment
-            row.governanceScore = Math.round(score);
-            row.combatPts = Math.round(combatPts);
-            row.supportPts = Math.round(supportPts);
-
-            if (score >= 80) row.riskLevel = 'Safe';
-            else if (score >= 40) row.riskLevel = 'Monitor';
-            else if (score >= 0) row.riskLevel = 'Warning';
-            else row.riskLevel = 'Critical';
-
-            row.mainContribution = combatPts > supportPts ? 'Combat' : 'Support';
-            if (combatPts < 5 && supportPts < 5) row.mainContribution = 'None';
-
-            row.governanceNotes = notes.join(', ') || '-';
-        });
     }
 
     static calculateOverviewDiff(startData, endData) {
         const startMap = new Map(startData.map(row => [row['Governor ID'], row]));
         const endMap = new Map(endData.map(row => [row['Governor ID'], row]));
+
         // Union of all IDs to show everyone (dropped or new)
         const allIds = new Set([...startMap.keys(), ...endMap.keys()]);
 
@@ -220,33 +166,22 @@ class CalculationService {
             });
             newRow['Status'] = endRow['_kingdom'] ? (startRow['_kingdom'] ? 'Active' : 'New') : 'Dropped';
 
-            // 2. Numeric Metrics (Start | End | Δ)
+            // 2. Numeric Metrics
             numericMetrics.forEach(metric => {
                 const startVal = Utils.parseNumber(startRow[metric]);
                 const endVal = Utils.parseNumber(endRow[metric]);
-
-                // NO FILTER: Show all columns regardless of values (0s will show as "-")
-                // if (startVal === 0 && endVal === 0 && metric !== 'Power') return; // REMOVED
-
                 const diff = endVal - startVal;
 
-                // Formatting
-                const fmt = (n) => n.toLocaleString();
-                const fmtDiff = (n) => {
-                    if (n > 0) return `<span class="diff-pos text-success">+${n.toLocaleString()}</span>`;
-                    if (n < 0) return `<span class="diff-neg text-danger">${n.toLocaleString()}</span>`;
-                    return '<span class="diff-neutral">-</span>';
-                };
-
-                newRow[`${metric} (Start)`] = (startRow[metric] || startVal !== 0) ? fmt(startVal) : '-';
-                newRow[`${metric} (End)`] = (endRow[metric] || endVal !== 0) ? fmt(endVal) : '-';
-                newRow[`${metric} (Δ)`] = fmtDiff(diff);
-
-                // Store raw numeric delta for calculations (Alliance Duel)
-                newRow[`_raw_${metric}_Delta`] = diff;
+                // Store RAW values instead of pre-formatted HTML 
+                // This saves memory and separates Data from UI Layer
                 newRow[`_raw_${metric}_Start`] = startVal;
                 newRow[`_raw_${metric}_End`] = endVal;
-                newRow[`_raw_${metric}_End`] = endVal;
+                newRow[`_raw_${metric}_Delta`] = diff;
+
+                // Provide clean, raw data for the UI to format
+                newRow[`${metric} (Start)`] = startVal;
+                newRow[`${metric} (End)`] = endVal;
+                newRow[`${metric} (Δ)`] = diff;
             });
 
             detailedData.push(newRow);
@@ -254,8 +189,8 @@ class CalculationService {
 
         // Sort by Power (End) descending by default
         detailedData.sort((a, b) => {
-            const pa = Utils.parseNumber(a['Power (End)']);
-            const pb = Utils.parseNumber(b['Power (End)']);
+            const pa = Utils.parseNumber(a['_raw_Power_End']);
+            const pb = Utils.parseNumber(b['_raw_Power_End']);
             return pb - pa;
         });
 

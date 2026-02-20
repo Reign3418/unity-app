@@ -1,8 +1,7 @@
 // ==========================================
 // 1. CONFIGURATION
-// ==========================================
 const Config = {
-    APP_VERSION: 'v2.1 (Pipeline & Smart Load)',
+    APP_VERSION: 'v2.2 (Data Pipelines & Analytics)',
 
     // -------------------------------------------------------------------------
     // SECURITY CONFIGURATION

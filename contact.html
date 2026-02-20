@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unity Dashboard - Contact</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .page-content {
+            max-width: 800px;
+            margin: 4rem auto;
+            padding: 2rem;
+            background: var(--bg-surface);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            text-align: center;
+        }
+
+        h1 {
+            margin-bottom: 2rem;
+            color: var(--accent-primary);
+        }
+
+        h2 {
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        p {
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+            color: var(--text-secondary);
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 2rem;
+            color: var(--accent-primary);
+            text-decoration: none;
+            font-weight: 500;
+            text-align: left;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        .contact-box {
+            background: var(--bg-color-alt);
+            border: 1px solid var(--border-light);
+            padding: 2rem;
+            border-radius: 8px;
+            margin: 2rem auto;
+            max-width: 400px;
+        }
+
+        .discord-btn {
+            display: inline-block;
+            background: #5865F2;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: 600;
+            margin-top: 1rem;
+            transition: background 0.2s;
+        }
+
+        .discord-btn:hover {
+            background: #4752C4;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- App Header -->
+    <header class="app-header">
+        <div class="header-content">
+            <div class="logo-container">
+                <div class="logo-icon">
+                    <img src="images/logo.png" alt="Unity Logo"
+                        onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjM2I4MmY2IiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHBhdGggZD0iTTEyIDJMMyA3bDkgNSA5LTUtOS01eiIvPjxwYXRoIGQ9Ik0yMSAxN2wtOSA1LTktNSIvPjxwYXRoIGQ9Ik0yMSAxMmwtOSA1LTktNSIvPjwvc3ZnPg=='">
+                </div>
+                <div class="header-titles">
+                    <h1>Unity</h1>
+                    <span class="subtitle">Kingdom vs Kingdom Performance Analysis</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="page-content">
+            <div style="text-align: left;">
+                <a href="index.html" class="back-link">← Back to Dashboard</a>
+            </div>
+
+            <h1>Contact Us</h1>
+
+            <p>Have questions about how to format your kingdom scan data? Need to report a bug, or have a feature
+                request for the Unity Dashboard? We're here to help.</p>
+
+            <div class="contact-box">
+                <p>We don't have a community Discord server set up just yet, but you can reach out directly!</p>
+                <p style="font-size: 1.1rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem;">
+                    Discord: reign3418</p>
+                <button class="discord-btn"
+                    onclick="navigator.clipboard.writeText('reign3418'); alert('Discord username copied to clipboard!');"
+                    style="cursor: pointer; border: none;">Copy Username</button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Global Footer -->
+    <footer class="site-footer">
+        <div class="container"
+            style="max-width: 800px; margin: 0 auto; text-align: center; display: flex; flex-direction: column; align-items: center; padding-top: 2rem;">
+            <div class="footer-divider"
+                style="width: 100%; height: 1px; background: rgba(255,255,255,0.1); margin-bottom: 2rem;"></div>
+            <div class="footer-bottom" style="display:flex; flex-direction:column; gap: 1rem;">
+                <p class="copyright" style="color: var(--text-muted); font-size: 0.85rem;">© 2026 Unity Dashboard. All
+                    rights reserved.</p>
+                <div class="footer-links" style="display:flex; gap: 1.5rem; justify-content: center;">
+                    <a href="about.html"
+                        style="color: var(--text-secondary); text-decoration: none; font-size: 0.85rem; font-weight:500;">About
+                        Us</a>
+                    <a href="contact.html"
+                        style="color: var(--accent-primary); text-decoration: none; font-size: 0.85rem; font-weight:500;">Contact</a>
+                    <a href="privacy.html"
+                        style="color: var(--text-secondary); text-decoration: none; font-size: 0.85rem; font-weight:500;">Privacy
+                        Policy</a>
+                    <a href="terms.html"
+                        style="color: var(--text-secondary); text-decoration: none; font-size: 0.85rem; font-weight:500;">Terms
+                        of Service</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+</body>
+
+</html>

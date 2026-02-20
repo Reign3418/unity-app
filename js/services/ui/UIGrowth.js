@@ -23,7 +23,7 @@ const GROWTH_CONFIG = {
 };
 
 class UIGrowth {
-    constructor(dataService) {
+    init(dataService) {
         this.data = dataService;
         this.currentFilter = null; // Track active grade filter
         this.searchTerm = ''; // Track active search term
@@ -639,3 +639,5 @@ class UIGrowth {
         setTxt('.count-c', counts.C);
     }
 }
+
+window.uiGrowth = new UIGrowth();

@@ -135,16 +135,9 @@ Object.assign(UIService.prototype, {
         }
 
         // Results Table Sort
-        clone.querySelectorAll('.dkp-table:not(.governance-table) th').forEach(th => {
+        clone.querySelectorAll('.dkp-table th').forEach(th => {
             th.addEventListener('click', () => {
                 this.handleSort(kingdomId, th.dataset.sort, false);
-            });
-        });
-
-        // Governance Table Sort
-        clone.querySelectorAll('.governance-table th').forEach(th => {
-            th.addEventListener('click', () => {
-                this.handleSort(kingdomId, th.dataset.sort, true);
             });
         });
 
@@ -171,42 +164,7 @@ Object.assign(UIService.prototype, {
             return 0;
         });
 
-        if (isGovernance) this.renderGovernanceTab(kingdomId, kState.calculatedData);
-        else this.renderResultsTable(kingdomId, kState.calculatedData);
-    },
-
-    renderGovernanceTab(kingdomId, data) {
-        const container = document.getElementById(`kingdom-${kingdomId}`);
-        if (!container) return;
-        const tbody = container.querySelector('.governance-table tbody');
-        if (!tbody) return;
-
-        const fragment = document.createDocumentFragment();
-        tbody.innerHTML = '';
-
-        // Default Sort if needed, but handled by handleSort usually.
-        // If no sort active, sort by Risk (Score Ascending)
-        if (!this.data.state.kingdoms[kingdomId].lastSortCol) {
-            data.sort((a, b) => (a.governanceScore || 0) - (b.governanceScore || 0));
-        }
-
-        data.forEach(row => {
-            const tr = document.createElement('tr');
-            const riskClass = `risk-${(row.riskLevel || 'critical').toLowerCase()}`;
-
-            tr.innerHTML = `
-                <td>${row.id}</td>
-                <td>${row.name}</td>
-                <td style="font-weight:bold;">${row.governanceScore || 0}</td>
-                <td><span class="status-badge ${riskClass}">${row.riskLevel || 'Critical'}</span></td>
-                <td>${row.mainContribution || '-'}</td>
-                <td>${row.governanceNotes || '-'}</td>
-                <td>${row.combatPts || 0}</td>
-                <td>${row.supportPts || 0}</td>
-            `;
-            fragment.appendChild(tr);
-        });
-        tbody.appendChild(fragment);
+        this.renderResultsTable(kingdomId, kState.calculatedData);
     },
 
     renderResultsTable(kingdomId, data) {
@@ -416,13 +374,44 @@ Object.assign(UIService.prototype, {
             return;
         }
 
-        const headers = Object.keys(data[0]).filter(h => h !== '_kingdom' && h !== 'Kingdom');
+        // Filter out internal '_raw_' keys
+        const headers = Object.keys(data[0]).filter(h => !h.startsWith('_') && h !== 'Kingdom');
         thead.innerHTML = '<tr>' + headers.map(h => `<th>${h}</th>`).join('') + '</tr>';
 
         const fragment = document.createDocumentFragment();
+
+        const fmtDiff = (n) => {
+            if (n === 0 || n === '-') return '<span class="diff-neutral">-</span>';
+            const num = Utils.parseNumber(n);
+            if (num > 0) return `<span class="diff-pos text-success">+${num.toLocaleString()}</span>`;
+            if (num < 0) return `<span class="diff-neg text-danger">${num.toLocaleString()}</span>`;
+            return '<span class="diff-neutral">-</span>';
+        };
+
+        const fmtVal = (n) => {
+            if (n === 0 || n === '-') return '-';
+            return Utils.parseNumber(n).toLocaleString();
+        };
+
         data.forEach(row => {
             const tr = document.createElement('tr');
-            tr.innerHTML = headers.map(h => `<td>${row[h]}</td>`).join('');
+
+            const rowHTML = headers.map(h => {
+                let val = row[h];
+
+                // If it's a Delta column, format with colors
+                if (h.includes('(Δ)')) {
+                    val = fmtDiff(val);
+                }
+                // If it's a Start/End numeric column, format with commas
+                else if (h.includes('(Start)') || h.includes('(End)')) {
+                    val = fmtVal(val);
+                }
+
+                return `<td>${val}</td>`;
+            }).join('');
+
+            tr.innerHTML = rowHTML;
             fragment.appendChild(tr);
         });
 
@@ -830,301 +819,6 @@ Object.assign(UIService.prototype, {
         container.innerHTML = html;
     },
 
-    renderAllianceDuel(kingdomId) {
-        const container = document.getElementById(`kingdom-${kingdomId}`);
-        const vsContainer = container.querySelector('.alliance-vs-container');
-        if (!vsContainer) return;
 
-        const kState = this.data.state.kingdoms[kingdomId];
-        // Use Overview Data (Delta between Start and End)
-        const data = kState.currentOverviewData;
 
-        if (!data || data.length === 0) {
-            vsContainer.querySelector('.vs-stats-grid').innerHTML = '<div style="text-align:center; padding:2rem;">No overview data available. Ensure both Start and End scans are loaded.</div>';
-            return;
-        }
-
-        const distinctAlliances = [...new Set(data.map(r => r['Alliance Tag']))].filter(a => a).sort();
-
-        // Populate Date Range
-        const datesEl = vsContainer.querySelector('.vs-dates');
-        if (datesEl) {
-            const start = this.data.state.startScanDate || 'N/A';
-            const end = this.data.state.endScanDate || 'N/A';
-            datesEl.textContent = `${start} - ${end}`;
-        }
-
-        const selectA = vsContainer.querySelector('.vs-select-a');
-        const selectB = vsContainer.querySelector('.vs-select-b');
-
-        const populate = (select) => {
-            select.innerHTML = '<option value="">Select Alliance</option>';
-            distinctAlliances.forEach(tag => {
-                select.innerHTML += `<option value="${tag}">${tag}</option>`;
-            });
-        };
-
-        populate(selectA);
-        populate(selectB);
-
-        const handleSelection = () => {
-            const valA = selectA.value;
-            const valB = selectB.value;
-            if (valA && valB && valA !== valB) {
-                this.updateAllianceVsStats(kingdomId, valA, valB, data);
-            }
-        };
-
-        // Remove old listeners to avoid duplicates (cloneNode typically handles this by stripping, but safer)
-        selectA.onchange = handleSelection;
-        selectB.onchange = handleSelection;
-    },
-
-    updateAllianceVsStats(kingdomId, tagA, tagB, data) {
-        const container = document.getElementById(`kingdom-${kingdomId}`);
-        const grid = container.querySelector('.vs-stats-grid');
-        const arena = container.querySelector('.vs-arena');
-
-        const getStats = (tag) => {
-            const rows = data.filter(r => r['Alliance Tag'] === tag);
-            return {
-                name: rows.length > 0 ? (rows[0]['Alliance Name'] || tag) : tag,
-                tag: tag,
-                startPower: rows.reduce((sum, r) => sum + (r['_raw_Power_Start'] || 0), 0),
-                troopStart: rows.reduce((sum, r) => sum + (r['_raw_Troop Power_Start'] || 0), 0),
-                techStart: rows.reduce((sum, r) => sum + (r['_raw_Tech Power_Start'] || 0), 0),
-                buildingStart: rows.reduce((sum, r) => sum + (r['_raw_Building Power_Start'] || 0), 0),
-                commanderStart: rows.reduce((sum, r) => sum + (r['_raw_Commander Power_Start'] || 0), 0),
-
-                power: rows.reduce((sum, r) => sum + (r['_raw_Power_Delta'] || 0), 0),
-                troop: rows.reduce((sum, r) => sum + (r['_raw_Troop Power_Delta'] || 0), 0),
-                tech: rows.reduce((sum, r) => sum + (r['_raw_Tech Power_Delta'] || 0), 0),
-                building: rows.reduce((sum, r) => sum + (r['_raw_Building Power_Delta'] || 0), 0),
-                commander: rows.reduce((sum, r) => sum + (r['_raw_Commander Power_Delta'] || 0), 0),
-                kp: rows.reduce((sum, r) => sum + (r['_raw_Kill Points_Delta'] || 0), 0),
-                deads: rows.reduce((sum, r) => {
-                    const val = r['Deads (End)'];
-                    if (!val || val === '-') return sum;
-                    return sum + parseFloat(String(val).replace(/,/g, ''));
-                }, 0),
-                members: rows.length
-            };
-        };
-
-        const statsA = getStats(tagA);
-        const statsB = getStats(tagB);
-
-        // Render Cards
-        const createCard = (stats, color) => `
-            <div class="vs-card ${color}-card">
-                <div class="vs-card-header">
-                    <div class="vs-alliance-tag">[${stats.tag}]</div>
-                    <div class="vs-alliance-name">${stats.tag}</div> <!-- Using tag as name if full name unavailable -->
-                </div>
-                <div class="vs-avatar">${stats.tag.substring(0, 2)}</div>
-                
-                <div class="vs-main-stat">
-                    <div class="vs-stat-label">Total Power</div>
-                    <div class="vs-stat-value-main">${CalculationService.formatNumber(stats.startPower)}</div>
-                </div>
-
-                <!-- Detailed Starting Stats -->
-                <div class="vs-detailed-stats">
-                    <div class="vs-detail-row">
-                        <span>Troops</span>
-                        <strong>${CalculationService.formatNumber(stats.troopStart)}</strong>
-                    </div>
-                    <div class="vs-detail-row">
-                        <span>Tech</span>
-                        <strong>${CalculationService.formatNumber(stats.techStart)}</strong>
-                    </div>
-                    <div class="vs-detail-row">
-                        <span>Building</span>
-                        <strong>${CalculationService.formatNumber(stats.buildingStart)}</strong>
-                    </div>
-                    <div class="vs-detail-row">
-                        <span>Commander</span>
-                        <strong>${CalculationService.formatNumber(stats.commanderStart)}</strong>
-                    </div>
-                </div>
-
-                <div class="vs-sub-stats">
-                    <div class="vs-sub-stat-box">
-                        <div class="vs-stat-label">Members</div>
-                        <div style="font-weight:bold; color:white;">${stats.members}</div>
-                    </div>
-                     <div class="vs-sub-stat-box">
-                        <div class="vs-stat-label">Kill Points</div>
-                        <div style="font-weight:bold; color:#f59e0b;">${CalculationService.formatNumber(stats.kp)}</div>
-                    </div>
-                     <div class="vs-sub-stat-box">
-                        <div class="vs-stat-label">Deads</div>
-                        <div style="font-weight:bold; color:#ef4444;">${CalculationService.formatNumber(stats.deads)}</div>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        if (arena) {
-            arena.innerHTML = `
-                ${createCard(statsA, 'blue')}
-                 <!-- Center VS is handled by parent or CSS, here just cards -->
-                ${createCard(statsB, 'red')}
-            `;
-        }
-
-        const createCompactBar = (label, valA, valB, format = true) => {
-            const total = Math.abs(valA) + Math.abs(valB);
-            const perA = total === 0 ? 50 : (Math.abs(valA) / total) * 100;
-            const perB = total === 0 ? 50 : (Math.abs(valB) / total) * 100;
-
-            const displayA = format ? CalculationService.formatNumber(valA) : valA;
-            const displayB = format ? CalculationService.formatNumber(valB) : valB;
-
-            return `
-                <div class="vs-compact-stat">
-                    <div class="vs-compact-header">${label}</div>
-                    <div class="vs-compact-row">
-                        <span class="val-blue">${displayA}</span>
-                        <div class="vs-compact-bar-bg">
-                            <div class="vs-compact-bar-fill" style="width: ${perA}%; background: #3b82f6;"></div>
-                            <div class="vs-compact-bar-fill" style="width: ${perB}%; background: #ef4444;"></div>
-                        </div>
-                        <span class="val-red">${displayB}</span>
-                    </div>
-                </div>
-            `;
-        };
-
-        grid.innerHTML = `
-            ${createCompactBar('Total Power Growth', statsA.power, statsB.power)}
-            ${createCompactBar('Troop Power Growth', statsA.troop, statsB.troop)}
-            ${createCompactBar('Kill Points Gained', statsA.kp, statsB.kp)}
-            ${createCompactBar('Dead Troops', statsA.deads, statsB.deads)}
-            ${createCompactBar('Tech Power Growth', statsA.tech, statsB.tech)}
-            ${createCompactBar('Commander Power Growth', statsA.commander, statsB.commander)}
-            ${createCompactBar('Building Power Growth', statsA.building, statsB.building)}
-            ${createCompactBar('Active Members', statsA.members, statsB.members, false)}
-        `;
-    },
-
-    renderHallOfLegends(kingdomId) {
-        const container = document.getElementById(`kingdom-${kingdomId}`);
-        const badgeGrid = container.querySelector('.hol-badges');
-        const podiumContainer = container.querySelector('.hol-podium');
-        const categoryTitle = container.querySelector('.hol-category-title');
-        const dateEl = container.querySelector('.hol-dates');
-        const allianceSelect = container.querySelector('.hol-alliance-filter');
-
-        if (!badgeGrid || !podiumContainer) return;
-
-        const kState = this.data.state.kingdoms[kingdomId];
-        const fullData = kState.currentOverviewData;
-
-        if (!fullData || fullData.length === 0) {
-            podiumContainer.innerHTML = '<div style="text-align:center; padding:2rem;">No overview data available. Ensure both Start and End scans are loaded.</div>';
-            return;
-        }
-
-        // Populate Dates
-        if (dateEl) {
-            const start = this.data.state.startScanDate || 'N/A';
-            const end = this.data.state.endScanDate || 'N/A';
-            dateEl.textContent = `Scan Period: ${start} - ${end}`;
-        }
-
-        // Populate Alliance Filter
-        const distinctAlliances = [...new Set(fullData.map(r => r['Alliance Tag']))].filter(a => a).sort();
-        if (allianceSelect && allianceSelect.options.length <= 1) {
-            distinctAlliances.forEach(tag => {
-                allianceSelect.innerHTML += `<option value="${tag}">${tag}</option>`;
-            });
-        }
-
-        let currentBadge = 'butcher';
-
-        const render = () => {
-            const selectedAlliance = allianceSelect ? allianceSelect.value : '';
-            const filteredData = selectedAlliance
-                ? fullData.filter(r => r['Alliance Tag'] === selectedAlliance)
-                : fullData;
-
-            const achievements = CalculationService.calculateAchievements(filteredData);
-
-            const badges = [
-                { id: 'butcher', icon: '⚔️', name: 'The Butcher', desc: 'Highest Kill Points Gained' },
-                { id: 'shield', icon: '🛡️', name: 'The Shield', desc: 'Most Dead Troops' },
-                { id: 'titan', icon: '⚡', name: 'The Titan', desc: 'Highest Power Growth' },
-                { id: 'warlord', icon: '🎖️', name: 'The Warlord', desc: 'Most Commander Power' },
-                { id: 'scientist', icon: '🧪', name: 'The Scientist', desc: 'Most Tech Power' },
-                { id: 'architect', icon: '🏗️', name: 'The Architect', desc: 'Most Building Power' },
-                { id: 'healer', icon: '❤️', name: 'The Healer', desc: 'Most Assistance provided' },
-                { id: 'broker', icon: '💰', name: 'The Broker', desc: 'Most Resources Gathered' }
-            ];
-
-            badgeGrid.innerHTML = badges.map(b => `
-                <div class="hol-badge" data-id="${b.id}" title="${b.desc}">
-                    <div class="hol-badge-icon">${b.icon}</div>
-                    <div class="hol-badge-name">${b.name}</div>
-                </div>
-            `).join('');
-
-            // Preserve active state
-            const newActive = badgeGrid.querySelector(`.hol-badge[data-id="${currentBadge}"]`);
-            if (newActive) newActive.classList.add('active');
-
-            const list = achievements[currentBadge];
-            if (categoryTitle) {
-                const badge = badges.find(b => b.id === currentBadge);
-                categoryTitle.textContent = `${badge.name}: ${badge.desc}`;
-            }
-
-            if (!list || list.length === 0) {
-                podiumContainer.innerHTML = '<div style="padding:2rem;">No candidates found for this category.</div>';
-            } else {
-                const first = list[0];
-                const second = list[1];
-                const third = list[2];
-
-                const createPodium = (player, rank, height) => {
-                    if (!player) return `<div class="hol-step empty" style="height: ${height}px; background:rgba(255,255,255,0.05); border:none;"></div>`;
-                    return `
-                        <div class="hol-step rank-${rank}" style="height: ${height}px;">
-                            <div class="hol-player-card">
-                                <div class="hol-avatar">${player.name.substring(0, 2)}</div>
-                                <div class="hol-info">
-                                    <div class="hol-name">${player.name}</div>
-                                    <div class="hol-alliance">[${player.alliance}]</div>
-                                    <div class="hol-value">${CalculationService.formatNumber(player.value)}</div>
-                                </div>
-                            </div>
-                            <div class="hol-rank-num">${rank}</div>
-                        </div>
-                    `;
-                };
-
-                podiumContainer.innerHTML = `
-                    ${createPodium(second, 2, 160)}
-                    ${createPodium(first, 1, 200)}
-                    ${createPodium(third, 3, 130)}
-                `;
-            }
-
-            // Re-attach listeners
-            badgeGrid.querySelectorAll('.hol-badge').forEach(el => {
-                el.addEventListener('click', () => {
-                    currentBadge = el.dataset.id;
-                    render();
-                });
-            });
-        };
-
-        render();
-
-        if (allianceSelect) {
-            allianceSelect.onchange = () => {
-                render();
-            };
-        }
-    }
 });
