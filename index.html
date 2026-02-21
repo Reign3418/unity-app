@@ -947,6 +947,9 @@
                 data-tooltip="View the top performers and kingdom achievements.">Hall of Legends 🏆</button>
             <button class="subtab-btn" data-subtab="war-council" data-tooltip="Build and manage squads for KvK.">Team
                 Builder ⚔️</button>
+            <button class="subtab-btn" data-subtab="alliance-merge"
+                data-tooltip="Simulate merging multiple alliances and distributing members by power.">Alliance Merge
+                🤝</button>
             <button class="subtab-btn" data-subtab="config">Configuration</button>
         </div>
 
@@ -1232,6 +1235,67 @@
                         </div>
                         <div class="wc-workspace wc-squad-container">
                             <!-- Squad Containers Injected Here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="subtab-content" data-content="alliance-merge">
+                <div class="wc-container">
+                    <!-- Sidebar: Source Pool -->
+                    <div class="wc-sidebar">
+                        <div class="wc-header">
+                            <h3>Source Pool</h3>
+                            <div style="font-size: 0.8em; color: var(--text-secondary); margin-bottom: 5px;">Source
+                                Alliances:</div>
+                            <div class="am-source-alliances">
+                                <!-- Dropdown & Tags injected by JS -->
+                            </div>
+                            <input type="text" placeholder="Search Players..." class="wc-search-input am-search">
+                            <div style="margin-top:10px; display: flex; flex-direction: column; gap: 8px;">
+                                <div
+                                    style="display: flex; gap: 10px; align-items: center; justify-content: space-between;">
+                                    <label style="font-size: 0.8em; color: var(--text-secondary);">Rank by:</label>
+                                    <select class="wc-search-input am-sort-select"
+                                        style="padding: 4px; width: 60%; margin: 0;">
+                                        <option value="power">Power</option>
+                                        <option value="kp">Kill Points</option>
+                                        <option value="deads">Deads</option>
+                                    </select>
+                                </div>
+                                <div
+                                    style="display: flex; gap: 10px; align-items: center; justify-content: space-between;">
+                                    <label style="font-size: 0.8em; color: var(--text-secondary);">Min Power:</label>
+                                    <input type="number" class="wc-search-input am-min-power" placeholder="e.g. 3000000"
+                                        style="padding: 4px; width: 60%; margin: 0;">
+                                </div>
+                                <div
+                                    style="display: flex; gap: 10px; align-items: center; justify-content: space-between;">
+                                    <label style="font-size: 0.8em; color: var(--text-secondary);"
+                                        title="Max players to pull from each individual source alliance">Top X /
+                                        Alliance:</label>
+                                    <input type="number" class="wc-search-input am-top-x" placeholder="Unlimited"
+                                        style="padding: 4px; width: 60%; margin: 0;">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="wc-pool-list wc-pool am-pool" ondrop="UIAllianceMerge.drop(event)"
+                            ondragover="UIAllianceMerge.allowDrop(event)">
+                            <!-- Draggable Players Injected Here -->
+                        </div>
+                    </div>
+
+                    <!-- Main Area: Merged Alliances -->
+                    <div class="wc-main" style="display: flex; flex-direction: column; overflow: hidden; height: 100%;">
+                        <div class="wc-toolbar" style="margin-bottom: 10px; flex-shrink: 0;">
+                            <button class="wc-btn" onclick="UIAllianceMerge.createTarget()">+ New Target</button>
+                            <button class="wc-btn wc-btn-secondary" style="background-color: var(--info-color);"
+                                onclick="UIAllianceMerge.autoFill()">Auto-Fill Elements</button>
+                            <button class="wc-btn wc-btn-secondary" onclick="UIAllianceMerge.clearAll()">Reset</button>
+                        </div>
+                        <div class="wc-workspace am-target-container"
+                            style="flex: 1; margin-top: 0; padding-top: 5px; height: 100%; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+                            <!-- Target Containers Injected Here -->
                         </div>
                     </div>
                 </div>
@@ -1562,6 +1626,7 @@
     <script src="js/services/ui/UIHallOfLegends.js"></script>
     <script src="js/services/ui/UIAllianceDuel.js"></script>
     <script src="js/services/ui/UIWarCouncil.js"></script>
+    <script src="js/services/ui/UIAllianceMerge.js"></script>
     <script src="js/services/ui/UIRaceChart.js"></script>
     <script src="js/services/ui/UIGovernance.js"></script>
     <script src="js/services/ui/UISquadBuilder.js"></script>

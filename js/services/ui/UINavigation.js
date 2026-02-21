@@ -125,6 +125,10 @@ Object.assign(UIService.prototype, {
             if (window.UIWarCouncil) {
                 window.UIWarCouncil.init(this.data, kingdomId);
             }
+        } else if (subTabId === 'alliance-merge') {
+            if (window.UIAllianceMerge) {
+                window.UIAllianceMerge.init(this.data, kingdomId);
+            }
         }
     },
 
