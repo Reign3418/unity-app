@@ -57,6 +57,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                     console.error("UIGovernance Init Failed:", govErr);
                 }
 
+                // Initialize Calculators
+                try {
+                    if (window.CalculatorsService) {
+                        window.calculatorsService = new window.CalculatorsService();
+                    }
+                } catch (calcErr) {
+                    console.error("CalculatorsService Init Failed:", calcErr);
+                }
+
                 // Smart Welcome Logic
                 const savedState = await dataService.peekState();
                 const welcomeModal = document.getElementById('welcomeModal');

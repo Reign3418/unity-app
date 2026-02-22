@@ -92,17 +92,29 @@ class CalculationService {
             const bldPowerEnd = Utils.parseNumber(endRow['Building Power']);
             const bldPowerDiff = bldPowerEnd - bldPowerStart;
 
-            const kvkKP = (t4Diff * config.t4Points) + (t5Diff * config.t5Points);
-            const targetKP = startPower * kpTargetMultiplier;
-            const targetDeads = startPower * config.deadsMultiplier;
-
-            const kpPercent = targetKP > 0 ? (kvkKP / targetKP) * 100 : 0;
-            const deadPercent = targetDeads > 0 ? (deadsDiff / targetDeads) * 100 : 0;
-
+            let kvkKP = 0;
+            let targetKP = 0;
+            let targetDeads = 0;
+            let kpPercent = 0;
+            let deadPercent = 0;
             let totalDKPPercent = 0;
-            if (targetKP > 0 && targetDeads > 0) totalDKPPercent = (kpPercent + deadPercent) / 2;
-            else if (targetKP > 0) totalDKPPercent = kpPercent;
-            else if (targetDeads > 0) totalDKPPercent = deadPercent;
+            let basicTotalDKP = 0;
+
+            if (config.dkpSystem === 'basic') {
+                kvkKP = (t4Diff * config.basicT4Points) + (t5Diff * config.basicT5Points);
+                basicTotalDKP = kvkKP + (deadsDiff * config.basicDeadsPoints);
+            } else {
+                kvkKP = (t4Diff * config.t4Points) + (t5Diff * config.t5Points);
+                targetKP = startPower * kpTargetMultiplier;
+                targetDeads = startPower * config.deadsMultiplier;
+
+                kpPercent = targetKP > 0 ? (kvkKP / targetKP) * 100 : 0;
+                deadPercent = targetDeads > 0 ? (deadsDiff / targetDeads) * 100 : 0;
+
+                if (targetKP > 0 && targetDeads > 0) totalDKPPercent = (kpPercent + deadPercent) / 2;
+                else if (targetKP > 0) totalDKPPercent = kpPercent;
+                else if (targetDeads > 0) totalDKPPercent = deadPercent;
+            }
 
             // Status Logic (Refined)
             let status = 'Sleeper';
@@ -128,6 +140,7 @@ class CalculationService {
                 targetDeads,
                 deadPercent: parseFloat(deadPercent.toFixed(2)),
                 totalDKPPercent: parseFloat(totalDKPPercent.toFixed(2)),
+                basicTotalDKP: Math.round(basicTotalDKP),
                 bonus: 0
             });
         });

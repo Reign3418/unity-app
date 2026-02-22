@@ -10,6 +10,10 @@ Object.assign(UIService.prototype, {
         const limitSelect = document.getElementById('kingdomComparisonLimit');
         const limitVal = limitSelect ? limitSelect.value : 'all';
 
+        const t4Weight = parseFloat(document.getElementById('allKingdomT4Weight')?.value) || 10;
+        const t5Weight = parseFloat(document.getElementById('allKingdomT5Weight')?.value) || 20;
+        const deadWeight = parseFloat(document.getElementById('allKingdomDeadWeight')?.value) || 30;
+
         if (this.data.state.loadedKingdoms.size === 0) {
             tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;">No kingdoms loaded. Upload scans to begin.</td></tr>';
             return;
@@ -50,11 +54,11 @@ Object.assign(UIService.prototype, {
                 stats.t5 += p.t5 || 0;
                 stats.deads += p.deads || 0;
                 stats.healed += p.healed || 0;
-                stats.kp += p.kvkKP || 0;
             });
 
-            const deadsWeight = kState.config.deadsWeight || 50;
-            stats.dkp = stats.kp + (stats.deads * deadsWeight);
+            // Dynamically calculate KP and DKP based on input multipliers
+            stats.kp = (stats.t4 * t4Weight) + (stats.t5 * t5Weight);
+            stats.dkp = stats.kp + (stats.deads * deadWeight);
 
             const tr = document.createElement('tr');
             tr.innerHTML = `
@@ -94,8 +98,29 @@ Object.assign(UIService.prototype, {
         const kConfig = this.data.state.kingdoms[kingdomId].config;
         clone.querySelectorAll('.config-input').forEach(input => {
             if (kConfig[input.name] !== undefined) input.value = kConfig[input.name];
-            input.addEventListener('change', (e) => this.data.state.kingdoms[kingdomId].config[e.target.name] = parseFloat(e.target.value));
+            input.addEventListener('change', (e) => {
+                const val = e.target.value;
+                this.data.state.kingdoms[kingdomId].config[e.target.name] = isNaN(val) ? val : parseFloat(val);
+            });
         });
+
+        const dkpSystemSelect = clone.querySelector('.dkp-system-select');
+        const advancedInputs = clone.querySelector('.advanced-dkp-inputs');
+        const basicInputs = clone.querySelector('.basic-dkp-inputs');
+
+        if (dkpSystemSelect && advancedInputs && basicInputs) {
+            const toggleInputs = () => {
+                if (dkpSystemSelect.value === 'basic') {
+                    advancedInputs.classList.add('hidden');
+                    basicInputs.classList.remove('hidden');
+                } else {
+                    basicInputs.classList.add('hidden');
+                    advancedInputs.classList.remove('hidden');
+                }
+            };
+            dkpSystemSelect.addEventListener('change', toggleInputs);
+            toggleInputs(); // Initial setup
+        }
 
         const nextBtn = clone.querySelector('.next-btn');
         if (nextBtn) nextBtn.addEventListener('click', () => this.switchSubTab(kingdomId, 'results'));
@@ -181,6 +206,41 @@ Object.assign(UIService.prototype, {
         // Ensure results section is visible if data exists
         if (data && data.length > 0) resultsSection.classList.remove('hidden');
 
+        const kConfig = this.data.state.kingdoms[kingdomId].config;
+        const isBasic = kConfig.dkpSystem === 'basic';
+
+        // Adjust Table Headers
+        const thead = resultsSection.querySelector('.dkp-table thead tr');
+        if (thead) {
+            const thList = Array.from(thead.querySelectorAll('th'));
+            const toggleHeader = (sortKey, show) => {
+                const th = thList.find(t => t.dataset.sort === sortKey);
+                if (th) th.style.display = show ? '' : 'none';
+            };
+
+            toggleHeader('targetKP', !isBasic);
+            toggleHeader('kpPercent', !isBasic);
+            toggleHeader('targetDeads', !isBasic);
+            toggleHeader('deadPercent', !isBasic);
+            toggleHeader('totalDKPPercent', !isBasic);
+
+            // If basic, we need a column for Basic Total DKP. If we don't have one, create it.
+            let thBasic = thList.find(t => t.dataset.sort === 'basicTotalDKP');
+            if (isBasic) {
+                if (!thBasic) {
+                    thBasic = document.createElement('th');
+                    thBasic.dataset.sort = 'basicTotalDKP';
+                    thBasic.textContent = 'Total DKP';
+                    // insert before bonus
+                    const thBonus = thList.find(t => t.dataset.sort === 'bonus');
+                    thead.insertBefore(thBasic, thBonus);
+                }
+                thBasic.style.display = '';
+            } else if (thBasic) {
+                thBasic.style.display = 'none';
+            }
+        }
+
         try {
             const fragment = document.createDocumentFragment();
             tbody.innerHTML = '';
@@ -211,11 +271,15 @@ Object.assign(UIService.prototype, {
                     <td>${(row.deads || 0).toLocaleString()}</td>
                     <td>${(row.rssGathered || 0).toLocaleString()}</td>
                     <td>${(row.kvkKP || 0).toLocaleString()}</td>
+                    ${!isBasic ? `
                     <td>${Math.round(row.targetKP || 0).toLocaleString()}</td>
                     <td class="${(row.kpPercent || 0) >= 100 ? 'status-complete' : 'status-incomplete'}">${(row.kpPercent || 0)}%</td>
                     <td>${Math.round(row.targetDeads || 0).toLocaleString()}</td>
                     <td class="${(row.deadPercent || 0) >= 100 ? 'status-complete' : 'status-incomplete'}">${(row.deadPercent || 0)}%</td>
                     <td class="${(row.totalDKPPercent || 0) >= 100 ? 'status-complete' : 'status-incomplete'}"><span class="total-dkp">${(row.totalDKPPercent || 0)}%</span></td>
+                    ` : `
+                    <td><span class="total-dkp">${(row.basicTotalDKP || 0).toLocaleString()}</span></td>
+                    `}
                     <td><input type="number" class="bonus-input" data-id="${row.id}" value="${row.bonus || 0}" step="1"></td>
                 `;
                 fragment.appendChild(tr);
@@ -232,6 +296,9 @@ Object.assign(UIService.prototype, {
     attachBonusListeners(kingdomId) {
         const container = document.getElementById(`kingdom-${kingdomId}`);
         if (!container) return;
+        const config = this.data.state.kingdoms[kingdomId].config;
+        const isBasic = config.dkpSystem === 'basic';
+
         container.querySelectorAll('.bonus-input').forEach(input => {
             input.addEventListener('input', (e) => {
                 const id = e.target.dataset.id;
@@ -240,19 +307,27 @@ Object.assign(UIService.prototype, {
 
                 if (row) {
                     row.bonus = newBonus;
-                    let baseScore = 0;
-                    if (row.targetKP > 0 && row.targetDeads > 0) baseScore = (row.kpPercent + row.deadPercent) / 2;
-                    else if (row.targetKP > 0) baseScore = row.kpPercent;
-                    else if (row.targetDeads > 0) baseScore = row.deadPercent;
-
-                    row.totalDKPPercent = parseFloat((baseScore + newBonus).toFixed(2));
 
                     const tr = e.target.closest('tr');
                     const totalCell = tr.querySelector('.total-dkp');
                     const totalTd = totalCell.parentElement;
 
-                    totalCell.textContent = row.totalDKPPercent + '%';
-                    totalTd.className = row.totalDKPPercent >= 100 ? 'status-complete' : 'status-incomplete';
+                    if (isBasic) {
+                        const baseScore = row.kvkKP + (row.deads * config.basicDeadsPoints);
+                        row.basicTotalDKP = Math.round(baseScore + newBonus);
+                        totalCell.textContent = row.basicTotalDKP.toLocaleString();
+                        // Basic table doesn't map full/incomplete status based on 100% target
+                        totalTd.className = '';
+                    } else {
+                        let baseScore = 0;
+                        if (row.targetKP > 0 && row.targetDeads > 0) baseScore = (row.kpPercent + row.deadPercent) / 2;
+                        else if (row.targetKP > 0) baseScore = row.kpPercent;
+                        else if (row.targetDeads > 0) baseScore = row.deadPercent;
+
+                        row.totalDKPPercent = parseFloat((baseScore + newBonus).toFixed(2));
+                        totalCell.textContent = row.totalDKPPercent + '%';
+                        totalTd.className = row.totalDKPPercent >= 100 ? 'status-complete' : 'status-incomplete';
+                    }
                 }
             });
         });
@@ -809,7 +884,7 @@ Object.assign(UIService.prototype, {
                 if (numericHeaders.includes(h) && maxValues[h] > 0) {
                     const intensity = (val / maxValues[h]);
                     const alpha = Math.max(0.1, intensity * 0.8);
-                    style = `style="background-color: rgba(59, 130, 246, ${alpha}); color: ${intensity > 0.6 ? 'white' : 'var(--text-primary)'}"`;
+                    style = `style="background-color: rgba(139, 92, 246, ${alpha}); color: ${intensity > 0.6 ? 'white' : 'var(--text-primary)'}"`;
                 }
                 html += `<td ${style}>${typeof val === 'number' ? val.toLocaleString() : val}</td>`;
             });

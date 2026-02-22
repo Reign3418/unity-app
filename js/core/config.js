@@ -16,7 +16,11 @@ const Config = {
         t5MixRatio: 0.7,
         kpMultiplier: 1.25,
         t4Points: 10,
-        t5Points: 20
+        t5Points: 20,
+        dkpSystem: 'advanced',
+        basicT4Points: 10,
+        basicT5Points: 20,
+        basicDeadsPoints: 30
     },
     COLUMN_MAPPING: {
         'Governor ID': ['governor id', 'gov id', 'id', 'user id', 'uid', 'character id'],

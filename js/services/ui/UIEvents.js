@@ -199,10 +199,12 @@ Object.assign(UIService.prototype, {
             });
         }
 
-        // Comparison Limit
-        if (this.elements.kingdomComparisonLimit) {
-            this.elements.kingdomComparisonLimit.addEventListener('change', () => this.renderKingdomComparison());
-        }
+        // Comparison Limit and Custom Weights
+        ['kingdomComparisonLimit', 'allKingdomT4Weight', 'allKingdomT5Weight', 'allKingdomDeadWeight'].forEach(id => {
+            if (this.elements[id]) {
+                this.elements[id].addEventListener('input', Utils.debounce(() => this.renderKingdomComparison(), 300));
+            }
+        });
 
         // New Phone Who Dis Listeners
         if (this.elements.npwdKingdomSelect) {

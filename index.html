@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Unity</title>
-    <link rel="stylesheet" href="style.css?v=26">
+    <link rel="stylesheet" href="style.css?v=28">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script
@@ -33,8 +33,8 @@
             <button class="tab-btn" data-tab="upload"
                 data-tooltip="Upload Start (Pre-KvK) and End (Post-KvK) scans here.">Upload Scans</button>
             <button class="tab-btn" data-tab="prekvk-analysis"
-                data-tooltip="Start-Scan data analysis (Kingdom, Alliance, Governor profiles).">Prekvk
-                analysis</button>
+                data-tooltip="Start-Scan data analysis (Kingdom, Alliance, Governor profiles).">Kingdom
+                Analysis</button>
             <button class="tab-btn" data-tab="prekvk-ranking"
                 data-tooltip="Rank kingdoms based on Start Scan power.">PreKVK Ranking</button>
             <button class="tab-btn" data-tab="new-phone-who-dis" data-tooltip="Identify new and departed players.">New
@@ -52,6 +52,8 @@
                 ⚙️</button>
             <button class="tab-btn" data-tab="race-to-glory" data-tooltip="Animated Bar Chart Race.">Race to Glory
                 🏁</button>
+            <button class="tab-btn" data-tab="calculators"
+                data-tooltip="Quickly calculate items and values.">Calculators 🧮</button>
         </div>
 
         <div class="tabs hidden" id="kingdomTabs" style="margin-top: 1rem;">
@@ -281,16 +283,35 @@
             <div class="results-header">
                 <h2 data-tooltip="Final calculated DKP Report comparing all loaded kingdoms.">All Kingdom DKP results
                 </h2>
-                <div class="input-group" style="margin-left: auto;">
-                    <label>Governor Count</label>
-                    <select id="kingdomComparisonLimit" class="prekvk-select">
-                        <option value="all">All Governors</option>
-                        <option value="100">Top 100</option>
-                        <option value="300">Top 300</option>
-                        <option value="400">Top 400</option>
-                        <option value="650">Top 650</option>
-                        <option value="1000">Top 1000</option>
-                    </select>
+                <div class="input-group"
+                    style="margin-left: auto; display: flex; flex-direction: row; align-items: flex-end; flex-wrap: wrap; gap: 15px;">
+                    <div class="input-group" style="margin: 0; align-items: center; flex-direction: row; gap: 5px;">
+                        <label style="margin: 0;">T4 Points:</label>
+                        <input type="number" id="allKingdomT4Weight" class="config-input" value="10" step="1"
+                            style="width: 70px;">
+                    </div>
+                    <div class="input-group" style="margin: 0; align-items: center; flex-direction: row; gap: 5px;">
+                        <label style="margin: 0;">T5 Points:</label>
+                        <input type="number" id="allKingdomT5Weight" class="config-input" value="20" step="1"
+                            style="width: 70px;">
+                    </div>
+                    <div class="input-group" style="margin: 0; align-items: center; flex-direction: row; gap: 5px;">
+                        <label style="margin: 0;">Deads Points:</label>
+                        <input type="number" id="allKingdomDeadWeight" class="config-input" value="30" step="1"
+                            style="width: 70px;">
+                    </div>
+
+                    <div class="input-group" style="margin: 0;">
+                        <label style="margin: 0;">Governor Count</label>
+                        <select id="kingdomComparisonLimit" class="prekvk-select">
+                            <option value="all">All Governors</option>
+                            <option value="100">Top 100</option>
+                            <option value="300">Top 300</option>
+                            <option value="400">Top 400</option>
+                            <option value="650">Top 650</option>
+                            <option value="1000">Top 1000</option>
+                        </select>
+                    </div>
                 </div>
             </div>
             <div class="table-container">
@@ -306,7 +327,8 @@
                             <th>Total Deads</th>
                             <th>Total Healed</th>
                             <th>Total KP</th>
-                            <th>Total DKP</th>
+                            <th data-tooltip="Formula: (T4 Kills * T4 Pts) + (T5 Kills * T5 Pts) + (Deads * Deads Pts)">
+                                Total DKP</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -541,7 +563,7 @@
             </div>
 
             <!-- 1. The Audit (Quadrant Analysis) -->
-            <div id="audit-ui" class="gov-section">
+            <div id="audit-ui" class="gov-section subtab-content active" data-content="audit">
                 <div class="chart-container" style="height: 500px; position: relative;">
                     <canvas id="auditChart"></canvas>
                 </div>
@@ -555,7 +577,7 @@
             </div>
 
             <!-- 2. The Purge List -->
-            <div id="purge-ui" class="gov-section hidden">
+            <div id="purge-ui" class="gov-section subtab-content" data-content="purge">
                 <div class="control-bar" style="display: flex; justify-content: space-between; margin-bottom: 15px;">
                     <div class="filters">
                         <label>Threshold (KP/Power): <select id="purgeThreshold">
@@ -583,14 +605,14 @@
             </div>
 
             <!-- 3. War Potential -->
-            <div id="war-potential-ui" class="gov-section hidden">
+            <div id="war-potential-ui" class="gov-section subtab-content" data-content="war-potential">
                 <div class="stats-grid" id="warStatsGrid">
                     <!-- Cards injected by JS -->
                 </div>
             </div>
 
             <!-- 4. Squad Builder -->
-            <div id="squad-builder-ui" class="gov-section hidden">
+            <div id="squad-builder-ui" class="gov-section subtab-content" data-content="squad-builder">
                 <div class="squad-workspace">
                     <!-- Left: Commander Pool -->
                     <div class="commander-pool-panel">
@@ -728,64 +750,298 @@
                 <button id="factoryResetBtn" class="primary-btn danger-btn">⚠️ Factory Reset</button>
             </div>
         </div>
+    </div> <!-- Close .card here -->
+    </div>
 
-        <!-- Live Feed Tab -->
-        <div id="live-feed" class="tab-content">
-            <div class="card">
-                <div class="results-header">
-                    <h2>Live Feed 📡</h2>
-                    <div class="live-controls" style="display: flex; gap: 10px; align-items: center;">
-                        <div id="connectionPanel">
-                            <input type="text" id="feedRepo" class="config-input" placeholder="User/Repo"
-                                style="width: 150px;">
-                            <input type="text" id="feedPath" class="config-input" placeholder="Path (data/feed.json)"
-                                style="width: 180px;">
+    <!-- Calculators Tab -->
+    <div id="calculators" class="tab-content">
+        <div class="kingdom-subtabs" id="calcSubTabs" style="margin-bottom: 20px;">
+            <button class="calc-tab-btn active" data-subtab="calc-speedups">Speedups</button>
+            <button class="calc-tab-btn" data-subtab="calc-rss">Resources</button>
+            <button class="calc-tab-btn" data-subtab="calc-ap">Action Points</button>
+            <button class="calc-tab-btn" data-subtab="calc-vip">VIP Points</button>
+            <button class="calc-tab-btn" data-subtab="calc-xp">Tomes of Knowledge</button>
+        </div>
+
+        <div class="card calc-layout" style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px;">
+
+            <!-- Calculator Inputs Column -->
+            <div class="calc-inputs-column">
+                <!-- Speedups Subtab -->
+                <div class="calc-tab-content active" data-content="calc-speedups">
+                    <h2>Speedup Calculator</h2>
+                    <div class="calc-grid"
+                        style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; margin-top: 15px;">
+                        <div class="input-group"><label>1 Minute</label><input type="number"
+                                class="config-input calc-input" data-cat="speedup" data-val="1" min="0" placeholder="0">
                         </div>
-                        <button id="btnConnectFeed" class="primary-btn">Connect</button>
-                        <button id="btnStopFeed" class="primary-btn hidden"
-                            style="background:var(--danger-color); border-color:var(--danger-color)">Stop
-                            Update</button>
-                        <span id="feedStatus" class="status-badge"
-                            style="background:#555; color:white; padding:4px 8px; border-radius:4px; font-size:0.9em;">Disconnected</span>
+                        <div class="input-group"><label>5 Minutes</label><input type="number"
+                                class="config-input calc-input" data-cat="speedup" data-val="5" min="0" placeholder="0">
+                        </div>
+                        <div class="input-group"><label>10 Minutes</label><input type="number"
+                                class="config-input calc-input" data-cat="speedup" data-val="10" min="0"
+                                placeholder="0"></div>
+                        <div class="input-group"><label>15 Minutes</label><input type="number"
+                                class="config-input calc-input" data-cat="speedup" data-val="15" min="0"
+                                placeholder="0"></div>
+                        <div class="input-group"><label>30 Minutes</label><input type="number"
+                                class="config-input calc-input" data-cat="speedup" data-val="30" min="0"
+                                placeholder="0"></div>
+                        <div class="input-group"><label>60 Minutes</label><input type="number"
+                                class="config-input calc-input" data-cat="speedup" data-val="60" min="0"
+                                placeholder="0"></div>
+                        <div class="input-group"><label>3 Hours</label><input type="number"
+                                class="config-input calc-input" data-cat="speedup" data-val="180" min="0"
+                                placeholder="0"></div>
+                        <div class="input-group"><label>8 Hours</label><input type="number"
+                                class="config-input calc-input" data-cat="speedup" data-val="480" min="0"
+                                placeholder="0"></div>
+                        <div class="input-group"><label>15 Hours</label><input type="number"
+                                class="config-input calc-input" data-cat="speedup" data-val="900" min="0"
+                                placeholder="0"></div>
+                        <div class="input-group"><label>24 Hours</label><input type="number"
+                                class="config-input calc-input" data-cat="speedup" data-val="1440" min="0"
+                                placeholder="0"></div>
+                        <div class="input-group"><label>3 Days</label><input type="number"
+                                class="config-input calc-input" data-cat="speedup" data-val="4320" min="0"
+                                placeholder="0"></div>
+                        <div class="input-group"><label>7 Days</label><input type="number"
+                                class="config-input calc-input" data-cat="speedup" data-val="10080" min="0"
+                                placeholder="0"></div>
+                        <div class="input-group"><label>30 Days</label><input type="number"
+                                class="config-input calc-input" data-cat="speedup" data-val="43200" min="0"
+                                placeholder="0"></div>
                     </div>
                 </div>
 
-                <div class="feed-layout"
-                    style="display: grid; grid-template-columns: 300px 1fr; gap: 20px; margin-top: 20px; height: 600px;">
-                    <!-- Left: Raw Log / Console -->
-                    <div class="feed-console"
-                        style="background: #1e1e1e; padding: 10px; border-radius: 8px; overflow-y: auto; font-family: monospace; font-size: 0.85em; color: #0f0;">
-                        <div id="feedLog" style="display: flex; flex-direction: column; gap: 4px;">
-                            <div style="opacity: 0.5;">> System Ready. Waiting for connection...</div>
+                <!-- Resources Subtab -->
+                <div class="calc-tab-content" data-content="calc-rss">
+                    <h2>Resource Calculator</h2>
+
+                    <div style="margin-top: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px;">
+                        <h3 style="color: #FACC15; margin-bottom: 10px;">Corn (Food)</h3>
+                        <div class="calc-grid"
+                            style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px;">
+                            <div class="input-group"><label>1,000</label><input type="number"
+                                    class="config-input calc-input" data-cat="food" data-val="1000" min="0"
+                                    placeholder="0"></div>
+                            <div class="input-group"><label>10,000</label><input type="number"
+                                    class="config-input calc-input" data-cat="food" data-val="10000" min="0"
+                                    placeholder="0"></div>
+                            <div class="input-group"><label>50,000</label><input type="number"
+                                    class="config-input calc-input" data-cat="food" data-val="50000" min="0"
+                                    placeholder="0"></div>
+                            <div class="input-group"><label>150,000</label><input type="number"
+                                    class="config-input calc-input" data-cat="food" data-val="150000" min="0"
+                                    placeholder="0"></div>
+                            <div class="input-group"><label>500,000</label><input type="number"
+                                    class="config-input calc-input" data-cat="food" data-val="500000" min="0"
+                                    placeholder="0"></div>
+                            <div class="input-group"><label>1,500,000</label><input type="number"
+                                    class="config-input calc-input" data-cat="food" data-val="1500000" min="0"
+                                    placeholder="0"></div>
+                            <div class="input-group"><label>5,000,000</label><input type="number"
+                                    class="config-input calc-input" data-cat="food" data-val="5000000" min="0"
+                                    placeholder="0"></div>
                         </div>
                     </div>
 
-                    <!-- Right: Parsed Table -->
-                    <div class="feed-data panel" style="overflow-y: auto;">
-                        <h3 style="margin-bottom: 10px; border-bottom: 1px solid #444; padding-bottom: 5px;">Live
-                            Governor Data</h3>
-                        <table class="dkp-table" style="font-size: 0.9em;">
-                            <thead>
-                                <tr>
-                                    <th>Timestamp</th>
-                                    <th>Governor Name</th>
-                                    <th>Power</th>
-                                    <th>Kill Points</th>
-                                </tr>
-                            </thead>
-                            <tbody id="feedTableBody">
-                                <tr>
-                                    <td colspan="4" style="text-align:center; color:#888;">No data received yet.</td>
-                                </tr>
-                            </tbody>
-                        </table>
+                    <div style="margin-top: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px;">
+                        <h3 style="color: #A3E635; margin-bottom: 10px;">Wood</h3>
+                        <div class="calc-grid"
+                            style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px;">
+                            <div class="input-group"><label>1,000</label><input type="number"
+                                    class="config-input calc-input" data-cat="wood" data-val="1000" min="0"
+                                    placeholder="0"></div>
+                            <div class="input-group"><label>10,000</label><input type="number"
+                                    class="config-input calc-input" data-cat="wood" data-val="10000" min="0"
+                                    placeholder="0"></div>
+                            <div class="input-group"><label>50,000</label><input type="number"
+                                    class="config-input calc-input" data-cat="wood" data-val="50000" min="0"
+                                    placeholder="0"></div>
+                            <div class="input-group"><label>150,000</label><input type="number"
+                                    class="config-input calc-input" data-cat="wood" data-val="150000" min="0"
+                                    placeholder="0"></div>
+                            <div class="input-group"><label>500,000</label><input type="number"
+                                    class="config-input calc-input" data-cat="wood" data-val="500000" min="0"
+                                    placeholder="0"></div>
+                            <div class="input-group"><label>1,500,000</label><input type="number"
+                                    class="config-input calc-input" data-cat="wood" data-val="1500000" min="0"
+                                    placeholder="0"></div>
+                            <div class="input-group"><label>5,000,000</label><input type="number"
+                                    class="config-input calc-input" data-cat="wood" data-val="5000000" min="0"
+                                    placeholder="0"></div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px;">
+                        <h3 style="color: #9CA3AF; margin-bottom: 10px;">Stone</h3>
+                        <div class="calc-grid"
+                            style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px;">
+                            <div class="input-group"><label>750</label><input type="number"
+                                    class="config-input calc-input" data-cat="stone" data-val="750" min="0"
+                                    placeholder="0"></div>
+                            <div class="input-group"><label>7,500</label><input type="number"
+                                    class="config-input calc-input" data-cat="stone" data-val="7500" min="0"
+                                    placeholder="0"></div>
+                            <div class="input-group"><label>37,500</label><input type="number"
+                                    class="config-input calc-input" data-cat="stone" data-val="37500" min="0"
+                                    placeholder="0"></div>
+                            <div class="input-group"><label>112,500</label><input type="number"
+                                    class="config-input calc-input" data-cat="stone" data-val="112500" min="0"
+                                    placeholder="0"></div>
+                            <div class="input-group"><label>375,000</label><input type="number"
+                                    class="config-input calc-input" data-cat="stone" data-val="375000" min="0"
+                                    placeholder="0"></div>
+                            <div class="input-group"><label>1,125,000</label><input type="number"
+                                    class="config-input calc-input" data-cat="stone" data-val="1125000" min="0"
+                                    placeholder="0"></div>
+                            <div class="input-group"><label>3,750,000</label><input type="number"
+                                    class="config-input calc-input" data-cat="stone" data-val="3750000" min="0"
+                                    placeholder="0"></div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 15px;">
+                        <h3 style="color: #FCD34D; margin-bottom: 10px;">Gold</h3>
+                        <div class="calc-grid"
+                            style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px;">
+                            <div class="input-group"><label>500</label><input type="number"
+                                    class="config-input calc-input" data-cat="gold" data-val="500" min="0"
+                                    placeholder="0"></div>
+                            <div class="input-group"><label>5,000</label><input type="number"
+                                    class="config-input calc-input" data-cat="gold" data-val="5000" min="0"
+                                    placeholder="0"></div>
+                            <div class="input-group"><label>15,000</label><input type="number"
+                                    class="config-input calc-input" data-cat="gold" data-val="15000" min="0"
+                                    placeholder="0"></div>
+                            <div class="input-group"><label>50,000</label><input type="number"
+                                    class="config-input calc-input" data-cat="gold" data-val="50000" min="0"
+                                    placeholder="0"></div>
+                            <div class="input-group"><label>200,000</label><input type="number"
+                                    class="config-input calc-input" data-cat="gold" data-val="200000" min="0"
+                                    placeholder="0"></div>
+                            <div class="input-group"><label>600,000</label><input type="number"
+                                    class="config-input calc-input" data-cat="gold" data-val="600000" min="0"
+                                    placeholder="0"></div>
+                            <div class="input-group"><label>2,000,000</label><input type="number"
+                                    class="config-input calc-input" data-cat="gold" data-val="2000000" min="0"
+                                    placeholder="0"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Points Subtab -->
+                <div class="calc-tab-content" data-content="calc-ap">
+                    <h2>Action Points Calculator</h2>
+                    <div class="calc-grid"
+                        style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; margin-top: 15px;">
+                        <div class="input-group"><label>10 AP</label><input type="number"
+                                class="config-input calc-input" data-cat="ap" data-val="10" min="0" placeholder="0">
+                        </div>
+                        <div class="input-group"><label>50 AP</label><input type="number"
+                                class="config-input calc-input" data-cat="ap" data-val="50" min="0" placeholder="0">
+                        </div>
+                        <div class="input-group"><label>100 AP</label><input type="number"
+                                class="config-input calc-input" data-cat="ap" data-val="100" min="0" placeholder="0">
+                        </div>
+                        <div class="input-group"><label>500 AP</label><input type="number"
+                                class="config-input calc-input" data-cat="ap" data-val="500" min="0" placeholder="0">
+                        </div>
+                        <div class="input-group"><label>1,000 AP</label><input type="number"
+                                class="config-input calc-input" data-cat="ap" data-val="1000" min="0" placeholder="0">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VIP Points Subtab -->
+                <div class="calc-tab-content" data-content="calc-vip">
+                    <h2>VIP Points Calculator</h2>
+                    <div class="calc-grid"
+                        style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; margin-top: 15px;">
+                        <div class="input-group"><label>5 VIP</label><input type="number"
+                                class="config-input calc-input" data-cat="vip" data-val="5" min="0" placeholder="0">
+                        </div>
+                        <div class="input-group"><label>10 VIP</label><input type="number"
+                                class="config-input calc-input" data-cat="vip" data-val="10" min="0" placeholder="0">
+                        </div>
+                        <div class="input-group"><label>50 VIP</label><input type="number"
+                                class="config-input calc-input" data-cat="vip" data-val="50" min="0" placeholder="0">
+                        </div>
+                        <div class="input-group"><label>100 VIP</label><input type="number"
+                                class="config-input calc-input" data-cat="vip" data-val="100" min="0" placeholder="0">
+                        </div>
+                        <div class="input-group"><label>500 VIP</label><input type="number"
+                                class="config-input calc-input" data-cat="vip" data-val="500" min="0" placeholder="0">
+                        </div>
+                        <div class="input-group"><label>1,000 VIP</label><input type="number"
+                                class="config-input calc-input" data-cat="vip" data-val="1000" min="0" placeholder="0">
+                        </div>
+                        <div class="input-group"><label>5,000 VIP</label><input type="number"
+                                class="config-input calc-input" data-cat="vip" data-val="5000" min="0" placeholder="0">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tomes of Knowledge Subtab -->
+                <div class="calc-tab-content" data-content="calc-xp">
+                    <h2>Tomes of Knowledge (XP) Calculator</h2>
+                    <div class="calc-grid"
+                        style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; margin-top: 15px;">
+                        <div class="input-group"><label>Level 1 (100 XP)</label><input type="number"
+                                class="config-input calc-input" data-cat="xp" data-val="100" min="0" placeholder="0">
+                        </div>
+                        <div class="input-group"><label>Level 2 (500 XP)</label><input type="number"
+                                class="config-input calc-input" data-cat="xp" data-val="500" min="0" placeholder="0">
+                        </div>
+                        <div class="input-group"><label>Level 3 (1,000 XP)</label><input type="number"
+                                class="config-input calc-input" data-cat="xp" data-val="1000" min="0" placeholder="0">
+                        </div>
+                        <div class="input-group"><label>Level 4 (5,000 XP)</label><input type="number"
+                                class="config-input calc-input" data-cat="xp" data-val="5000" min="0" placeholder="0">
+                        </div>
+                        <div class="input-group"><label>Level 5 (10,000 XP)</label><input type="number"
+                                class="config-input calc-input" data-cat="xp" data-val="10000" min="0" placeholder="0">
+                        </div>
+                        <div class="input-group"><label>Level 6 (50,000 XP)</label><input type="number"
+                                class="config-input calc-input" data-cat="xp" data-val="50000" min="0" placeholder="0">
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-    </div> <!-- End Content Area -->
+            <!-- Calculator Totals Panel -->
+            <div class="calc-totals-panel"
+                style="background: rgba(0,0,0,0.2); padding: 25px; border-radius: 8px; border: 1px solid var(--border-color); display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 250px;">
+                <h3
+                    style="color: var(--text-secondary); margin-bottom: 20px; font-weight: normal; font-size: 1.1em; letter-spacing: 1px;">
+                    TOTAL CONVERSION</h3>
+                <div id="calcTotalDisplay"
+                    style="font-size: 3em; font-weight: bold; color: var(--accent-primary); line-height: 1.2; text-align: center; text-shadow: 0 0 20px rgba(59, 130, 246, 0.4);">
+                    0
+                </div>
+                <div id="calcTotalSuffix"
+                    style="color: var(--text-muted); margin-top: 10px; font-size: 1.1em; letter-spacing: 0.5px;">
+                    <!-- Time Breakdowns e.g. "0 Days, 0 Hours..." -->
+                </div>
+
+                <button class="secondary-btn" id="calcClearBtn" style="margin-top: 30px; width: 100%;">Clear All
+                    Quantities</button>
+            </div>
+
+        </div>
     </div>
+
+    <!-- Live Feed Tab -->
+    <div id="live-feed" class="tab-content">
+        <div class="card text-center" style="padding: 4rem 2rem;">
+            <div style="font-size: 4rem; margin-bottom: 1rem;">🔒</div>
+            <h2 style="color: var(--danger-color); margin-bottom: 1rem;">Access Restricted</h2>
+            <p style="color: var(--text-secondary); max-width: 500px; margin: 0 auto;">
+                You do not have the required permissions to view the real-time Live Feed data.
+                Please contact an administrator if you believe you should have access.
+            </p>
+        </div>
     </div>
 
     <!-- Mail Generator Tab -->
@@ -941,8 +1197,6 @@
                 data-tooltip="Power Efficiency Analysis (DKP vs Power).">Power Efficiency</button>
             <button class="subtab-btn" data-subtab="roster-analysis"
                 data-tooltip="Analyzes Lifetime Stats (Start Scan).">Roster Analysis</button>
-            <button class="subtab-btn" data-subtab="results"
-                data-tooltip="Final DKP calculations, targets, and bonuses.">Results</button>
             <button class="subtab-btn" data-subtab="hall-of-legends"
                 data-tooltip="View the top performers and kingdom achievements.">Hall of Legends 🏆</button>
             <button class="subtab-btn" data-subtab="war-council" data-tooltip="Build and manage squads for KvK.">Team
@@ -951,6 +1205,8 @@
                 data-tooltip="Simulate merging multiple alliances and distributing members by power.">Alliance Merge
                 🤝</button>
             <button class="subtab-btn" data-subtab="config">Configuration</button>
+            <button class="subtab-btn" data-subtab="results"
+                data-tooltip="Final DKP calculations, targets, and bonuses.">Results</button>
         </div>
 
         <div class="subtab-content active" data-content="overview">
@@ -1304,7 +1560,19 @@
             <div class="subtab-content" data-content="config">
                 <div class="card">
                     <h2>Configuration</h2>
-                    <div class="controls">
+                    <div class="controls" style="margin-bottom: 20px;">
+                        <div class="input-group" style="width: 100%; margin-bottom: 10px;">
+                            <label style="font-weight: bold; font-size: 1.1em; margin-bottom: 10px;">DKP Formula
+                                System</label>
+                            <select class="config-input dkp-system-select" name="dkpSystem"
+                                style="padding: 10px; font-size: 1rem; border-color: var(--accent-primary);">
+                                <option value="advanced">Advanced DKP System (Target & Percentages)</option>
+                                <option value="basic">Basic DKP System (Flat Multipliers)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="controls advanced-dkp-inputs">
                         <div class="input-group"><label>Deads Multiplier</label><input type="number"
                                 class="config-input" name="deadsMultiplier" value="0.02" step="0.01"></div>
                         <div class="input-group"><label>Deads Weight</label><input type="number" class="config-input"
@@ -1319,6 +1587,15 @@
                                 name="t4Points" value="10"></div>
                         <div class="input-group"><label>T5 Points</label><input type="number" class="config-input"
                                 name="t5Points" value="20"></div>
+                    </div>
+
+                    <div class="controls basic-dkp-inputs hidden">
+                        <div class="input-group"><label>T4 Points Multiplier</label><input type="number"
+                                class="config-input" name="basicT4Points" value="10"></div>
+                        <div class="input-group"><label>T5 Points Multiplier</label><input type="number"
+                                class="config-input" name="basicT5Points" value="20"></div>
+                        <div class="input-group"><label>Deads Points Multiplier</label><input type="number"
+                                class="config-input" name="basicDeadsPoints" value="30"></div>
                     </div>
 
                     <!-- Cloud Config Removed from here -->
@@ -1603,6 +1880,9 @@
         </div>
     </div>
 
+    </div> <!-- End Content Area -->
+    </div> <!-- End Container -->
+
     <!-- Dependencies -->
     <!-- Core -->
     <script src="js/core/config.js"></script>
@@ -1622,7 +1902,7 @@
     <script src="js/services/ui/UICharts.js"></script>
     <script src="js/services/ui/UIExports.js"></script>
     <script src="js/services/ui/UISOC.js"></script>
-    <script src="js/services/ui/UIGrowth.js"></script>
+    <script src="js/services/ui/UIGrowth.js?v=2.2.1"></script>
     <script src="js/services/ui/UIHallOfLegends.js"></script>
     <script src="js/services/ui/UIAllianceDuel.js"></script>
     <script src="js/services/ui/UIWarCouncil.js"></script>
@@ -1631,6 +1911,7 @@
     <script src="js/services/ui/UIGovernance.js"></script>
     <script src="js/services/ui/UISquadBuilder.js"></script>
     <script src="js/core/commanders.js"></script>
+    <script src="js/services/CalculatorsService.js"></script>
     <script src="js/services/MailService.js"></script>
 
     <!-- Global Footer -->

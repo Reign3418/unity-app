@@ -17,7 +17,8 @@ class UIService {
             'kingdomAnalysisContainer', 'allianceAnalysisContainer', 'governorAnalysisContainer',
             'townHallFilter', 'npwdKingdomSelect', 'newArrivalsContainer', 'departuresContainer',
             'rankingGovCountSelect', 'rankingTable', 'rankingCountLabel',
-            'kingdomComparisonLimit', 'kingdomComparisonTable'
+            'kingdomComparisonLimit', 'kingdomComparisonTable',
+            'allKingdomT4Weight', 'allKingdomT5Weight', 'allKingdomDeadWeight'
         ];
         ids.forEach(id => {
             const el = document.getElementById(id);
