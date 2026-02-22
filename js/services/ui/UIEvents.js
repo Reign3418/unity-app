@@ -122,6 +122,39 @@ Object.assign(UIService.prototype, {
             });
         }
 
+        // ---- Gemini API Key ----
+        const geminiInput = document.getElementById('geminiApiKey');
+
+        // Load previously saved key from localStorage
+        const savedGeminiKey = localStorage.getItem('geminiApiKey') || '';
+        if (geminiInput && savedGeminiKey) geminiInput.value = savedGeminiKey;
+
+        // Also seed the OCR service if it's already running
+        if (savedGeminiKey && window.ocrService) {
+            window.ocrService.apiKey = savedGeminiKey;
+            window.ocrService.updateStatusBadge();
+        }
+
+        const saveGeminiBtn = document.getElementById('saveGeminiKeyBtn');
+        if (saveGeminiBtn) {
+            saveGeminiBtn.addEventListener('click', () => {
+                const key = geminiInput ? geminiInput.value.trim() : '';
+                if (!key) {
+                    alert('Please enter a Gemini API key.');
+                    return;
+                }
+                localStorage.setItem('geminiApiKey', key);
+
+                // Apply immediately to live OCR service
+                if (window.ocrService) {
+                    window.ocrService.apiKey = key;
+                    window.ocrService.updateStatusBadge();
+                }
+
+                alert('Gemini API key saved! ✅');
+            });
+        }
+
         // Upload Buttons
         ['start', 'mid', 'end'].forEach(type => {
             const btn = document.getElementById(`cloudUpload${type.charAt(0).toUpperCase() + type.slice(1)}Btn`);

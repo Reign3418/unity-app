@@ -312,7 +312,8 @@ button {
 /* Subtabs */
 .prekvk-subtabs,
 .kingdom-subtabs,
-.heatmap-subtabs {
+.heatmap-subtabs,
+#uploadSubTabs {
     display: flex;
     gap: 0.5rem;
     margin-bottom: 2rem;
@@ -327,7 +328,8 @@ button {
 }
 
 .subtab-btn,
-.calc-tab-btn {
+.calc-tab-btn,
+.upload-tab-btn {
     background: transparent;
     border: none;
     color: var(--text-secondary);
@@ -340,13 +342,15 @@ button {
 }
 
 .subtab-btn:hover,
-.calc-tab-btn:hover {
+.calc-tab-btn:hover,
+.upload-tab-btn:hover {
     color: var(--text-primary);
     background: rgba(255, 255, 255, 0.05);
 }
 
 .subtab-btn.active,
-.calc-tab-btn.active {
+.calc-tab-btn.active,
+.upload-tab-btn.active {
     background: rgba(139, 92, 246, 0.15);
     color: var(--accent-primary);
     box-shadow: 0 0 10px rgba(139, 92, 246, 0.2);
@@ -356,14 +360,16 @@ button {
 /* Tab Content Visibility */
 .tab-content,
 .subtab-content,
-.calc-tab-content {
+.calc-tab-content,
+.upload-tab-content {
     display: none;
     animation: fadeIn 0.3s ease;
 }
 
 .tab-content.active,
 .subtab-content.active,
-.calc-tab-content.active {
+.calc-tab-content.active,
+.upload-tab-content.active {
     display: block;
 }
 

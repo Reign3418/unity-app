@@ -59,8 +59,24 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 // Initialize Calculators
                 try {
+                    const calcService = new CalculatorsService();
+                } catch (calcErr) {
+                    console.error("Calculators Init Failed:", calcErr);
+                }
+
+                // Initialize OCR Scanner
+                try {
+                    const ocrService = new OCRScannerService();
+                    window.ocrService = ocrService;
+                } catch (ocrErr) {
+                    console.error("OCR Scanner Init Failed:", ocrErr);
+                }
+                try {
                     if (window.CalculatorsService) {
                         window.calculatorsService = new window.CalculatorsService();
+                    }
+                    if (window.TroopTrainingCalc) {
+                        window.troopCalc = new window.TroopTrainingCalc();
                     }
                 } catch (calcErr) {
                     console.error("CalculatorsService Init Failed:", calcErr);
