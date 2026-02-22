@@ -135,16 +135,16 @@ window.CalculatorsService = CalculatorsService;
 // Troop Training Calculator
 // ─────────────────────────────────────────────
 
-class TroopTrainingCalc {
-    // Base stats per tier (training time in seconds per troop)
-    static TIERS = {
-        1: { timeSec: 5, food: 90, wood: 90, stone: 0, gold: 0, power: 5 },
-        2: { timeSec: 60, food: 500, wood: 500, stone: 0, gold: 0, power: 20 },
-        3: { timeSec: 180, food: 1800, wood: 1800, stone: 0, gold: 0, power: 60 },
-        4: { timeSec: 720, food: 6800, wood: 6800, stone: 6800, gold: 0, power: 200 },
-        5: { timeSec: 1800, food: 15000, wood: 15000, stone: 15000, gold: 5000, power: 500 },
-    };
+// Per-tier base stats (training time in seconds per single troop)
+var TROOP_TIER_DATA = {
+    1: { timeSec: 5, food: 90, wood: 90, stone: 0, gold: 0, power: 5 },
+    2: { timeSec: 60, food: 500, wood: 500, stone: 0, gold: 0, power: 20 },
+    3: { timeSec: 180, food: 1800, wood: 1800, stone: 0, gold: 0, power: 60 },
+    4: { timeSec: 720, food: 6800, wood: 6800, stone: 6800, gold: 0, power: 200 },
+    5: { timeSec: 1800, food: 15000, wood: 15000, stone: 15000, gold: 5000, power: 500 },
+};
 
+class TroopTrainingCalc {
     constructor() {
         this.speedBuff = document.getElementById('troopSpeedBuff');
         this.clearBtn = document.getElementById('troopClearBtn');
@@ -178,7 +178,7 @@ class TroopTrainingCalc {
             const qty = parseInt(inp.value) || 0;
             if (qty <= 0) return;
             const tier = parseInt(inp.dataset.tier);
-            const t = TroopTrainingCalc.TIERS[tier];
+            const t = TROOP_TIER_DATA[tier];
             if (!t) return;
 
             totalTimeSec += (t.timeSec / multiplier) * qty;
