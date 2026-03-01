@@ -10,9 +10,18 @@ Object.assign(UIService.prototype, {
         const limitSelect = document.getElementById('kingdomComparisonLimit');
         const limitVal = limitSelect ? limitSelect.value : 'all';
 
+        const dkpMode = document.getElementById('allKingdomDkpMode')?.value || 'basic';
         const t4Weight = parseFloat(document.getElementById('allKingdomT4Weight')?.value) || 10;
         const t5Weight = parseFloat(document.getElementById('allKingdomT5Weight')?.value) || 20;
         const deadWeight = parseFloat(document.getElementById('allKingdomDeadWeight')?.value) || 30;
+        const t4DeadWeight = parseFloat(document.getElementById('allKingdomT4DeadWeight')?.value) || 50;
+        const t5DeadWeight = parseFloat(document.getElementById('allKingdomT5DeadWeight')?.value) || 100;
+
+        const thDeads = document.querySelector('#kingdomComparisonTable thead tr th:nth-child(7)');
+        if (thDeads) {
+            thDeads.textContent = dkpMode === 'advanced' ? 'HoH Specific Deads' : 'Total Deads';
+        }
+
 
         if (this.data.state.loadedKingdoms.size === 0) {
             tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;">No kingdoms loaded. Upload scans to begin.</td></tr>';
@@ -58,7 +67,15 @@ Object.assign(UIService.prototype, {
 
             // Dynamically calculate KP and DKP based on input multipliers
             stats.kp = (stats.t4 * t4Weight) + (stats.t5 * t5Weight);
-            stats.dkp = stats.kp + (stats.deads * deadWeight);
+
+            let displayDeads = stats.deads.toLocaleString();
+
+            if (dkpMode === 'advanced' && kState.hohData && (kState.hohData.t4 > 0 || kState.hohData.t5 > 0)) {
+                stats.dkp = stats.kp + (kState.hohData.t4 * t4DeadWeight) + (kState.hohData.t5 * t5DeadWeight);
+                displayDeads = `<div style="font-size:0.85rem"><span style="color:var(--text-muted)">T4:</span> ${kState.hohData.t4.toLocaleString()}<br><span style="color:var(--accent-primary)">T5:</span> ${kState.hohData.t5.toLocaleString()}</div>`;
+            } else {
+                stats.dkp = stats.kp + (stats.deads * deadWeight);
+            }
 
             const tr = document.createElement('tr');
             tr.innerHTML = `
@@ -68,7 +85,7 @@ Object.assign(UIService.prototype, {
                 <td class="${stats.troopPower >= 0 ? 'status-complete' : 'status-incomplete'}">${stats.troopPower.toLocaleString()}</td>
                 <td>${stats.t4.toLocaleString()}</td>
                 <td>${stats.t5.toLocaleString()}</td>
-                <td>${stats.deads.toLocaleString()}</td>
+                <td>${displayDeads}</td>
                 <td>${stats.healed.toLocaleString()}</td>
                 <td>${stats.kp.toLocaleString()}</td>
                 <td>${Math.round(stats.dkp).toLocaleString()}</td>
@@ -626,6 +643,22 @@ Object.assign(UIService.prototype, {
         if (this.data.state.loadedKingdoms.size > 0 && select.value === '') {
             select.value = Array.from(this.data.state.loadedKingdoms)[0];
             this.renderNewPhoneWhoDis(select.value);
+        }
+    },
+
+    updateHoHScannerDropdown() {
+        const select = document.getElementById('hohTargetKingdom');
+        if (!select) return;
+        const currentVal = select.value;
+        select.innerHTML = '<option value="">Select Kingdom First...</option>';
+        Array.from(this.data.state.loadedKingdoms).forEach(kId => {
+            const option = document.createElement('option');
+            option.value = kId;
+            option.textContent = `Kingdom ${kId}`;
+            select.appendChild(option);
+        });
+        if (currentVal && this.data.state.loadedKingdoms.has(currentVal)) {
+            select.value = currentVal;
         }
     },
 

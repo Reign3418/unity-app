@@ -12,7 +12,7 @@ class OCRScannerService {
         // Gemini API key — MUST be set via Settings tab (stored in localStorage).
         // Never hardcode keys in source files; GitHub secret scanning will reject the push.
         this.apiKey = localStorage.getItem('geminiApiKey') || '';
-        this.apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent`;
+        this.apiModel = localStorage.getItem('geminiApiModel') || 'gemini-2.5-flash';
 
         // Single aggregated profile for the current batch of screenshots
         this.aggregatedData = null;
@@ -90,6 +90,79 @@ class OCRScannerService {
         this.fileInput.addEventListener('change', (e) => {
             if (e.target.files.length) this.handleFiles(e.target.files);
         });
+
+        if (this.commitBtn) {
+            this.commitBtn.addEventListener('click', async () => {
+                if (!this.aggregatedData || !this.aggregatedData.name) {
+                    alert('No valid profile name found to commit.');
+                    return;
+                }
+
+                const kingdomSelect = document.getElementById('ocrKingdomSelect');
+                const kingdomId = kingdomSelect ? kingdomSelect.value : null;
+
+                if (!kingdomId) {
+                    alert('Please select a Kingdom to upload this data to.');
+                    return;
+                }
+
+                if (!window.uiMyAlliance || !window.uiMyAlliance.rosterService || !window.uiMyAlliance.rosterService.connected) {
+                    alert('Not connected to Firebase. Please configure the database URL in Settings and refresh.');
+                    return;
+                }
+
+                // Construct a player object
+                const p = {
+                    id: this.aggregatedData.id || `UNKNOWN_${Date.now()}`,
+                    name: this.aggregatedData.name,
+                    power: this.aggregatedData.power || 0,
+                    killPoints: this.aggregatedData.killPoints || 0,
+                    dead: this.aggregatedData.dead || 0,
+                    alliance: this.aggregatedData.alliance || '',
+                    t1Kills: this.aggregatedData.t1Kills || 0,
+                    t2Kills: this.aggregatedData.t2Kills || 0,
+                    t3Kills: this.aggregatedData.t3Kills || 0,
+                    t4Kills: this.aggregatedData.t4Kills || 0,
+                    t5Kills: this.aggregatedData.t5Kills || 0,
+                    helps: this.aggregatedData.helps || 0,
+                    rssGathered: this.aggregatedData.rssGathered || 0,
+                    rssAssistance: this.aggregatedData.rssAssistance || 0,
+                    troopPower: this.aggregatedData.troopPower || 0,
+                    techPower: this.aggregatedData.techPower || 0,
+                    buildingPower: this.aggregatedData.buildingPower || 0,
+                    commanderPower: this.aggregatedData.commanderPower || 0,
+                    acclaim: this.aggregatedData.acclaim || 0,
+                    autarch: this.aggregatedData.autarch || 0,
+                    status: 'Active'
+                };
+
+                this.commitBtn.textContent = '⏳ Uploading...';
+                this.commitBtn.style.opacity = '0.7';
+
+                try {
+                    await window.uiMyAlliance.rosterService.pushPlayerScan(kingdomId, p);
+
+                    // Visual Success state
+                    this.commitBtn.textContent = '☁️ Published to Cloud!';
+                    this.commitBtn.style.background = 'var(--success-color)';
+                    this.commitBtn.style.opacity = '1';
+
+                    setTimeout(() => {
+                        this.commitBtn.textContent = '☁️ Upload to Cloud';
+                        this.commitBtn.style.background = 'var(--accent-primary)';
+                        this.stagingArea.style.display = 'none';
+                        this.aggregatedData = null;
+                    }, 2500);
+                } catch (e) {
+                    alert('Failed to push to Cloud Roster: ' + e.message);
+                    this.commitBtn.textContent = '❌ Failed';
+                    setTimeout(() => {
+                        this.commitBtn.textContent = '☁️ Upload to Cloud';
+                        this.commitBtn.style.opacity = '1';
+                    }, 2000);
+                }
+            });
+        }
     }
 
     // ----------------------------------------------------------------
@@ -105,11 +178,10 @@ class OCRScannerService {
 
         // Reset aggregated profile for a new batch
         this.aggregatedData = {
-            id: null,
-            name: null,
-            power: null,
-            killPoints: null,
-            dead: null,
+            id: null, name: null, alliance: null, power: null, killPoints: null, dead: null,
+            t1Kills: null, t2Kills: null, t3Kills: null, t4Kills: null, t5Kills: null,
+            helps: null, rssGathered: null, rssAssistance: null, troopPower: null,
+            techPower: null, buildingPower: null, commanderPower: null, acclaim: null, autarch: null,
             images: [],
             rawResponses: []
         };
@@ -153,13 +225,16 @@ class OCRScannerService {
 
                     const d = this.aggregatedData;
 
-                    // Merge — first non-null wins, except numbers where we take the largest
+                    // Merge — first non-null wins for text fields
                     if (extracted.id && !d.id) d.id = String(extracted.id);
                     if (extracted.name && !d.name) d.name = extracted.name;
+                    if (extracted.alliance && !d.alliance) d.alliance = extracted.alliance;
 
-                    if (extracted.power > 0) d.power = Math.max(d.power || 0, extracted.power);
-                    if (extracted.killPoints > 0) d.killPoints = Math.max(d.killPoints || 0, extracted.killPoints);
-                    if (extracted.dead > 0) d.dead = Math.max(d.dead || 0, extracted.dead);
+                    // For numbers, take the largest valid number out of all the scanned images in the sequence
+                    const numKeys = ['power', 'killPoints', 'dead', 't1Kills', 't2Kills', 't3Kills', 't4Kills', 't5Kills', 'helps', 'rssGathered', 'rssAssistance', 'troopPower', 'techPower', 'buildingPower', 'commanderPower', 'acclaim', 'autarch'];
+                    for (const key of numKeys) {
+                        if (extracted[key] > 0) d[key] = Math.max(d[key] || 0, extracted[key]);
+                    }
 
                     d.rawResponses.push(JSON.stringify(extracted, null, 2));
                     this.updateAggregatedRow(true);
@@ -184,17 +259,56 @@ class OCRScannerService {
         const safeMime = mimeType || 'image/jpeg';
 
         const prompt = `This is a Rise of Kingdoms mobile game screenshot. 
-Extract the following governor stats and return ONLY a valid JSON object with these exact keys (use null if not found):
-{
-  "id": "governor ID number — look for text like 'ID: 12345678' or '(ID: 12345678)' or 'Governor ID'",
-  "name": "the governor's player username (NOT 'Governor', NOT a civilization name like China/Korea/France)",
-  "power": <total power as a plain integer, usually labeled 'Highest Power' or 'Power' — a number over 1 million>,
-  "killPoints": <kill points as a plain integer, usually labeled 'Kill Points', 'Total Score', or 'KP'>,
-  "dead": <dead troops count as a plain integer, usually labeled 'Dead'>
-}
-Return ONLY the raw JSON. No markdown, no explanation, no code fences.`;
+Extract the following governor stats. Use null if a metric is missing or not visible. Keep all numbers as plain integers, avoiding commas or K/M formatting (e.g. 1.2M -> 1200000, 500K -> 500000).
 
-        const response = await fetch(`${this.apiUrl}?key=${this.apiKey}`, {
+1. id (governor ID number — look for text like 'ID: 12345678' or '(ID: 12345678)' or 'Governor ID')
+2. name (the governor's player username, NOT 'Governor', NOT a civilization name like China/Korea/France)
+3. power (total power as a plain integer, usually labeled 'Highest Power' or 'Power' — a number over 1 million)
+4. killPoints (kill points as a plain integer, usually labeled 'Kill Points', 'Total Score', or 'KP')
+5. dead (dead troops count as a plain integer, usually labeled 'Dead')
+6. alliance (the spelled out alliance tag inside brackets, e.g. '[ABCD]')
+7. t1Kills (Tier 1 Kills. Look at the 'Kill Statistics' popup. There is a list of 5 rows with gold icons. Extract the FIRST number from the FIRST row. IGNORE the second number (Kill Points) in that row.)
+8. t2Kills (Tier 2 Kills. Extract the FIRST number from the SECOND row in that list.)
+9. t3Kills (Tier 3 Kills. Extract the FIRST number from the THIRD row in that list.)
+10. t4Kills (Tier 4 Kills. Extract the FIRST number from the FOURTH row in that list.)
+11. t5Kills (Tier 5 Kills. Extract the FIRST number from the FIFTH row in that list. This is usually 0.)
+12. helps (Alliance Help Times, a number)
+13. rssGathered (Resources Gathered, a number)
+14. rssAssistance (Resource Assistance, a number)
+15. troopPower (Troop Power, a number)
+16. techPower (Technology Power, a number)
+17. buildingPower (Building Power, a number)
+18. commanderPower (Commander Power, a number)
+19. acclaim (Acclaim points if visible, a number)
+20. autarch (Autarch points/wins if visible, maybe near Ark of Osiris, a number)
+
+Respond ONLY with a valid JSON object matching this structure identically:
+{
+  "id": null,
+  "name": null,
+  "power": 0,
+  "killPoints": 0,
+  "dead": 0,
+  "alliance": null,
+  "t1Kills": 0,
+  "t2Kills": 0,
+  "t3Kills": 0,
+  "t4Kills": 0,
+  "t5Kills": 0,
+  "helps": 0,
+  "rssGathered": 0,
+  "rssAssistance": 0,
+  "troopPower": 0,
+  "techPower": 0,
+  "buildingPower": 0,
+  "commanderPower": 0,
+  "acclaim": 0,
+  "autarch": 0
+}`;
+
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${this.apiModel}:generateContent`;
+
+        const response = await fetch(`${apiUrl}?key=${this.apiKey}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -206,7 +320,8 @@ Return ONLY the raw JSON. No markdown, no explanation, no code fences.`;
                 }],
                 generationConfig: {
                     temperature: 0,
-                    maxOutputTokens: 256
+                    responseMimeType: 'application/json',
+                    maxOutputTokens: 1024
                 }
             })
         });
@@ -219,8 +334,13 @@ Return ONLY the raw JSON. No markdown, no explanation, no code fences.`;
         const result = await response.json();
         const rawText = result?.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
 
-        // Strip any accidental markdown code fences Gemini might add
-        const cleaned = rawText.replace(/```json?\s*/gi, '').replace(/```/g, '').trim();
+        // Strip any accidental markdown code fences Gemini might add, and isolate the JSON block
+        let cleaned = rawText.replace(/```json?\s*/gi, '').replace(/```/g, '').trim();
+        const firstBrace = cleaned.indexOf('{');
+        const lastBrace = cleaned.lastIndexOf('}');
+        if (firstBrace !== -1 && lastBrace !== -1 && lastBrace >= firstBrace) {
+            cleaned = cleaned.substring(firstBrace, lastBrace + 1);
+        }
 
         let parsed;
         try {
@@ -242,7 +362,22 @@ Return ONLY the raw JSON. No markdown, no explanation, no code fences.`;
             name: parsed.name ? String(parsed.name).trim() : null,
             power: toInt(parsed.power),
             killPoints: toInt(parsed.killPoints),
-            dead: toInt(parsed.dead)
+            dead: toInt(parsed.dead),
+            alliance: parsed.alliance ? String(parsed.alliance).trim() : null,
+            t1Kills: toInt(parsed.t1Kills),
+            t2Kills: toInt(parsed.t2Kills),
+            t3Kills: toInt(parsed.t3Kills),
+            t4Kills: toInt(parsed.t4Kills),
+            t5Kills: toInt(parsed.t5Kills),
+            helps: toInt(parsed.helps),
+            rssGathered: toInt(parsed.rssGathered),
+            rssAssistance: toInt(parsed.rssAssistance),
+            troopPower: toInt(parsed.troopPower),
+            techPower: toInt(parsed.techPower),
+            buildingPower: toInt(parsed.buildingPower),
+            commanderPower: toInt(parsed.commanderPower),
+            acclaim: toInt(parsed.acclaim),
+            autarch: toInt(parsed.autarch)
         };
     }
 
@@ -307,6 +442,7 @@ Return ONLY the raw JSON. No markdown, no explanation, no code fences.`;
             </td>
             <td>${d.id || 'Pending'}</td>
             <td style="font-weight:bold; color:var(--text-primary);">${d.name || 'Unknown'}</td>
+            <td>${d.alliance || '-'}</td>
             <td>${d.power ? d.power.toLocaleString() : '-'}</td>
             <td>${d.killPoints ? d.killPoints.toLocaleString() : '-'}</td>
             <td>${d.dead ? d.dead.toLocaleString() : '-'}</td>

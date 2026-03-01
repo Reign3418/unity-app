@@ -7,6 +7,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         dataService.loadState();
 
         const uiService = new UIService(dataService);
+        window.uiService = uiService;
+
         // Initialize App
         (async () => {
             try {
@@ -71,12 +73,53 @@ document.addEventListener('DOMContentLoaded', async () => {
                 } catch (ocrErr) {
                     console.error("OCR Scanner Init Failed:", ocrErr);
                 }
+
+                // Initialize Global Firebase Service
+                try {
+                    const firebaseService = new FirebaseRosterService();
+                    window.firebaseRosterService = firebaseService;
+
+                    // Automatically connect if URL saved
+                    const savedUrl = localStorage.getItem('__unity_firebase_url');
+                    if (savedUrl) {
+                        firebaseService.init(savedUrl);
+                    }
+                } catch (fbErr) {
+                    console.error("Firebase Service Init Failed:", fbErr);
+                }
+
+                // Initialize My Alliance Cloud Roster
+                try {
+                    if (window.UIMyAlliance && window.firebaseRosterService) {
+                        window.uiMyAlliance = new window.UIMyAlliance(dataService, window.firebaseRosterService);
+                        window.uiMyAlliance.init();
+                    }
+                } catch (allianceErr) {
+                    console.error("My Alliance Init Failed:", allianceErr);
+                }
+
+                // Initialize Community Hub
+                try {
+                    if (window.UICommunity && window.firebaseRosterService) {
+                        window.uiCommunity = new window.UICommunity(window.firebaseRosterService);
+                        window.uiCommunity.init();
+                    }
+                } catch (commErr) {
+                    console.error("Community Hub Init Failed:", commErr);
+                }
+
                 try {
                     if (window.CalculatorsService) {
                         window.calculatorsService = new window.CalculatorsService();
                     }
                     if (window.TroopTrainingCalc) {
                         window.troopCalc = new window.TroopTrainingCalc();
+                    }
+                    if (window.AllianceFlagCalc) {
+                        window.flagCalc = new window.AllianceFlagCalc();
+                    }
+                    if (window.HoHScannerCalc) {
+                        window.hohScanner = new window.HoHScannerCalc();
                     }
                 } catch (calcErr) {
                     console.error("CalculatorsService Init Failed:", calcErr);
@@ -187,6 +230,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const uploadBtn = zone.querySelector('.upload-btn');
             const cloudBtn = zone.querySelector('.cloud-btn');
+            const firebaseBtn = zone.querySelector('.firebase-sync-btn');
 
             // Logic for New Split UI
             if (uploadBtn) {
@@ -200,6 +244,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 cloudBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     if (uiService) uiService.handleMainCloudImport(type);
+                });
+            }
+
+            if (firebaseBtn) {
+                firebaseBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (uiService) uiService.handleFirebaseImport(type);
                 });
             }
 

@@ -152,6 +152,7 @@ Object.assign(UIService.prototype, {
         });
         this.updatePrekvkDropdown();
         this.updateNPWDDropdown();
+        if (this.updateHoHScannerDropdown) this.updateHoHScannerDropdown();
     },
 
     switchPrekvkSubTab(subTabId) {

@@ -18,7 +18,8 @@ class UIService {
             'townHallFilter', 'npwdKingdomSelect', 'newArrivalsContainer', 'departuresContainer',
             'rankingGovCountSelect', 'rankingTable', 'rankingCountLabel',
             'kingdomComparisonLimit', 'kingdomComparisonTable',
-            'allKingdomT4Weight', 'allKingdomT5Weight', 'allKingdomDeadWeight'
+            'allKingdomT4Weight', 'allKingdomT5Weight', 'allKingdomDeadWeight',
+            'allKingdomT4DeadWeight', 'allKingdomT5DeadWeight', 'allKingdomDkpMode'
         ];
         ids.forEach(id => {
             const el = document.getElementById(id);

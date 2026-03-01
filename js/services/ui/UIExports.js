@@ -315,6 +315,120 @@ Object.assign(UIService.prototype, {
         this.renderCloudFileBrowser(modal, browser, closeBtn, onFileSelect, 'scans');
     },
 
+    async handleFirebaseImport(type) {
+        if (!window.uiMyAlliance || !window.uiMyAlliance.rosterService || !window.uiMyAlliance.rosterService.connected) {
+            alert("Please configure your Firebase Settings in the Settings Tab to sync live rosters.");
+            return;
+        }
+
+        try {
+            const modal = document.getElementById('firebaseSyncModal');
+            const select = document.getElementById('firebaseKingdomSelect');
+            const confirmBtn = document.getElementById('confirmFirebaseBtn');
+            const cancelBtn = document.getElementById('cancelFirebaseBtn');
+            const closeBtn = document.getElementById('closeFirebaseModal');
+
+            if (!modal || !select || !confirmBtn || !cancelBtn || !closeBtn) {
+                alert("Firebase modal elements not found in DOM.");
+                return;
+            }
+
+            modal.classList.remove('hidden');
+            select.innerHTML = '<option value="">Loading Workspace List...</option>';
+            confirmBtn.disabled = true;
+
+            const kingdoms = await window.uiMyAlliance.rosterService.getActiveKingdoms();
+            select.innerHTML = '';
+
+            if (kingdoms.length === 0) {
+                select.innerHTML = '<option value="">No Cloud Workspaces Found</option>';
+            } else {
+                kingdoms.forEach(k => {
+                    select.innerHTML += `<option value="${k}">${k}</option>`;
+                });
+                confirmBtn.disabled = false;
+            }
+
+            const cleanup = () => {
+                modal.classList.add('hidden');
+                confirmBtn.onclick = null;
+                cancelBtn.onclick = null;
+                closeBtn.onclick = null;
+            };
+
+            cancelBtn.onclick = cleanup;
+            closeBtn.onclick = cleanup;
+
+            confirmBtn.onclick = async () => {
+                const targetKId = select.value;
+                if (!targetKId) return;
+
+                confirmBtn.disabled = true;
+                confirmBtn.textContent = 'Syncing...';
+
+                try {
+                    const rawData = await window.uiMyAlliance.rosterService.getKingdomDataOnce(targetKId);
+                    if (rawData.length === 0) {
+                        alert(`No data found in Firebase for Kingdom ${targetKId}`);
+                        confirmBtn.disabled = false;
+                        confirmBtn.textContent = 'Sync Data';
+                        return;
+                    }
+
+                    // Map Firebase camelCase keys to traditional CSV Header keys expected by DataService
+                    const mappedData = rawData.map(p => ({
+                        'Governor ID': p.id,
+                        'Governor Name': p.name,
+                        'Alliance Tag': p.alliance,
+                        'Power': p.power,
+                        'Kill Points': p.killPoints,
+                        'Deads': p.dead,
+                        'T1 Kills': p.t1Kills,
+                        'T2 Kills': p.t2Kills,
+                        'T3 Kills': p.t3Kills,
+                        'T4 Kills': p.t4Kills,
+                        'T5 Kills': p.t5Kills,
+                        'Resources Gathered': p.rssGathered,
+                        'Assistance': p.rssAssistance,
+                        'Troop Power': p.troopPower,
+                        'Tech Power': p.techPower,
+                        'Building Power': p.buildingPower,
+                        'Commander Power': p.commanderPower,
+                        '_kingdom': targetKId
+                    }));
+
+                    // Bundle it into a virtual JSON upload
+                    const content = JSON.stringify({
+                        date: new Date().toISOString().split('T')[0],
+                        kingdoms: [targetKId],
+                        data: mappedData
+                    });
+
+                    const blob = new Blob([content], { type: 'application/json' });
+                    const file = new File([blob], `Firebase_Sync_K${targetKId}_${Date.now()}.json`, { type: 'application/json' });
+
+                    if (window.handleFilesGlobal) {
+                        await window.handleFilesGlobal([file], type, `Synced from Firebase: Kingdom ${targetKId}`);
+                    } else {
+                        alert("Error: Global file handler not linked.");
+                    }
+
+                    cleanup();
+                } catch (err) {
+                    console.error('Firebase Import Inner Error:', err);
+                    alert("Failed to sync from Firebase: " + err.message);
+                } finally {
+                    confirmBtn.disabled = false;
+                    confirmBtn.textContent = 'Sync Data';
+                }
+            };
+
+        } catch (e) {
+            console.error('Firebase Import Error:', e);
+            alert("Failed to initialize Firebase Sync: " + e.message);
+        }
+    },
+
     async handleMainCloudSave(type) {
         try {
             const dataState = this.data.state;

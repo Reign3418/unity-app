@@ -1,7 +1,7 @@
 // ==========================================
 // 1. CONFIGURATION
 const Config = {
-    APP_VERSION: 'v2.2 (Data Pipelines & Analytics)',
+    APP_VERSION: 'v2.3 (Community Hub Edition)',
 
     // -------------------------------------------------------------------------
     // SECURITY CONFIGURATION

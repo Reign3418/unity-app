@@ -14,6 +14,10 @@
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/pca-js@1.0.0/pca.min.js"></script>
 
+    <!-- Firebase SDK (Compat version for simplicity in vanilla JS) -->
+    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-database-compat.js"></script>
+
     <!-- Tesseract.js for AI OCR: purpose-built text extraction from images -->
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 </head>
@@ -44,6 +48,8 @@
                 Phone Who Dis</button>
             <button class="tab-btn" data-tab="all-kingdom-results"
                 data-tooltip="Comparison leaderboard for multiple kingdoms.">All Kingdom DKP results</button>
+            <button class="tab-btn" data-tab="my-alliance"
+                data-tooltip="Live Cloud Roster shared with your alliance.">My Alliance 🛡️</button>
             <button class="tab-btn" data-tab="soc" data-tooltip="Season of Conquest Modes">SOC ⚔️</button>
             <button class="tab-btn" data-tab="governance"
                 data-tooltip="The Audit: Roster Management & War Potential.">Governance ⚖️</button>
@@ -55,6 +61,8 @@
                 ⚙️</button>
             <button class="tab-btn" data-tab="race-to-glory" data-tooltip="Animated Bar Chart Race.">Race to Glory
                 🏁</button>
+            <button class="tab-btn" data-tab="community" data-tooltip="Submit ideas, bugs, and reviews!">Community Hub
+                💬</button>
             <button class="tab-btn" data-tab="calculators"
                 data-tooltip="Quickly calculate items and values.">Calculators 🧮</button>
         </div>
@@ -119,7 +127,12 @@
                                     </button>
                                     <div class="or-divider">OR</div>
                                     <button class="action-btn cloud-btn" data-type="start">
-                                        <span class="icon">☁️</span> Load from Cloud
+                                        <span class="icon">🐙</span> Load from GitHub
+                                    </button>
+                                    <button class="action-btn firebase-sync-btn" data-type="start"
+                                        style="margin-top: 10px; background: rgba(59, 130, 246, 0.1); border: 1px solid var(--accent-primary); color: var(--text-primary);">
+                                        <span class="icon" style="color: var(--accent-primary);">🔥</span> Sync from
+                                        Firebase
                                     </button>
                                 </div>
                                 <div class="card-footer hidden" id="startSaveContainer">
@@ -144,7 +157,12 @@
                                     </button>
                                     <div class="or-divider">OR</div>
                                     <button class="action-btn cloud-btn" data-type="mid">
-                                        <span class="icon">☁️</span> Load from Cloud
+                                        <span class="icon">🐙</span> Load from GitHub
+                                    </button>
+                                    <button class="action-btn firebase-sync-btn" data-type="mid"
+                                        style="margin-top: 10px; background: rgba(59, 130, 246, 0.1); border: 1px solid var(--accent-primary); color: var(--text-primary);">
+                                        <span class="icon" style="color: var(--accent-primary);">🔥</span> Sync from
+                                        Firebase
                                     </button>
                                 </div>
                                 <div class="card-footer hidden" id="midSaveContainer">
@@ -168,7 +186,12 @@
                                     </button>
                                     <div class="or-divider">OR</div>
                                     <button class="action-btn cloud-btn" data-type="end">
-                                        <span class="icon">☁️</span> Load from Cloud
+                                        <span class="icon">🐙</span> Load from GitHub
+                                    </button>
+                                    <button class="action-btn firebase-sync-btn" data-type="end"
+                                        style="margin-top: 10px; background: rgba(59, 130, 246, 0.1); border: 1px solid var(--accent-primary); color: var(--text-primary);">
+                                        <span class="icon" style="color: var(--accent-primary);">🔥</span> Sync from
+                                        Firebase
                                     </button>
                                 </div>
                                 <div class="card-footer hidden" id="endSaveContainer">
@@ -231,6 +254,7 @@
                                             <th>Image</th>
                                             <th>Governor ID</th>
                                             <th>Name</th>
+                                            <th>Alliance</th>
                                             <th>Power</th>
                                             <th>Kill Points</th>
                                             <th>Dead</th>
@@ -242,9 +266,19 @@
                                     </tbody>
                                 </table>
                             </div>
-                            <div style="margin-top: 20px; text-align: right;">
+                            <div
+                                style="margin-top: 20px; display: flex; justify-content: flex-end; align-items: center; gap: 15px;">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <label for="ocrKingdomSelect"
+                                        style="font-size: 0.9em; color: var(--text-secondary);">Target Kingdom:</label>
+                                    <select id="ocrKingdomSelect" class="config-input"
+                                        style="min-width: 150px; padding: 6px 10px;">
+                                        <option value="" disabled selected>Select Kingdom</option>
+                                    </select>
+                                </div>
                                 <button class="primary-btn" id="ocrCommitBtn"
-                                    style="opacity: 0.5; cursor: not-allowed;">Commit to Database</button>
+                                    style="opacity: 0.5; cursor: not-allowed; min-width: 180px;">☁️ Upload to
+                                    Cloud</button>
                             </div>
                         </div>
                     </div>
@@ -370,20 +404,43 @@
                 </h2>
                 <div class="input-group"
                     style="margin-left: auto; display: flex; flex-direction: row; align-items: flex-end; flex-wrap: wrap; gap: 15px;">
+                    <!-- DKP Mode Toggle -->
                     <div class="input-group" style="margin: 0; align-items: center; flex-direction: row; gap: 5px;">
-                        <label style="margin: 0;">T4 Points:</label>
+                        <label style="margin: 0;">DKP Mode:</label>
+                        <select id="allKingdomDkpMode" class="prekvk-select" style="min-width: 100px;">
+                            <option value="basic">Basic</option>
+                            <option value="advanced">Advanced (HoH Scan)</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group" style="margin: 0; align-items: center; flex-direction: row; gap: 5px;">
+                        <label style="margin: 0;">T4 Pts:</label>
                         <input type="number" id="allKingdomT4Weight" class="config-input" value="10" step="1"
-                            style="width: 70px;">
+                            style="width: 70px; padding: 4px 8px;">
                     </div>
                     <div class="input-group" style="margin: 0; align-items: center; flex-direction: row; gap: 5px;">
-                        <label style="margin: 0;">T5 Points:</label>
+                        <label style="margin: 0;">T5 Pts:</label>
                         <input type="number" id="allKingdomT5Weight" class="config-input" value="20" step="1"
-                            style="width: 70px;">
+                            style="width: 70px; padding: 4px 8px;">
                     </div>
-                    <div class="input-group" style="margin: 0; align-items: center; flex-direction: row; gap: 5px;">
-                        <label style="margin: 0;">Deads Points:</label>
+
+                    <!-- Basic Only Input -->
+                    <div id="basicAllKingdomInputs" class="input-group"
+                        style="margin: 0; align-items: center; flex-direction: row; gap: 5px;">
+                        <label style="margin: 0;">Deads Pts:</label>
                         <input type="number" id="allKingdomDeadWeight" class="config-input" value="30" step="1"
-                            style="width: 70px;">
+                            style="width: 70px; padding: 4px 8px;">
+                    </div>
+
+                    <!-- Advanced Only Inputs -->
+                    <div id="advancedAllKingdomInputs" class="input-group hidden"
+                        style="margin: 0; align-items: center; flex-direction: row; gap: 5px;">
+                        <label style="margin: 0; color: var(--accent-primary);">T4 Deads Pts:</label>
+                        <input type="number" id="allKingdomT4DeadWeight" class="config-input" value="50" step="1"
+                            style="width: 70px; padding: 4px 8px; border-color: var(--accent-primary);">
+                        <label style="margin: 0; margin-left: 5px; color: var(--accent-primary);">T5 Deads Pts:</label>
+                        <input type="number" id="allKingdomT5DeadWeight" class="config-input" value="100" step="1"
+                            style="width: 70px; padding: 4px 8px; border-color: var(--accent-primary);">
                     </div>
 
                     <div class="input-group" style="margin: 0;">
@@ -399,6 +456,55 @@
                     </div>
                 </div>
             </div>
+
+            <!-- HoH Scanner Dropzone Component -->
+            <div id="allKingdomHoHScannerContainer" class="hidden"
+                style="margin-bottom: 20px; border: 1px dashed var(--accent-primary); border-radius: 8px; padding: 20px; background: rgba(59, 130, 246, 0.05);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h3 style="color: var(--accent-primary); margin: 0;">⚔️ Hall of Heroes Scanner</h3>
+                    <div id="hohScannerStatus" style="font-size: 0.9rem; color: var(--text-muted);">Waiting for "Unit
+                        Deaths" Screenshot...</div>
+                </div>
+
+                <div style="display: flex; gap: 20px;">
+                    <div id="hohOcrDropZone"
+                        style="flex: 1; border: 2px dashed var(--border-color); border-radius: 8px; padding: 30px; text-align: center; cursor: pointer; transition: all 0.2s; background: rgba(0,0,0,0.2);">
+                        <div style="font-size: 2rem; margin-bottom: 10px;">📸</div>
+                        <div style="font-weight: 500;">Drop Unit Deaths Screenshot Here</div>
+                        <div
+                            style="font-size: 0.85rem; color: var(--text-muted); margin-top: 5px; margin-bottom: 15px;">
+                            or click to browse
+                        </div>
+                        <div onclick="event.stopPropagation()">
+                            <select id="hohTargetKingdom" class="prekvk-select"
+                                style="min-width: 150px; text-align: center;">
+                                <option value="">Select Kingdom First...</option>
+                            </select>
+                        </div>
+                        <input type="file" id="hohOcrInput" accept="image/*" hidden="">
+                    </div>
+
+                    <div id="hohResultsPanel" class="hidden"
+                        style="flex: 1; border-radius: 8px; background: rgba(0,0,0,0.3); padding: 15px;">
+                        <h4
+                            style="margin-top: 0; margin-bottom: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 5px;">
+                            Extracted Kingdom Totals</h4>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <div>
+                                <div style="color: var(--text-muted); font-size: 0.85rem;">Total T4 Deads</div>
+                                <div id="hohTotalT4Deads" style="font-size: 1.2rem; font-weight: 600; color: #fff;">0
+                                </div>
+                            </div>
+                            <div>
+                                <div style="color: var(--text-muted); font-size: 0.85rem;">Total T5 Deads</div>
+                                <div id="hohTotalT5Deads" style="font-size: 1.2rem; font-weight: 600; color: #fff;">0
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="table-container">
                 <table class="dkp-table" id="kingdomComparisonTable">
                     <thead>
@@ -784,83 +890,290 @@
     </div>
 
     <!-- Application Settings Tab -->
+    <!-- Application Settings Tab -->
     <div id="settings" class="tab-content">
-        <div class="card">
-            <div class="results-header">
-                <h2>Application Settings</h2>
-            </div>
+        <div class="results-header" style="margin-bottom: 2rem;">
+            <h2>Application Settings & Setup</h2>
+            <p style="color: var(--text-muted); margin-top: 5px; margin-bottom: 0;">Configure your cloud services and
+                API keys to unlock the full potential of Unity.</p>
+        </div>
 
-            <div class="results-header" style="margin-top: 2rem;">
-                <h3>☁️ Cloud Integration (GitHub)
-                    <span style="font-size: 0.8em; margin-left: 10px; opacity: 0.8;"
-                        data-tooltip="Configure GitHub cloud storage.">
-                        ℹ️
-                    </span>
-                </h3>
-            </div>
+        <div class="settings-grid"
+            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 2rem;">
 
-            <div class="controls">
-                <div class="input-group">
-                    <label>GitHub Username</label>
-                    <input type="text" id="ghOwner" class="config-input">
+            <!-- GitHub Card -->
+            <div class="card" style="display: flex; flex-direction: column; height: 100%;">
+                <div class="results-header"
+                    style="margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                    <h3 style="margin: 0; display: flex; align-items: center; gap: 10px;">
+                        ☁️ GitHub Cloud Integration
+                    </h3>
                 </div>
-                <div class="input-group">
-                    <label>Repository Name</label>
-                    <input type="text" id="ghRepo" class="config-input">
+
+                <div style="flex-grow: 1; margin-bottom: 1.5rem;">
+                    <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
+                        <strong>Purpose:</strong> Stores all uploaded CSV stats and calculations persistently in the
+                        cloud.
+                    </p>
+                    <p style="font-size: 0.9rem; color: var(--success-color); margin-bottom: 1rem;">
+                        <strong>Cost:</strong> 100% Free
+                    </p>
+
+                    <h4 style="font-size: 0.95rem; margin-bottom: 0.5rem; color: var(--text-primary);">Setup Guide:</h4>
+                    <ol
+                        style="font-size: 0.85rem; color: var(--text-muted); padding-left: 1.2rem; margin-bottom: 1rem; display: flex; flex-direction: column; gap: 0.4rem;">
+                        <li>Create a free account on <a href="https://github.com" target="_blank"
+                                style="color: var(--accent-primary);">GitHub</a>.</li>
+                        <li>Create a new <strong>Public</strong> or <strong>Private</strong> repository.</li>
+                        <li>Go to Settings > Developer settings > Personal access tokens > Tokens (classic).</li>
+                        <li>Generate a new token with <code
+                                style="background: rgba(0,0,0,0.3); padding: 2px 4px; border-radius: 3px;">repo</code>
+                            scope checked. <strong>Copy the token immediately</strong>.</li>
+                    </ol>
                 </div>
-                <div class="input-group">
-                    <label>Personal Access Token</label>
-                    <input type="password" id="ghToken" class="config-input">
-                </div>
-                <div class="input-group" style="justify-content: flex-end;">
-                    <label>&nbsp;</label>
-                    <button id="saveGhConfigBtn" class="primary-btn">Save Cloud Settings</button>
+
+                <div class="controls" style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 0;">
+                    <div class="input-group">
+                        <label>GitHub Username</label>
+                        <input type="text" id="ghOwner" class="config-input" placeholder="e.g. your-username">
+                    </div>
+                    <div class="input-group">
+                        <label>Repository Name</label>
+                        <input type="text" id="ghRepo" class="config-input" placeholder="e.g. rok-data">
+                    </div>
+                    <div class="input-group">
+                        <label>Personal Access Token</label>
+                        <input type="password" id="ghToken" class="config-input" placeholder="ghp_...">
+                    </div>
+                    <button id="saveGhConfigBtn" class="primary-btn"
+                        style="align-self: flex-end; margin-top: 0.5rem;">Save Cloud Settings</button>
                 </div>
             </div>
+
+            <!-- Gemini Card -->
+            <div class="card" style="display: flex; flex-direction: column; height: 100%;">
+                <div class="results-header"
+                    style="margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                    <h3 style="margin: 0; display: flex; align-items: center; gap: 10px;">
+                        🤖 Gemini AI Scanner
+                    </h3>
+                </div>
+
+                <div style="flex-grow: 1; margin-bottom: 1.5rem;">
+                    <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
+                        <strong>Purpose:</strong> Powers the OCR Screenshot Scanner (reading game images natively).
+                    </p>
+                    <p style="font-size: 0.9rem; color: var(--success-color); margin-bottom: 1rem;">
+                        <strong>Cost:</strong> Free Tier <span style="color:var(--text-muted); font-size: 0.8em;">(15
+                            requests/min, 1 million reqs/day)</span>. Pay-as-you-go if exceeded <span
+                            style="color:var(--text-muted); font-size: 0.8em;">(fractions of a cent per scan)</span>.
+                    </p>
+
+                    <h4 style="font-size: 0.95rem; margin-bottom: 0.5rem; color: var(--text-primary);">Setup Guide:</h4>
+                    <ol
+                        style="font-size: 0.85rem; color: var(--text-muted); padding-left: 1.2rem; margin-bottom: 1rem; display: flex; flex-direction: column; gap: 0.4rem;">
+                        <li>Visit <a href="https://aistudio.google.com/app/apikey" target="_blank"
+                                style="color: var(--accent-primary);">Google AI Studio</a> and sign in.</li>
+                        <li>Click <strong>Create API Key</strong> and select (or create) a Google Cloud project.</li>
+                        <li>Copy the generated API Key.</li>
+                        <li><em>Note: If you constantly hit quota errors, ensure billing is set up on your Cloud Project
+                                (the Free tier requires a linked card to verify identity).</em></li>
+                    </ol>
+                </div>
+
+                <div class="controls" style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 0;">
+                    <div class="input-group">
+                        <label>Gemini API Key</label>
+                        <input type="password" id="geminiApiKey" class="config-input" placeholder="AIzaSy...">
+                    </div>
+                    <div class="input-group">
+                        <label>Gemini API Model</label>
+                        <select id="geminiApiModel" class="config-input">
+                            <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+                            <option value="gemini-2.0-flash-exp">Gemini 2.0 Flash Exp</option>
+                            <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+                            <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+                            <option value="gemini-1.5-flash-latest">Gemini 1.5 Flash (Latest Build)</option>
+                        </select>
+                    </div>
+                    <button id="saveGeminiKeyBtn" class="primary-btn"
+                        style="align-self: flex-end; margin-top: 0.5rem;">Save API Key</button>
+                </div>
+            </div>
+
+            <!-- Firebase Card -->
+            <div class="card" style="display: flex; flex-direction: column; height: 100%;">
+                <div class="results-header"
+                    style="margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                    <h3 style="margin: 0; display: flex; align-items: center; gap: 10px;">
+                        🔥 Firebase Cloud Sync
+                    </h3>
+                </div>
+
+                <div style="flex-grow: 1; margin-bottom: 1.5rem;">
+                    <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
+                        <strong>Purpose:</strong> Drives the "My Alliance" live shared roster and instant AI scan
+                        syncing.
+                    </p>
+                    <p style="font-size: 0.9rem; color: var(--success-color); margin-bottom: 1rem;">
+                        <strong>Cost:</strong> Spark Plan is 100% Free <span
+                            style="color:var(--text-muted); font-size: 0.8em;">(1GB storage, 10GB/mo transfer - highly
+                            sufficient for text data)</span>.
+                    </p>
+
+                    <h4 style="font-size: 0.95rem; margin-bottom: 0.5rem; color: var(--text-primary);">Setup Guide:</h4>
+                    <ol
+                        style="font-size: 0.85rem; color: var(--text-muted); padding-left: 1.2rem; margin-bottom: 1rem; display: flex; flex-direction: column; gap: 0.4rem;">
+                        <li>Go to the <a href="https://console.firebase.google.com/" target="_blank"
+                                style="color: var(--accent-primary);">Firebase Console</a> and add a new project.</li>
+                        <li>In the left menu, select <strong>Realtime Database</strong> under Build.</li>
+                        <li>Click <strong>Create Database</strong> (start in Test Mode, or edit Rules to allow
+                            reads/writes).</li>
+                        <li>Copy the Database URL provided (e.g., <code
+                                style="background: rgba(0,0,0,0.3); padding: 2px 4px; border-radius: 3px;">https://your-project.firebaseio.com</code>).
+                        </li>
+                        <li>Paste it below. No further API keys are needed!</li>
+                    </ol>
+                </div>
+
+                <div class="controls" style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 0;">
+                    <div class="input-group">
+                        <label>Firebase Realtime Database URL</label>
+                        <input type="text" id="firebaseDbUrl" class="config-input"
+                            placeholder="https://your-project-id.firebaseio.com">
+                    </div>
+                    <button id="saveSettingsBtn" class="primary-btn"
+                        style="align-self: flex-end; margin-top: auto;">Save Firebase DB</button>
+                </div>
+            </div>
+
+            <!-- Data Management Card -->
+            <div class="card"
+                style="display: flex; flex-direction: column; height: 100%; border: 1px solid rgba(239, 68, 68, 0.3);">
+                <div class="results-header"
+                    style="margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                    <h3 style="margin: 0; display: flex; align-items: center; gap: 10px; color: var(--danger-color);">
+                        💾 Data Management
+                    </h3>
+                </div>
+
+                <div style="flex-grow: 1; margin-bottom: 1.5rem;">
+                    <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1rem;">
+                        Manage your local app session and clean up memory.
+                    </p>
+
+                    <div style="margin-bottom: 1.5rem; padding: 1rem; background: rgba(0,0,0,0.2); border-radius: 8px;">
+                        <h4 style="font-size: 0.95rem; margin-bottom: 0.5rem; color: var(--text-primary);">🧹 Clear
+                            Loaded Scans</h4>
+                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">Removes all
+                            currently loaded Kingdom CSVs from your immediate active session.</p>
+                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0;">Use this to switch
+                            tasks without mixing new data. <em>(Your cloud saves and app settings remain safe.)</em></p>
+                    </div>
+
+                    <div
+                        style="padding: 1rem; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px;">
+                        <h4 style="font-size: 0.95rem; margin-bottom: 0.5rem; color: var(--danger-color);">⚠️ Factory
+                            Reset</h4>
+                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0;">Hard wipe of
+                            EVERYTHING in local storage. Erases API keys, GitHub tokens, settings, and loaded data.
+                            Cannot be undone.</p>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: auto;">
+                    <button id="resetDataBtn" class="primary-btn"
+                        style="background: var(--warning-color); border-color: var(--warning-color); color: #000; box-shadow: none;">Clear
+                        Loaded Scans</button>
+                    <button id="factoryResetBtn" class="primary-btn danger-btn"
+                        style="background: var(--danger-color); box-shadow: none;">Factory Reset</button>
+                </div>
+            </div>
+
+        </div> <!-- Close .settings-grid -->
+    </div>
+
+    <!-- Community Hub Tab (NEW) -->
+    <div id="community" class="tab-content">
+        <div class="results-header" style="margin-bottom: 2rem;">
+            <h2>Unity Community Hub 💬</h2>
+            <p style="color: var(--text-muted); margin-top: 5px; margin-bottom: 0;">Share your ideas, report bugs, and
+                chat with other users developing Unity!</p>
         </div>
 
-        <div class="results-header" style="margin-top: 2rem;">
-            <h3>🤖 AI Screenshot Scanner (Gemini)
-                <span style="font-size: 0.8em; margin-left: 10px; opacity: 0.8;"
-                    data-tooltip="Used for OCR scanning in the Upload tab.">
-                    ℹ️
-                </span>
-            </h3>
-        </div>
-        <div class="controls">
-            <div class="input-group">
-                <label>Gemini API Key
-                    <a href="https://aistudio.google.com" target="_blank"
-                        style="font-size:0.8em; margin-left:8px; color:var(--accent-primary); opacity:0.8;">
-                        Get free key ↗
-                    </a>
-                </label>
-                <input type="password" id="geminiApiKey" class="config-input" placeholder="AIzaSy...">
-            </div>
-            <div class="input-group" style="justify-content: flex-end;">
-                <label>&nbsp;</label>
-                <button id="saveGeminiKeyBtn" class="primary-btn">Save API Key</button>
-            </div>
-        </div>
+        <div class="split-layout"
+            style="display: grid; grid-template-columns: 350px 1fr; gap: 2rem; align-items: start;">
 
+            <!-- Left Column: Submit Form -->
+            <div class="card" style="position: sticky; top: 2rem;">
+                <div class="results-header"
+                    style="margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                    <h3 style="margin: 0;">Submit Feedback</h3>
+                </div>
 
-        <div class="results-header" style="margin-top: 2rem;">
-            <h3>💾 Data Management</h3>
-        </div>
-        <div class="controls" style="flex-direction: column; gap: 15px;">
-            <p style="color: var(--text-muted); font-size: 0.9em;">
-                <strong>Clear Loaded Scans:</strong> Removes all currently loaded scan data from memory and the active
-                session. Use this to switch tasks without mixing data. Your cloud saves and settings remain safe.<br>
-                <strong>Factory Reset:</strong> Wipes EVERYTHING (Data, Settings, Local Cache). Use with caution.
-            </p>
-            <div class="input-group" style="justify-content: space-between;">
-                <button id="resetDataBtn" class="primary-btn"
-                    style="background: var(--warning-color); border-color: var(--warning-color);">🧹 Clear Loaded
-                    Scans</button>
-                <button id="factoryResetBtn" class="primary-btn danger-btn">⚠️ Factory Reset</button>
+                <div class="controls" style="display: flex; flex-direction: column; gap: 1.2rem; margin-bottom: 0;">
+                    <div class="input-group">
+                        <label>Post Type</label>
+                        <select id="communityType" class="config-input">
+                            <option value="Idea">💡 Idea / Feature Request</option>
+                            <option value="Bug">🐛 Bug Report</option>
+                            <option value="Review">⭐ Review</option>
+                            <option value="Question">❓ Question</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Your Name (or Kingdom)</label>
+                        <input type="text" id="communityName" class="config-input" placeholder="e.g. John Doe (K3155)"
+                            maxlength="50">
+                    </div>
+
+                    <div class="input-group">
+                        <label>Message</label>
+                        <textarea id="communityMessage" class="config-input" rows="5"
+                            placeholder="Describe your idea or report a bug..."
+                            style="resize: vertical; min-height: 100px; padding: 0.75rem;" maxlength="500"></textarea>
+                        <div style="text-align: right; font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">
+                            <span id="communityCharCount">0</span>/500
+                        </div>
+                    </div>
+
+                    <button id="communitySubmitBtn" class="primary-btn"
+                        style="width: 100%; margin-top: 0.5rem; display: flex; justify-content: center; gap: 10px; align-items: center;">
+                        <span>Post to Board</span>
+                        <span style="font-size: 1.2rem;">🚀</span>
+                    </button>
+                    <div id="communitySubmitStatus"
+                        style="text-align: center; font-size: 0.85rem; margin-top: -5px; min-height: 20px;"></div>
+                </div>
             </div>
+
+            <!-- Right Column: Live Feed -->
+            <div class="card"
+                style="background: rgba(15, 23, 42, 0.3); border: 2px dashed rgba(99, 102, 241, 0.2); min-height: 600px; padding: 1.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h3 style="margin: 0; color: var(--text-primary); display: flex; align-items: center; gap: 10px;">
+                        <span class="pulse-dot"
+                            style="width: 10px; height: 10px; background-color: var(--success-color); border-radius: 50%; display: inline-block; box-shadow: 0 0 8px var(--success-color);"></span>
+                        Live Global Feed
+                    </h3>
+                    <div
+                        style="font-size: 0.8rem; color: var(--text-muted); background: rgba(0,0,0,0.3); padding: 4px 10px; border-radius: 12px;">
+                        Synced via Firebase Realtime Database</div>
+                </div>
+
+                <!-- Feed Container -->
+                <div id="communityFeedContainer"
+                    style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; max-height: 700px; overflow-y: auto; padding-right: 10px;">
+                    <!-- Loading Skeleton / Empty State -->
+                    <div id="communityEmptyState"
+                        style="grid-column: 1 / -1; text-align: center; color: var(--text-muted); padding: 3rem 0; font-style: italic;">
+                        Connecting to Global Board...
+                    </div>
+                </div>
+            </div>
+
         </div>
-    </div> <!-- Close .card here -->
     </div>
 
     <!-- Calculators Tab -->
@@ -872,6 +1185,7 @@
             <button class="calc-tab-btn" data-subtab="calc-vip">VIP Points</button>
             <button class="calc-tab-btn" data-subtab="calc-xp">Tomes of Knowledge</button>
             <button class="calc-tab-btn" data-subtab="calc-troops">🗡️ Troop Training</button>
+            <button class="calc-tab-btn" data-subtab="calc-flag">🚩 Alliance Flag</button>
         </div>
 
         <div class="card calc-layout" style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px;">
@@ -1403,6 +1717,183 @@
             </div>
 
         </div>
+
+        <!-- Alliance Flag Subtab -->
+        <div class="calc-tab-content calc-layout" data-content="calc-flag" style="width:100%;">
+
+            <div style="grid-column: 1 / -1;">
+                <h2>🚩 Alliance Flag Calculator</h2>
+                <p style="color:var(--text-muted); margin-bottom:16px; font-size:0.9rem;">Calculate the exact bottleneck
+                    holding up your next alliance flag based on your current reserves and passive hourly income.</p>
+            </div>
+
+            <div class="calc-inputs-column">
+                <!-- AI Scanner Dropzone -->
+                <div id="flagOcrDropZone"
+                    style="border: 2px dashed var(--accent-primary); border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 20px; background: rgba(139, 92, 246, 0.05); cursor: pointer; transition: all 0.3s ease;">
+                    <input type="file" id="flagOcrInput" accept="image/*" style="display: none;">
+                    <div style="font-size: 2em; margin-bottom: 10px;">📸</div>
+                    <div style="font-weight: bold; margin-bottom: 5px; color: var(--text-primary);">Drop Alliance
+                        Storehouse Screenshot Here</div>
+                    <div style="font-size: 0.85em; color: var(--text-muted); margin-bottom: 10px;">Or click to browse
+                    </div>
+                    <div id="flagOcrStatus" style="font-size: 0.9em; font-weight: bold; color: var(--text-muted);">Ready
+                        to scan</div>
+                    <div style="font-size: 0.75em; color: var(--warning-color); margin-top: 8px;">*Requires Gemini API
+                        Key in Settings</div>
+                </div>
+
+                <!-- Input Grid -->
+                <div class="table-container"
+                    style="margin-bottom: 24px; border-radius: 8px; border: 1px solid var(--border-color); overflow: hidden;">
+                    <table class="unity-table" style="background: rgba(0,0,0,0.2);">
+                        <thead>
+                            <tr style="background: rgba(255,255,255,0.05);">
+                                <th style="text-align: left; padding: 6px 8px;">Resource</th>
+                                <th style="padding: 6px 8px;">Flag Cost</th>
+                                <th style="padding: 6px 8px;">Current Stock</th>
+                                <th style="padding: 6px 8px;">Hourly Income</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Credits -->
+                            <tr>
+                                <td style="padding: 6px 8px; font-weight: bold; color: #FFF;"><span
+                                        style="font-size: 1.2em; vertical-align: middle; margin-right: 8px;">🪙</span>Alliance
+                                    Credits</td>
+                                <td><input type="number" class="config-input flag-input" data-res="credits"
+                                        data-field="cost" min="0" placeholder="0"
+                                        style="width: 100%; border-color: rgba(255,255,255,0.1); padding: 4px 8px;">
+                                </td>
+                                <td><input type="number" class="config-input flag-input" data-res="credits"
+                                        data-field="stock" min="0" placeholder="0"
+                                        style="width: 100%; border-color: rgba(255,255,255,0.1); padding: 4px 8px;">
+                                </td>
+                                <td><input type="number" class="config-input flag-input" data-res="credits"
+                                        data-field="income" min="0" placeholder="0"
+                                        style="width: 100%; border-color: rgba(255,255,255,0.1); padding: 4px 8px;">
+                                </td>
+                            </tr>
+                            <!-- Food -->
+                            <tr>
+                                <td style="padding: 6px 8px; font-weight: bold; color: #FACC15;"><span
+                                        style="font-size: 1.2em; vertical-align: middle; margin-right: 8px;">🌽</span>Alliance
+                                    Food</td>
+                                <td><input type="number" class="config-input flag-input" data-res="food"
+                                        data-field="cost" min="0" placeholder="0"
+                                        style="width: 100%; border-color: rgba(250,204,21,0.2); padding: 4px 8px;"></td>
+                                <td><input type="number" class="config-input flag-input" data-res="food"
+                                        data-field="stock" min="0" placeholder="0"
+                                        style="width: 100%; border-color: rgba(250,204,21,0.2); padding: 4px 8px;"></td>
+                                <td><input type="number" class="config-input flag-input" data-res="food"
+                                        data-field="income" min="0" placeholder="0"
+                                        style="width: 100%; border-color: rgba(250,204,21,0.2); padding: 4px 8px;"></td>
+                            </tr>
+                            <!-- Wood -->
+                            <tr>
+                                <td style="padding: 6px 8px; font-weight: bold; color: #A3E635;"><span
+                                        style="font-size: 1.2em; vertical-align: middle; margin-right: 8px;">🪵</span>Alliance
+                                    Wood</td>
+                                <td><input type="number" class="config-input flag-input" data-res="wood"
+                                        data-field="cost" min="0" placeholder="0"
+                                        style="width: 100%; border-color: rgba(163,230,53,0.2); padding: 4px 8px;"></td>
+                                <td><input type="number" class="config-input flag-input" data-res="wood"
+                                        data-field="stock" min="0" placeholder="0"
+                                        style="width: 100%; border-color: rgba(163,230,53,0.2); padding: 4px 8px;"></td>
+                                <td><input type="number" class="config-input flag-input" data-res="wood"
+                                        data-field="income" min="0" placeholder="0"
+                                        style="width: 100%; border-color: rgba(163,230,53,0.2); padding: 4px 8px;"></td>
+                            </tr>
+                            <!-- Stone -->
+                            <tr>
+                                <td style="padding: 6px 8px; font-weight: bold; color: #9CA3AF;"><span
+                                        style="font-size: 1.2em; vertical-align: middle; margin-right: 8px;">🪨</span>Alliance
+                                    Stone</td>
+                                <td><input type="number" class="config-input flag-input" data-res="stone"
+                                        data-field="cost" min="0" placeholder="0"
+                                        style="width: 100%; border-color: rgba(156,163,175,0.2); padding: 4px 8px;">
+                                </td>
+                                <td><input type="number" class="config-input flag-input" data-res="stone"
+                                        data-field="stock" min="0" placeholder="0"
+                                        style="width: 100%; border-color: rgba(156,163,175,0.2); padding: 4px 8px;">
+                                </td>
+                                <td><input type="number" class="config-input flag-input" data-res="stone"
+                                        data-field="income" min="0" placeholder="0"
+                                        style="width: 100%; border-color: rgba(156,163,175,0.2); padding: 4px 8px;">
+                                </td>
+                            </tr>
+                            <!-- Gold -->
+                            <tr>
+                                <td style="padding: 6px 8px; font-weight: bold; color: #FCD34D;"><span
+                                        style="font-size: 1.2em; vertical-align: middle; margin-right: 8px;">🪙</span>Alliance
+                                    Gold</td>
+                                <td><input type="number" class="config-input flag-input" data-res="gold"
+                                        data-field="cost" min="0" placeholder="0"
+                                        style="width: 100%; border-color: rgba(252,211,77,0.2); padding: 4px 8px;"></td>
+                                <td><input type="number" class="config-input flag-input" data-res="gold"
+                                        data-field="stock" min="0" placeholder="0"
+                                        style="width: 100%; border-color: rgba(252,211,77,0.2); padding: 4px 8px;"></td>
+                                <td><input type="number" class="config-input flag-input" data-res="gold"
+                                        data-field="income" min="0" placeholder="0"
+                                        style="width: 100%; border-color: rgba(252,211,77,0.2); padding: 4px 8px;"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Results Panel -->
+            <div class="calc-totals-panel"
+                style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                <h3
+                    style="color:var(--text-secondary); font-weight:normal; letter-spacing:1px; margin-bottom: 5px; font-size: 0.9em;">
+                    FLAG READINESS</h3>
+                <div id="flagReadyTime"
+                    style="font-size: 2.2em; font-weight: bold; color: var(--accent-primary); line-height: 1.2; text-shadow: 0 0 20px rgba(59, 130, 246, 0.4); text-align: center;">
+                    Ready Now!
+                </div>
+                <div id="flagBottleneckMsg"
+                    style="color: var(--success-color); margin-top: 15px; font-size: 1.1em; font-weight: 500; text-align: center;">
+                    You have enough resources to build this flag.
+                </div>
+                <div id="flagMaxBuildableMsg"
+                    style="color: var(--text-primary); margin-top: 10px; font-size: 1.2em; font-weight: bold; text-align: center; background: rgba(59, 130, 246, 0.1); padding: 8px 15px; border-radius: 6px; border: 1px solid rgba(59, 130, 246, 0.3); display: none;">
+                    Max Buildable Flags: <span id="flagMaxBuildableCount" style="color: var(--accent-primary);">0</span>
+                </div>
+                <div id="flagDeficitBars"
+                    style="width: 100%; margin-top: 15px; display: flex; flex-direction: column; gap: 8px;">
+                    <!-- Progress bars injected by JS -->
+                </div>
+
+                <!-- Glide Path -->
+                <div id="flagGlidePath"
+                    style="width: 100%; margin-top: 15px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 10px; display: none;">
+                    <h4
+                        style="color: var(--text-muted); margin-bottom: 15px; text-align: center; font-size: 0.9em; letter-spacing: 1px;">
+                        GLIDE PATH (PASSIVE INCOME)</h4>
+                    <table style="width: 100%; text-align: right; font-size: 0.9em; border-collapse: collapse;">
+                        <thead>
+                            <tr style="color: var(--text-muted); border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                <th style="text-align: left; padding-bottom: 8px;">Resource</th>
+                                <th style="padding-bottom: 8px;">24h (1d)</th>
+                                <th style="padding-bottom: 8px;">72h (3d)</th>
+                                <th style="padding-bottom: 8px;">168h (1wk)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="flagGlidePathBody">
+                            <!-- Injected via JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div style="display: flex; gap: 10px; width: 100%; margin-top: 15px;">
+                    <button class="secondary-btn" id="flagClearBtn" style="flex: 1;">Clear All Values</button>
+                    <button class="primary-btn" id="flagExportMailBtn" style="flex: 1;">📤 Send to Mail
+                        Generator</button>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <!-- Live Feed Tab -->
@@ -1546,6 +2037,70 @@
                         style="border: 2px solid #5c4e3e; border-radius: 4px; padding: 10px; background-color: rgba(0,0,0,0.3); min-height: 100%; font-family: 'Segoe UI', serif; white-space: pre-wrap;">
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+    <!-- My Alliance Cloud Roster Tab -->
+    <div id="my-alliance" class="tab-content">
+        <div class="card" style="margin-bottom: 20px;">
+            <h2>🛡️ My Alliance Live Roster</h2>
+            <p style="color: var(--text-muted); margin-bottom: 15px;">
+                A real-time, shared database where Alliance members can sync their scanned screenshots.
+                Data uploaded here is visible to anyone in your Kingdom with this page open.
+            </p>
+
+            <div
+                style="display: flex; gap: 15px; align-items: center; margin-bottom: 20px; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px;">
+                <label for="rosterKingdomSelect" style="font-weight: bold; color: var(--accent-primary);">Select Kingdom
+                    Workspace:</label>
+                <select id="rosterKingdomSelect" class="config-input"
+                    style="min-width: 150px; background: var(--bg-primary);">
+                    <option value="" disabled selected>Loading...</option>
+                </select>
+                <span id="rosterConnectionStatus"
+                    style="color: var(--warning-color); font-size: 0.9em; margin-left: 10px;">
+                    ⚠️ Disconnected - Configure Firebase in Settings
+                </span>
+            </div>
+
+            <div class="table-container">
+                <table class="unity-table">
+                    <thead>
+                        <tr>
+                            <th>Governor ID</th>
+                            <th>Name</th>
+                            <th>Alliance</th>
+                            <th>Power</th>
+                            <th>Kill Points</th>
+                            <th>T1 Kills</th>
+                            <th>T2 Kills</th>
+                            <th>T3 Kills</th>
+                            <th>T4 Kills</th>
+                            <th>T5 Kills</th>
+                            <th>Dead Troops</th>
+                            <th>Helps</th>
+                            <th>RSS Gathered</th>
+                            <th>RSS Assistance</th>
+                            <th>Troop Power</th>
+                            <th>Tech Power</th>
+                            <th>Building Power</th>
+                            <th>Cmdr Power</th>
+                            <th>Acclaim</th>
+                            <th>Autarch</th>
+                            <th>Last Sync</th>
+                        </tr>
+                    </thead>
+                    <tbody id="myAllianceTableBody">
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="myAllianceEmptyState"
+                style="text-align: center; padding: 40px; color: var(--text-muted); display: none;">
+                <div style="font-size: 3rem; margin-bottom: 10px;">☁️</div>
+                No players have synced their screenshots to this Kingdom yet.<br>
+                Go to the <strong>Upload Scans > Individual OCR Scanner</strong>, drop your profile, and click "Upload
+                to Cloud".
             </div>
         </div>
     </div>
@@ -1988,7 +2543,7 @@
                         </a>
                     </div>
 
-                    <div class="action-buttons">
+                    <div class="action-buttons" style="margin-top: 20px;">
                         <button class="primary-btn next-btn">Next: Calculate Results</button>
                     </div>
                 </div>
@@ -2242,6 +2797,25 @@
 
     <!-- Bottom Controls Removed -->
     </div>
+
+    <!-- Firebase Sync Modal -->
+    <div id="firebaseSyncModal" class="modal hidden">
+        <div class="modal-content" style="max-width: 400px;">
+            <span class="close-modal" id="closeFirebaseModal">&times;</span>
+            <h2 id="firebaseModalTitle">Select Cloud Workspace 🔥</h2>
+            <div style="margin-top: 15px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Available Workspaces</label>
+                <select id="firebaseKingdomSelect" class="select-css" style="width: 100%; margin-bottom: 15px;">
+                    <option value="">Loading...</option>
+                </select>
+                <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                    <button class="secondary-btn" id="cancelFirebaseBtn">Cancel</button>
+                    <button class="primary-btn" id="confirmFirebaseBtn">Sync Data</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Cloud File Picker Modal -->
     <div id="cloudFileModal" class="modal hidden">
         <div class="modal-content">
@@ -2258,7 +2832,7 @@
 
     <!-- Dependencies -->
     <!-- Core -->
-    <script src="js/core/config.js"></script>
+    <script src="js/core/config.js?v=2.3"></script>
     <script src="js/core/utils.js"></script>
 
     <!-- Services -->
@@ -2272,6 +2846,7 @@
     <script src="js/services/ui/UIEvents.js"></script>
     <script src="js/services/ui/UINavigation.js"></script>
     <script src="js/services/ui/UIRenderers.js"></script>
+    <script src="js/services/ui/UICommunity.js?v=28"></script>
     <script src="js/services/ui/UICharts.js"></script>
     <script src="js/services/ui/UIExports.js"></script>
     <script src="js/services/ui/UISOC.js"></script>
@@ -2286,6 +2861,8 @@
     <script src="js/core/commanders.js"></script>
     <script src="js/services/CalculatorsService.js"></script>
     <script src="js/services/MailService.js"></script>
+    <script src="js/services/FirebaseRosterService.js"></script>
+    <script src="js/services/ui/UIMyAlliance.js"></script>
     <script src="js/services/OCRScannerService.js"></script>
 
     <!-- Global Footer -->
@@ -2297,17 +2874,34 @@
             </div>
 
             <div class="footer-meta">
-                <span class="version-tag">Version <span id="appVersionDisplay"></span></span>
-                <a href="https://www.buymeacoffee.com/ReignsPlace" target="_blank" class="donate-btn-wrapper">
-                    <img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=☕&slug=ReignsPlace&button_colour=FFDD00&font_colour=000000&font_family=Poppins&outline_colour=000000&coffee_colour=ffffff"
-                        alt="Buy me a coffee" />
-                </a>
+                <div class="mascot-container" style="position: relative; display: inline-block;">
+                    <!-- Stick Figure Mascot -->
+                    <div class="bot-mascot">
+                        <div class="bot-head">
+                            <div class="bot-eye left"></div>
+                            <div class="bot-eye right"></div>
+                        </div>
+                        <div class="bot-body"></div>
+                        <div class="bot-arm left"></div>
+                        <div class="bot-arm right"></div>
+                        <div class="bot-leg left"></div>
+                        <div class="bot-leg right"></div>
+                        <div class="bot-zzz">Zzz...</div>
+                    </div>
+
+                    <a href="https://www.buymeacoffee.com/ReignsPlace" target="_blank" class="donate-btn-wrapper">
+                        <img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=☕&slug=ReignsPlace&button_colour=FFDD00&font_colour=000000&font_family=Poppins&outline_colour=000000&coffee_colour=ffffff"
+                            alt="Buy me a coffee" />
+                    </a>
+                </div>
             </div>
 
             <div class="footer-divider"></div>
 
             <div class="footer-bottom">
-                <p class="copyright">© 2026 Unity Dashboard. All rights reserved.</p>
+                <p class="copyright">© 2026 Unity Dashboard. All rights reserved. <span
+                        style="margin-left:15px; opacity:0.7;">|</span> <span style="margin-left:15px;"
+                        class="version-text">Version <span id="appVersionDisplay"></span></span></p>
                 <div class="footer-links">
                     <a href="about.html">About Us</a>
                     <a href="contact.html">Contact</a>
@@ -2328,6 +2922,28 @@
             if (typeof Config !== 'undefined' && Config.APP_VERSION) {
                 const el = document.getElementById('appVersionDisplay');
                 if (el) el.textContent = Config.APP_VERSION;
+            }
+
+            // Sync loading of Firebase URL
+            const fbInput = document.getElementById('firebaseDbUrl');
+            if (fbInput) {
+                const saved = localStorage.getItem('__unity_firebase_url');
+                if (saved) fbInput.value = saved;
+            }
+
+            // Link saveSettingsBtn to Firebase saving, since it's already hooked for DKP weights in UIEvents.js
+            const saveBtn = document.getElementById('saveSettingsBtn');
+            if (saveBtn) {
+                saveBtn.addEventListener('click', () => {
+                    const fbInput = document.getElementById('firebaseDbUrl');
+                    if (fbInput) {
+                        const val = fbInput.value.trim();
+                        localStorage.setItem('__unity_firebase_url', val);
+                        if (window.uiMyAlliance) {
+                            window.uiMyAlliance.connectFirebase(val);
+                        }
+                    }
+                });
             }
         });
     </script>

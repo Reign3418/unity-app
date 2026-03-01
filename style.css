@@ -4380,6 +4380,11 @@ tbody tr:nth-child(even) {
     color: var(--text-muted);
 }
 
+.site-footer .donate-btn-wrapper {
+    display: block;
+    line-height: 0;
+}
+
 .site-footer .donate-btn-wrapper img {
     height: 36px;
     transition: transform 0.2s ease, filter 0.2s ease;
@@ -4447,4 +4452,203 @@ tbody tr:nth-child(even) {
 
 .site-footer .footer-links a:hover::after {
     width: 100%;
+}
+
+.config-input {
+    background: rgba(0, 0, 0, 0.4);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 0.9rem;
+    transition: border-color 0.2s;
+}
+
+.config-input:focus {
+    border-color: var(--accent-primary);
+    outline: none;
+}
+
+/* --- Animated Bot Mascot Easter Egg --- */
+.mascot-container {
+    position: relative;
+    display: inline-block;
+}
+
+.bot-mascot {
+    position: absolute;
+    top: -40px;
+    /* Sits exactly on the button */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 45px;
+    pointer-events: none;
+    /* Let clicks pass through to the button */
+    z-index: 10;
+    animation: dropIn 2s ease-out forwards;
+}
+
+/* Head resembling the Unity gear/circle logo */
+.bot-head {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    width: 20px;
+    height: 20px;
+    background: transparent;
+    border: 3px solid var(--accent-primary);
+    border-radius: 50%;
+    box-shadow: 0 0 8px rgba(99, 102, 241, 0.5);
+    transition: all 0.3s ease;
+    animation: headBob 4s infinite alternate ease-in-out;
+}
+
+/* Eyes */
+.bot-eye {
+    position: absolute;
+    top: 5px;
+    width: 4px;
+    height: 4px;
+    background: var(--accent-secondary);
+    border-radius: 50%;
+    transition: all 0.2s;
+}
+
+.bot-eye.left {
+    left: 3px;
+}
+
+.bot-eye.right {
+    right: 3px;
+}
+
+/* Sleeping state - eyes closed */
+.bot-mascot .bot-eye {
+    height: 1px;
+    top: 8px;
+    background: #475569;
+}
+
+/* Body / Stick */
+.bot-body {
+    position: absolute;
+    top: 30px;
+    left: 19px;
+    width: 2px;
+    height: 12px;
+    background: var(--accent-primary);
+}
+
+/* Arms */
+.bot-arm {
+    position: absolute;
+    top: 32px;
+    width: 10px;
+    height: 2px;
+    background: var(--accent-primary);
+}
+
+.bot-arm.left {
+    left: 10px;
+    transform: rotate(30deg);
+}
+
+.bot-arm.right {
+    right: 10px;
+    transform: rotate(-30deg);
+}
+
+/* Zzz animation */
+.bot-zzz {
+    position: absolute;
+    top: -5px;
+    right: -10px;
+    font-size: 10px;
+    color: var(--text-muted);
+    font-weight: bold;
+    font-family: 'Comic Sans MS', cursive, sans-serif;
+    opacity: 0;
+    animation: zzzFloat 3s infinite linear;
+    animation-delay: 2s;
+    /* Start after dropdown */
+}
+
+/* Wake up on hover of the container */
+.mascot-container:hover .bot-mascot .bot-eye {
+    height: 4px;
+    top: 5px;
+    background: var(--success-color);
+    box-shadow: 0 0 5px var(--success-color);
+}
+
+.mascot-container:hover .bot-head {
+    border-color: var(--success-color);
+    transform: translateY(-3px);
+    animation: none;
+}
+
+.mascot-container:hover .bot-arm.left {
+    transform: rotate(-150deg);
+    top: 25px;
+    left: 5px;
+}
+
+.mascot-container:hover .bot-arm.right {
+    transform: rotate(150deg);
+    top: 25px;
+    right: 5px;
+}
+
+.mascot-container:hover .bot-zzz {
+    display: none;
+    animation: none;
+}
+
+/* Animations */
+@keyframes dropIn {
+    0% {
+        top: -150px;
+        opacity: 0;
+    }
+
+    60% {
+        top: -35px;
+        opacity: 1;
+    }
+
+    80% {
+        top: -45px;
+        opacity: 1;
+    }
+}
+
+@keyframes headBob {
+    0% {
+        transform: rotate(-5deg) translateY(0);
+    }
+
+    100% {
+        transform: rotate(5deg) translateY(2px);
+    }
+}
+
+@keyframes zzzFloat {
+    0% {
+        transform: translate(0, 0) scale(0.5);
+        opacity: 0;
+    }
+
+    20% {
+        opacity: 0.8;
+    }
+
+    80% {
+        opacity: 0.5;
+    }
+
+    100% {
+        transform: translate(15px, -20px) scale(1.5);
+        opacity: 0;
+    }
 }

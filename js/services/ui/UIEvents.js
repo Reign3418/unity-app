@@ -122,16 +122,21 @@ Object.assign(UIService.prototype, {
             });
         }
 
-        // ---- Gemini API Key ----
+        // ---- Gemini API Key & Model ----
         const geminiInput = document.getElementById('geminiApiKey');
+        const geminiModelSelect = document.getElementById('geminiApiModel');
 
-        // Load previously saved key from localStorage
+        // Load previously saved key & model from localStorage
         const savedGeminiKey = localStorage.getItem('geminiApiKey') || '';
+        const savedGeminiModel = localStorage.getItem('geminiApiModel') || 'gemini-2.5-flash';
+
         if (geminiInput && savedGeminiKey) geminiInput.value = savedGeminiKey;
+        if (geminiModelSelect && savedGeminiModel) geminiModelSelect.value = savedGeminiModel;
 
         // Also seed the OCR service if it's already running
         if (savedGeminiKey && window.ocrService) {
             window.ocrService.apiKey = savedGeminiKey;
+            window.ocrService.apiModel = savedGeminiModel;
             window.ocrService.updateStatusBadge();
         }
 
@@ -139,18 +144,16 @@ Object.assign(UIService.prototype, {
         if (saveGeminiBtn) {
             saveGeminiBtn.addEventListener('click', () => {
                 const key = geminiInput ? geminiInput.value.trim() : '';
-                if (!key) {
-                    alert('Please enter a Gemini API key.');
-                    return;
-                }
-                localStorage.setItem('geminiApiKey', key);
+                const model = geminiModelSelect ? geminiModelSelect.value : 'gemini-2.5-flash';
 
-                // Apply immediately to live OCR service
+                localStorage.setItem('geminiApiKey', key);
+                localStorage.setItem('geminiApiModel', model);
+
                 if (window.ocrService) {
                     window.ocrService.apiKey = key;
+                    window.ocrService.apiModel = model;
                     window.ocrService.updateStatusBadge();
                 }
-
                 alert('Gemini API key saved! ✅');
             });
         }
@@ -233,11 +236,35 @@ Object.assign(UIService.prototype, {
         }
 
         // Comparison Limit and Custom Weights
-        ['kingdomComparisonLimit', 'allKingdomT4Weight', 'allKingdomT5Weight', 'allKingdomDeadWeight'].forEach(id => {
+        ['kingdomComparisonLimit', 'allKingdomT4Weight', 'allKingdomT5Weight', 'allKingdomDeadWeight', 'allKingdomT4DeadWeight', 'allKingdomT5DeadWeight'].forEach(id => {
             if (this.elements[id]) {
                 this.elements[id].addEventListener('input', Utils.debounce(() => this.renderKingdomComparison(), 300));
             }
         });
+
+        // Advanced Mode Toggle
+        if (this.elements.allKingdomDkpMode) {
+            this.elements.allKingdomDkpMode.addEventListener('change', (e) => {
+                const mode = e.target.value;
+                const basicInputs = document.getElementById('basicAllKingdomInputs');
+                const advInputs = document.getElementById('advancedAllKingdomInputs');
+                const scanner = document.getElementById('allKingdomHoHScannerContainer');
+
+                if (mode === 'advanced') {
+                    basicInputs?.classList.add('hidden');
+                    advInputs?.classList.remove('hidden');
+                    scanner?.classList.remove('hidden');
+                } else {
+                    advInputs?.classList.add('hidden');
+                    scanner?.classList.add('hidden');
+                    basicInputs?.classList.remove('hidden');
+                }
+
+                this.renderKingdomComparison();
+            });
+            // trigger initialization
+            this.elements.allKingdomDkpMode.dispatchEvent(new Event('change'));
+        }
 
         // New Phone Who Dis Listeners
         if (this.elements.npwdKingdomSelect) {
