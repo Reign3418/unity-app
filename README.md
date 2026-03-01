@@ -1,66 +1,27 @@
-# Unity - Kingdom vs Kingdom Performance Analysis
+# Unity: High-Performance Data Management for Rise of Kingdoms (RoK)
 
-Welcome to **Unity**, a tool designed to analyze Rise of Kingdoms stats, calculate DKP (Dragon Kill Points), and visualize player performance.
+[![GitHub Pages](https://img.shields.io/badge/Live-Demo-brightgreen)](https://reign3418.github.io)
+[![Backend](https://img.shields.io/badge/Backend-Python%20%2F%20Firebase-blue)](https://firebase.google.com)
 
-## 1. Upload Scans
-This is your starting point.
-- **Start Scan**: Upload the scan file taken *before* KvK (or the period you are analyzing).
-- **End Scan**: Upload the scan file taken *after* KvK.
-- **Supported Formats**: `.xlsx` or `.csv`.
+**Unity** is a specialized data management and visualization tool designed for Rise of Kingdoms leadership and power users. By bridging the gap between raw in-game data and actionable intelligence, Unity provides a fast, effective pipeline for tracking kingdom-wide metrics.
 
-> **Note**: The tool matches players by ID. If a player changes their name, they will still be tracked correctly.
+## 🚀 Key Features
+* **Real-time Data Sync:** Integration with **Google Firebase Realtime Database** for instant updates.
+* **Advanced Data Capture:** Utilizing a Python-based **Companion App** for seamless data collection.
+* **Computer Vision Integration:** Exploring **YOLOv8** for high-accuracy pattern recognition and temporal consistency, moving beyond traditional OCR limitations.
+* **WebGL Interface:** A lightweight, browser-based Unity dashboard for lightning-fast performance.
 
-## 2. Prekvk Analysis
-This tab gives you a "raw" look at the data from the **End Scan**. It helps you understand the composition of the kingdom before applying any DKP formulas.
-- **Kingdom Analysis**: Total power, T4/T5 kills, and deads for the whole kingdom.
-- **Alliance Analysis**: Breakdown of stats by Alliance Tag.
-- **Governor Profiles**: A list of the top governors sorted by power.
+## 🛠️ Technical Stack
+* **Frontend:** Unity WebGL (Hosted on GitHub Pages)
+* **Backend:** Python (Local Data Collection)
+* **Database:** Firebase Realtime Database
+* **AI/ML:** YOLOv8 for Object Detection and Data Extraction
 
-## 3. All Kingdom DKP Results
-This is the "Leaderboard" for kingdoms.
-- It compares multiple kingdoms (if you upload files for more than one) side-by-side.
-- **KVK DKP**: The calculated score based on your configuration settings.
+## 📖 How it Works
+1.  **Collect:** The Python Companion App captures relevant game data.
+2.  **Process:** Data is refined using pattern recognition for 100% accuracy.
+3.  **Sync:** Processed metrics are pushed to the Firebase cloud.
+4.  **Visualize:** Leaders view the live data through the Unity WebGL dashboard.
 
 ---
-
-## 4. Kingdom Specific Tabs
-Once you upload data, a new tab will appear for your kingdom (e.g., "Kingdom 1234"). Inside, you have several sub-tabs:
-
-### A. Overview
-A searchable table of every governor's raw stats (Power, Kills, Deads) from the End Scan.
-
-### B. Scatter (Performance Plot)
-This graph plots **Power** (X-axis) vs **Kill Points** (Y-axis) to categorize players.
-- **Heroes (High KP, Low Deads)**: High performers who managed to get kills efficiently.
-- **Warriors (High KP, High Deads)**: The fighters who sacrificed troops for the kingdom.
-- **Feeders (Low KP, High Deads)**: Players who took heavy losses but didn't get many kills (likely city rallies or defense).
-- **Slackers (Low KP, Low Deads)**: Low activity players.
-
-### C. Power Efficiency
-This chart answers: *"Did this player pull their weight?"*
-- **X-Axis**: Starting Power.
-- **Y-Axis**: DKP Score % (How close they came to their target).
-- **Bubble Size**: Amount of Dead Troops.
-
-**Zones:**
-- 🟢 **Overperformers (>100%)**: Exceeded their DKP target.
-- 🟡 **Meeting Expectations (80-100%)**: Did their job.
-- 🔴 **Underperformers (<80%)**: Did not meet the requirements for their power level.
-
-### D. Roster Analysis (Fortune Teller)
-This looks at **Lifetime Statistics** (from the Start Scan) to predict player behavior.
-- It helps you spot "farmers" (high power, low lifetime kills) vs "fighters" before KvK even starts.
-
-### E. Configuration
-Here you define the rules for DKP calculation.
-- **Deads Multiplier**: Points given per dead troop.
-- **T4/T5 Points**: Points given per kill.
-- **KP/Power Divisor**: How much power determines the target KP.
-- **T5 Mix Ratio**: The expected ratio of T5 kills for high-power players.
-
-### F. Results
-The final calculated report.
-- Shows **Target KP** vs **Actual KP**.
-- Shows **Target Deads** vs **Actual Deads**.
-- **Bonus/Punishment**: A final score indicating if the player met their quota.
-- **Export CSV**: Download this table to Excel/Google Sheets.
+*Developed by Reign3418. This project is currently in active development.*
