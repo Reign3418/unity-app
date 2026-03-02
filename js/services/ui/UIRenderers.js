@@ -148,6 +148,13 @@ Object.assign(UIService.prototype, {
             this.renderResultsTable(kingdomId, this.data.state.kingdoms[kingdomId].calculatedData);
         });
 
+        const dateDisplay = clone.querySelector('.calc-scan-dates');
+        if (dateDisplay) {
+            const sDate = this.data.state.startScanDate || 'Unknown Start Date';
+            const eDate = this.data.state.endScanDate || 'Unknown End Date';
+            dateDisplay.innerHTML = `Start Scan: <strong>${sDate}</strong> &nbsp;|&nbsp; End Scan: <strong>${eDate}</strong>`;
+        }
+
         const exportBtn = clone.querySelector('.export-btn');
         if (exportBtn) exportBtn.addEventListener('click', () => this.exportToCSV(kingdomId));
 
