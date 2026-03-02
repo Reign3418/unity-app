@@ -323,32 +323,41 @@ Object.assign(UIService.prototype, {
 
         try {
             const modal = document.getElementById('firebaseSyncModal');
-            const select = document.getElementById('firebaseKingdomSelect');
+            const checkboxesContainer = document.getElementById('firebaseKingdomCheckboxes');
+            const dateContainer = document.getElementById('firebaseDateSelectContainer');
+            const dateSelect = document.getElementById('firebaseDateSelect');
             const confirmBtn = document.getElementById('confirmFirebaseBtn');
             const cancelBtn = document.getElementById('cancelFirebaseBtn');
             const closeBtn = document.getElementById('closeFirebaseModal');
 
-            if (!modal || !select || !confirmBtn || !cancelBtn || !closeBtn) {
+            if (!modal || !checkboxesContainer || !confirmBtn || !cancelBtn || !closeBtn) {
                 alert("Firebase modal elements not found in DOM.");
                 return;
             }
 
             modal.classList.remove('hidden');
-            select.innerHTML = '<option value="">Loading Workspace List...</option>';
+            checkboxesContainer.innerHTML = '<div style="padding: 5px; color: var(--text-muted);">Loading Workspaces...</div>';
+            if (dateContainer) dateContainer.style.display = 'none';
             confirmBtn.disabled = true;
 
             const kingdoms = await window.uiMyAlliance.rosterService.getActiveKingdoms();
-            select.innerHTML = '';
+            checkboxesContainer.innerHTML = '';
 
             if (kingdoms.length === 0) {
-                select.innerHTML = '<option value="">No Cloud Workspaces Found</option>';
+                checkboxesContainer.innerHTML = '<div style="padding: 5px; color: var(--text-muted);">No Cloud Workspaces Found</div>';
             } else {
                 kingdoms.forEach(k => {
-                    select.innerHTML += `<option value="${k}">${k}</option>`;
+                    const id = `cb_kd_${k}`;
+                    checkboxesContainer.innerHTML += `
+                        <div style="display: flex; align-items: center; gap: 8px; padding: 4px 8px;">
+                            <input type="checkbox" id="${id}" value="${k}" class="firebase-kd-checkbox" style="cursor: pointer; width: 16px; height: 16px;">
+                            <label for="${id}" style="cursor: pointer; user-select: none;">${k}</label>
+                        </div>
+                    `;
                 });
-                confirmBtn.disabled = false;
             }
 
+            // Cleanup function to remove event listeners and hide modal
             const cleanup = () => {
                 modal.classList.add('hidden');
                 confirmBtn.onclick = null;
@@ -359,65 +368,150 @@ Object.assign(UIService.prototype, {
             cancelBtn.onclick = cleanup;
             closeBtn.onclick = cleanup;
 
+            // Helper to get checked items
+            const getSelectedKingdoms = () => {
+                return Array.from(checkboxesContainer.querySelectorAll('.firebase-kd-checkbox:checked')).map(cb => cb.value);
+            };
+
+            // Listen for checkbox changes to fetch dates
+            checkboxesContainer.addEventListener('change', async (e) => {
+                if (e.target && e.target.classList.contains('firebase-kd-checkbox')) {
+                    const selectedOptions = getSelectedKingdoms();
+                    if (selectedOptions.length === 0) {
+                        if (dateContainer) dateContainer.style.display = 'none';
+                        confirmBtn.disabled = true;
+                        return;
+                    }
+
+                    // Use the FIRST selected kingdom to determine available dates (assuming they scan same dates)
+                    const kId = selectedOptions[0];
+
+                    if (dateContainer && dateSelect) {
+                        dateContainer.style.display = 'block';
+                        dateSelect.innerHTML = '<option value="">Loading Dates...</option>';
+                        confirmBtn.disabled = true;
+
+                        try {
+                            const dates = await window.uiMyAlliance.rosterService.getAvailableScanDates(kId);
+
+                            // Also inject a "Live Roster" fake date to grab the current `/rosters` node
+                            dateSelect.innerHTML = '<option value="live">⚡ Live Tracking Rosters</option>';
+
+                            if (dates.length > 0) {
+                                dates.forEach(d => {
+                                    dateSelect.innerHTML += `<option value="${d}">📅 Historical: ${d}</option>`;
+                                });
+                            }
+
+                            dateSelect.onchange = () => {
+                                confirmBtn.disabled = !dateSelect.value;
+                            };
+
+                            // Auto-select "live" so button activates
+                            dateSelect.value = "live";
+                            confirmBtn.disabled = false;
+
+                        } catch (err) {
+                            console.error("Date fetch error:", err);
+                            dateSelect.innerHTML = '<option value="">Error Loading Dates</option>';
+                        }
+                    } else {
+                        // Fallback to old behavior if no date select exists in DOM
+                        confirmBtn.disabled = false;
+                    }
+                }
+            });
+
             confirmBtn.onclick = async () => {
-                const targetKId = select.value;
-                if (!targetKId) return;
+                const targetKIds = getSelectedKingdoms();
+                const targetDate = (dateSelect && dateSelect.value) ? dateSelect.value : "live";
+
+                if (targetKIds.length === 0) return;
 
                 confirmBtn.disabled = true;
                 confirmBtn.textContent = 'Syncing...';
 
                 try {
-                    const rawData = await window.uiMyAlliance.rosterService.getKingdomDataOnce(targetKId);
-                    if (rawData.length === 0) {
-                        alert(`No data found in Firebase for Kingdom ${targetKId}`);
+                    let combinedMappedData = [];
+                    let successfulKingdoms = [];
+
+                    for (const targetKId of targetKIds) {
+                        let rawData = [];
+                        if (targetDate === "live") {
+                            rawData = await window.uiMyAlliance.rosterService.getKingdomDataOnce(targetKId);
+                        } else {
+                            rawData = await window.uiMyAlliance.rosterService.loadScanDetails(targetKId, targetDate);
+                        }
+
+                        if (!rawData || rawData.length === 0) {
+                            console.warn(`No data found in Firebase for Kingdom ${targetKId} on ${targetDate}`);
+                            continue; // skip empty
+                        }
+
+                        // For historical array blocks, they are already mapped if pushed by the new pushFullScan.
+                        // For live rosters, we map them back to CSV keys.
+                        let mappedData = [];
+                        if (targetDate === "live") {
+                            mappedData = rawData.map(p => ({
+                                'Governor ID': p.id,
+                                'Governor Name': p.name,
+                                'Alliance Tag': p.alliance,
+                                'Power': p.power,
+                                'Kill Points': p.killPoints,
+                                'Deads': p.dead,
+                                'T1 Kills': p.t1Kills,
+                                'T2 Kills': p.t2Kills,
+                                'T3 Kills': p.t3Kills,
+                                'T4 Kills': p.t4Kills,
+                                'T5 Kills': p.t5Kills,
+                                'Resources Gathered': p.rssGathered,
+                                'Assistance': p.rssAssistance,
+                                'Troop Power': p.troopPower,
+                                'Tech Power': p.techPower,
+                                'Building Power': p.buildingPower,
+                                'Commander Power': p.commanderPower,
+                                '_kingdom': targetKId
+                            }));
+                        } else {
+                            // It's a full JSON dump from pushFullScan
+                            // Automatically inject _kingdom just in case it wasn't embedded
+                            mappedData = rawData.map(p => {
+                                p['_kingdom'] = targetKId;
+                                return p;
+                            });
+                        }
+
+                        combinedMappedData.push(...mappedData);
+                        successfulKingdoms.push(targetKId);
+                    }
+
+                    if (combinedMappedData.length === 0) {
+                        alert(`No data found in Firebase for the selected Kingdom(s) on ${targetDate}`);
                         confirmBtn.disabled = false;
                         confirmBtn.textContent = 'Sync Data';
                         return;
                     }
 
-                    // Map Firebase camelCase keys to traditional CSV Header keys expected by DataService
-                    const mappedData = rawData.map(p => ({
-                        'Governor ID': p.id,
-                        'Governor Name': p.name,
-                        'Alliance Tag': p.alliance,
-                        'Power': p.power,
-                        'Kill Points': p.killPoints,
-                        'Deads': p.dead,
-                        'T1 Kills': p.t1Kills,
-                        'T2 Kills': p.t2Kills,
-                        'T3 Kills': p.t3Kills,
-                        'T4 Kills': p.t4Kills,
-                        'T5 Kills': p.t5Kills,
-                        'Resources Gathered': p.rssGathered,
-                        'Assistance': p.rssAssistance,
-                        'Troop Power': p.troopPower,
-                        'Tech Power': p.techPower,
-                        'Building Power': p.buildingPower,
-                        'Commander Power': p.commanderPower,
-                        '_kingdom': targetKId
-                    }));
-
                     // Bundle it into a virtual JSON upload
                     const content = JSON.stringify({
-                        date: new Date().toISOString().split('T')[0],
-                        kingdoms: [targetKId],
-                        data: mappedData
+                        date: targetDate === "live" ? new Date().toISOString().split('T')[0] : targetDate,
+                        kingdoms: successfulKingdoms,
+                        data: combinedMappedData
                     });
 
                     const blob = new Blob([content], { type: 'application/json' });
-                    const file = new File([blob], `Firebase_Sync_K${targetKId}_${Date.now()}.json`, { type: 'application/json' });
+                    const file = new File([blob], `Firebase_Sync_MultiKDs_${targetDate}.json`, { type: 'application/json' });
 
                     if (window.handleFilesGlobal) {
-                        await window.handleFilesGlobal([file], type, `Synced from Firebase: Kingdom ${targetKId}`);
+                        await window.handleFilesGlobal([file], type, `Synced from Firebase: Kingdoms ${successfulKingdoms.join(', ')} (${targetDate})`);
                     } else {
                         alert("Error: Global file handler not linked.");
                     }
 
                     cleanup();
                 } catch (err) {
-                    console.error('Firebase Import Inner Error:', err);
-                    alert("Failed to sync from Firebase: " + err.message);
-                } finally {
+                    console.error("Firebase Sync Error:", err);
+                    alert("Error syncing data: " + err.message);
                     confirmBtn.disabled = false;
                     confirmBtn.textContent = 'Sync Data';
                 }
@@ -429,23 +523,127 @@ Object.assign(UIService.prototype, {
         }
     },
 
+    async handleFirebaseExport(type) {
+        if (!window.uiMyAlliance || !window.uiMyAlliance.rosterService || !window.uiMyAlliance.rosterService.connected) {
+            alert("Please configure your Firebase Settings in the Settings Tab to sync to Cloud.");
+            return;
+        }
+
+        const dataState = this.data.state;
+        let data = [];
+        let date, label;
+
+        if (type === 'start') {
+            date = dataState.startScanDate;
+            label = 'Start Scan';
+            dataState.loadedKingdoms.forEach(kId => {
+                if (dataState.kingdoms[kId] && dataState.kingdoms[kId].startData) {
+                    data.push(...dataState.kingdoms[kId].startData);
+                }
+            });
+        } else if (type === 'mid') {
+            date = dataState.midScanDate;
+            label = 'Mid/Healing Scan';
+            dataState.loadedKingdoms.forEach(kId => {
+                if (dataState.kingdoms[kId] && dataState.kingdoms[kId].midData) {
+                    data.push(...dataState.kingdoms[kId].midData);
+                }
+            });
+        } else {
+            date = dataState.endScanDate;
+            label = 'End Scan';
+            dataState.loadedKingdoms.forEach(kId => {
+                if (dataState.kingdoms[kId] && dataState.kingdoms[kId].endData) {
+                    data.push(...dataState.kingdoms[kId].endData);
+                }
+            });
+        }
+
+        if (!data || data.length === 0) {
+            alert(`No data loaded in the ${label} to push! Please select a file first.`);
+            return;
+        }
+
+        if (!date) {
+            alert(`Missing Date for ${label}. Please make sure your uploaded file indicates a date or the CSV metadata was parsed correctly.`);
+            return;
+        }
+
+        // We need to group the data by Kingdom in case a user uploads a multi-kingdom CSV
+        const kingdomGroups = {};
+        data.forEach(p => {
+            const kId = p['_kingdom'];
+            if (!kId) return;
+            if (!kingdomGroups[kId]) kingdomGroups[kId] = [];
+            kingdomGroups[kId].push(p);
+        });
+
+        const kingdomsStr = Object.keys(kingdomGroups).join(", ");
+        if (!confirm(`Are you sure you want to push ${data.length} governor profiles to Firebase for Kingdom(s) ${kingdomsStr} on Date: ${date}?`)) {
+            return;
+        }
+
+        try {
+            const btn = document.querySelector(`.firebase-export-btn[data-type="${type}"]`);
+            const originalText = btn ? btn.textContent : 'Push to Firebase';
+            if (btn) {
+                btn.disabled = true;
+                btn.textContent = 'Pushing... ⏳';
+            }
+
+            // Push each kingdom's slice array to the atomic cloud updater
+            for (const [kId, records] of Object.entries(kingdomGroups)) {
+                await window.uiMyAlliance.rosterService.pushFullScan(kId, date, records);
+            }
+
+            if (btn) {
+                btn.disabled = false;
+                btn.textContent = 'Pushed Successfully! ✅';
+                setTimeout(() => btn.textContent = originalText, 3000);
+            }
+
+            alert("Cloud Sync Complete! Data is now safely archived in Firebase.");
+
+        } catch (e) {
+            console.error(e);
+            alert("Failed to push data to Cloud: " + e.message);
+            const btn = document.querySelector(`.firebase-export-btn[data-type="${type}"]`);
+            if (btn) {
+                btn.disabled = false;
+                btn.textContent = '🔥 Push to Firebase';
+            }
+        }
+    },
     async handleMainCloudSave(type) {
         try {
             const dataState = this.data.state;
-            let data, date, fileNamePrefix;
+            let data = [];
+            let date, fileNamePrefix;
 
             if (type === 'start') {
-                data = dataState.startData;
                 date = dataState.startScanDate;
                 fileNamePrefix = 'start_scan';
+                dataState.loadedKingdoms.forEach(kId => {
+                    if (dataState.kingdoms[kId] && dataState.kingdoms[kId].startData) {
+                        data.push(...dataState.kingdoms[kId].startData);
+                    }
+                });
             } else if (type === 'mid') {
-                data = dataState.midData;
                 date = dataState.midScanDate;
                 fileNamePrefix = 'mid_scan';
+                dataState.loadedKingdoms.forEach(kId => {
+                    if (dataState.kingdoms[kId] && dataState.kingdoms[kId].midData) {
+                        data.push(...dataState.kingdoms[kId].midData);
+                    }
+                });
             } else {
-                data = dataState.endData;
                 date = dataState.endScanDate;
                 fileNamePrefix = 'end_scan';
+                dataState.loadedKingdoms.forEach(kId => {
+                    if (dataState.kingdoms[kId] && dataState.kingdoms[kId].endData) {
+                        data.push(...dataState.kingdoms[kId].endData);
+                    }
+                });
             }
 
             if (!data || data.length === 0) {
@@ -464,7 +662,6 @@ Object.assign(UIService.prototype, {
             const gh = new GitHubService();
             await gh.uploadFile(fileName, payload, `Save ${type} scan via Unity App`);
             alert(`File saved to GitHub: ${fileName}`);
-
         } catch (e) {
             console.error(e);
             alert("Save failed: " + e.message);

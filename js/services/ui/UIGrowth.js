@@ -402,6 +402,9 @@ class UIGrowth {
                     <button id="growth-report-growth-${kingdomId}" class="primary-btn" style="white-space:nowrap;">
                         Growth Report 📈
                     </button>
+                    <button id="growth-report-gathering-${kingdomId}" class="primary-btn" style="white-space:nowrap;">
+                        Gathering Report 🌾
+                    </button>
                 </div>
             </div>
         `;
@@ -411,6 +414,7 @@ class UIGrowth {
         const select = searchContainer.querySelector('select');
         const combatBtn = searchContainer.querySelector(`#growth-report-combat-${kingdomId}`);
         const growthBtn = searchContainer.querySelector(`#growth-report-growth-${kingdomId}`);
+        const gatheringBtn = searchContainer.querySelector(`#growth-report-gathering-${kingdomId}`);
 
         input.addEventListener('input', (e) => {
             this.searchTerm = e.target.value.toLowerCase().trim();
@@ -441,6 +445,12 @@ class UIGrowth {
                 this.generateStackRankingReport(kingdomId, 'growth');
             });
         }
+
+        if (gatheringBtn) {
+            gatheringBtn.addEventListener('click', () => {
+                this.generateStackRankingReport(kingdomId, 'gathering');
+            });
+        }
     }
 
     generateStackRankingReport(kingdomId, type = 'combat') {
@@ -452,26 +462,48 @@ class UIGrowth {
             data = data.filter(p => p.alliance === this.allianceFilter);
         }
 
-        // 2. Sort by Final Score (Descending)
-        // Ensure we clone to avoid mutating the original array order if it matters elsewhere
-        const sorted = [...data].sort((a, b) => b.finalScore - a.finalScore);
+        // 2. Sort depending on report type
+        let sorted = [...data];
+        if (type === 'gathering') {
+            sorted.sort((a, b) => b.gatheredDelta - a.gatheredDelta);
+        } else {
+            sorted.sort((a, b) => b.finalScore - a.finalScore);
+        }
 
-        // 3. Top 3 Movers
-        const top3 = sorted.slice(0, 3);
+        // 3. Top and Bottom splits
+        let topMovers = 3;
+        let bottomReview = 10;
 
-        // 4. Bottom 10 (Kick Candidates - Lowest Score)
-        // Reverse needed since sorted is Descending
-        const bottom10 = sorted.slice(-10).reverse();
+        if (type === 'gathering') {
+            topMovers = 5; // Show a bit more for gathering
+            bottomReview = 20; // Show bottom 20 gatherers
+        }
+
+        const topList = sorted.slice(0, topMovers);
+        const bottomList = sorted.slice(-bottomReview).reverse(); // Worst at the top of the bottom list
 
         // 5. Format Mail
         const allianceName = this.allianceFilter || "All Alliances";
-        const reportTitle = type === 'growth' ? "Growth Report 📈" : "Combat Report ⚔️";
+        let reportTitle = "Combat Report ⚔️";
+        if (type === 'growth') reportTitle = "Growth Report 📈";
+        if (type === 'gathering') reportTitle = "Gathering Report 🌾";
+
         let report = `${reportTitle}: <color=#000000><b>${allianceName}</b></color> ${this.reportDateRange || ''}\n\n`;
+
+        if (type === 'gathering' && this.allianceFilter) {
+            const totalGathered = data.reduce((sum, p) => sum + (p.gatheredDelta || 0), 0);
+            const totalAssistance = data.reduce((sum, p) => sum + (p.rssDelta || 0), 0);
+            report += `<b>Alliance Totals:</b>\n`;
+            report += `Total Gathered: <color=#D2691E><b>${Utils.formatCompactNumber(totalGathered)}</b></color>\n`;
+            report += `Total Assistance: <b>${Utils.formatCompactNumber(totalAssistance)}</b>\n\n`;
+        }
 
         const formatRow = (p) => {
             const fmt = Utils.formatCompactNumber;
             if (type === 'growth') {
                 return `(Tech:+${fmt(p.techDelta)} Cdr:+${fmt(p.cmdDelta)} Bld:+${fmt(p.bldDelta)} RSS:+${fmt(p.gatheredDelta)} Asst:+${fmt(p.rssDelta)})`;
+            } else if (type === 'gathering') {
+                return `(Gathered: <color=#D2691E>+${fmt(p.gatheredDelta)}</color> | Asst: +${fmt(p.rssDelta)})`;
             } else {
                 return `(Pwr:${p.powerDelta > 0 ? '+' : ''}${fmt(p.powerDelta)} KP:+${fmt(p.kpDelta)} Dds:+${fmt(p.deadsDelta)})`;
             }
@@ -479,14 +511,20 @@ class UIGrowth {
 
         const showTag = !this.allianceFilter; // Only show [Tag] if viewing ALL alliances
 
-        report += `<color=#32CD32><b>🏆 TOP 3 MOVERS</b></color>\n`;
-        top3.forEach((p, i) => {
-            report += `${i + 1}. <b>${p.name}</b>${showTag ? ` [${p.alliance}]` : ''} Sc:<color=#32CD32>${p.finalScore.toFixed(1)}</color> ${formatRow(p)}\n`;
+        let topHeader = (type === 'gathering') ? "🌾 TOP 5 HARVESTERS" : "🏆 TOP 3 MOVERS";
+        report += `<color=#32CD32><b>${topHeader}</b></color>\n`;
+
+        topList.forEach((p, i) => {
+            let metricText = type === 'gathering' ? '' : `Sc:<color=#32CD32>${p.finalScore.toFixed(1)}</color> `;
+            report += `${i + 1}. <b>${p.name}</b>${showTag ? ` [${p.alliance}]` : ''} ${metricText}${formatRow(p)}\n`;
         });
 
-        report += `\n<color=#FF4500><b>⚠️ BOTTOM 10 (Review)</b></color>\n`;
-        bottom10.forEach((p, i) => {
-            report += `${i + 1}. <b>${p.name}</b>${showTag ? ` [${p.alliance}]` : ''} Sc:<color=#FF4500>${p.finalScore.toFixed(1)}</color> ${formatRow(p)}\n`;
+        let bottomHeader = (type === 'gathering') ? "⚠️ BOTTOM 20 GATHERERS (Review)" : "⚠️ BOTTOM 10 (Review)";
+        report += `\n<color=#FF4500><b>${bottomHeader}</b></color>\n`;
+
+        bottomList.forEach((p, i) => {
+            let metricText = type === 'gathering' ? '' : `Sc:<color=#FF4500>${p.finalScore.toFixed(1)}</color> `;
+            report += `${i + 1}. <b>${p.name}</b>${showTag ? ` [${p.alliance}]` : ''} ${metricText}${formatRow(p)}\n`;
         });
 
         report += `\nGenerated by Unity`;

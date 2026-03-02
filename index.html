@@ -138,6 +138,9 @@
                                 <div class="card-footer hidden" id="startSaveContainer">
                                     <button class="footer-btn save-btn" id="cloudUploadStartBtn">💾 Save to
                                         Cloud</button>
+                                    <button class="footer-btn action-btn firebase-export-btn" data-type="start"
+                                        style="background:#ea580c; border:none; margin-left:10px; padding:0.4rem 1rem; border-radius:4px; cursor:pointer; font-weight:bold; color:#fff;">🔥
+                                        Push to Firebase</button>
                                 </div>
                                 <input type="file" id="startScanInput" accept=".xlsx, .csv, .json" multiple hidden>
                                 <div id="startScanDetails" class="file-details" style="display: none;"></div>
@@ -167,6 +170,9 @@
                                 </div>
                                 <div class="card-footer hidden" id="midSaveContainer">
                                     <button class="footer-btn save-btn" id="cloudUploadMidBtn">💾 Save to Cloud</button>
+                                    <button class="footer-btn action-btn firebase-export-btn" data-type="mid"
+                                        style="background:#ea580c; border:none; margin-left:10px; padding:0.4rem 1rem; border-radius:4px; cursor:pointer; font-weight:bold; color:#fff;">🔥
+                                        Push to Firebase</button>
                                 </div>
                                 <input type="file" id="midScanInput" accept=".xlsx, .csv, .json" multiple hidden>
                                 <div id="midScanDetails" class="file-details" style="display: none;"></div>
@@ -196,6 +202,9 @@
                                 </div>
                                 <div class="card-footer hidden" id="endSaveContainer">
                                     <button class="footer-btn save-btn" id="cloudUploadEndBtn">💾 Save to Cloud</button>
+                                    <button class="footer-btn action-btn firebase-export-btn" data-type="end"
+                                        style="background:#ea580c; border:none; margin-left:10px; padding:0.4rem 1rem; border-radius:4px; cursor:pointer; font-weight:bold; color:#fff;">🔥
+                                        Push to Firebase</button>
                                 </div>
                                 <input type="file" id="endScanInput" accept=".xlsx, .csv, .json" multiple hidden>
                                 <div id="endScanDetails" class="file-details" style="display: none;"></div>
@@ -370,27 +379,28 @@
     <div id="new-phone-who-dis" class="tab-content">
         <div class="card">
             <div class="results-header">
-                <h2 data-tooltip="Identify new players and those who have left.">New Phone Who Dis?</h2>
+                <h2 data-tooltip="Search the Global Cloud Timeline for any Governor.">Cross-Kingdom Background Check
+                </h2>
             </div>
 
             <div class="controls"
                 style="margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px;">
-                <div class="input-group">
-                    <label>Select Kingdom</label>
-                    <select id="npwdKingdomSelect" class="prekvk-select">
-                        <!-- Populated by JS -->
-                    </select>
+                <div class="input-group" style="flex-direction: row; align-items: flex-end; gap: 10px;">
+                    <div>
+                        <label>Governor ID</label>
+                        <input type="text" id="npwdSearchInput" class="config-input" placeholder="e.g. 12345678"
+                            style="width: 250px;">
+                    </div>
+                    <button class="primary-btn" id="npwdSearchBtn">Search Timeline</button>
+                    <div id="npwdSearchStatus" style="color: var(--text-muted); font-size: 0.9em; margin-left: 10px;">
+                    </div>
                 </div>
             </div>
 
-            <div class="npwd-container" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                <div class="npwd-column">
-                    <h3 style="color: var(--success-color); margin-bottom: 15px;">New Arrivals (In End, Not Start)</h3>
-                    <div id="newArrivalsContainer" class="prekvk-wrapper"></div>
-                </div>
-                <div class="npwd-column">
-                    <h3 style="color: var(--danger-color); margin-bottom: 15px;">Departures (In Start, Not End)</h3>
-                    <div id="departuresContainer" class="prekvk-wrapper"></div>
+            <div class="npwd-container">
+                <div id="npwdTimelineContainer" class="prekvk-wrapper">
+                    <p style="text-align:center; color: var(--text-muted); margin-top: 2rem;">Enter a Governor ID to
+                        search the Cloud Database.</p>
                 </div>
             </div>
         </div>
@@ -1062,6 +1072,20 @@
                         Manage your local app session and clean up memory.
                     </p>
 
+                    <div
+                        style="margin-bottom: 1.5rem; padding: 1rem; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 8px;">
+                        <h4 style="font-size: 0.95rem; margin-bottom: 0.5rem; color: var(--accent-primary);">🚀 Bulk
+                            Import Scans</h4>
+                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Select multiple
+                            Excel, JSON, or CSV scan files to parse and push to Firebase simultaneously.</p>
+                        <input type="file" id="bulkFirebaseUploadInput" multiple accept=".xlsx,.csv,.json"
+                            style="display: none;">
+                        <button id="bulkFirebaseUploadBtn" class="primary-btn"
+                            style="width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px;">
+                            <span>☁️</span> Bulk Push to Cloud
+                        </button>
+                    </div>
+
                     <div style="margin-bottom: 1.5rem; padding: 1rem; background: rgba(0,0,0,0.2); border-radius: 8px;">
                         <h4 style="font-size: 0.95rem; margin-bottom: 0.5rem; color: var(--text-primary);">🧹 Clear
                             Loaded Scans</h4>
@@ -1081,10 +1105,12 @@
                     </div>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: auto;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-top: auto;">
                     <button id="resetDataBtn" class="primary-btn"
                         style="background: var(--warning-color); border-color: var(--warning-color); color: #000; box-shadow: none;">Clear
                         Loaded Scans</button>
+                    <button id="wipeFirebaseBtn" class="primary-btn danger-btn"
+                        style="background: #ea580c; border-color: #ea580c; box-shadow: none;">Wipe Firebase</button>
                     <button id="factoryResetBtn" class="primary-btn danger-btn"
                         style="background: var(--danger-color); box-shadow: none;">Factory Reset</button>
                 </div>
@@ -2805,9 +2831,17 @@
             <h2 id="firebaseModalTitle">Select Cloud Workspace 🔥</h2>
             <div style="margin-top: 15px;">
                 <label style="display: block; margin-bottom: 8px; font-weight: 600;">Available Workspaces</label>
-                <select id="firebaseKingdomSelect" class="select-css" style="width: 100%; margin-bottom: 15px;">
-                    <option value="">Loading...</option>
-                </select>
+                <div id="firebaseKingdomCheckboxes" class="select-css"
+                    style="width: 100%; height: 120px; overflow-y: auto; margin-bottom: 15px; padding: 5px; background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); border-radius: 4px;">
+                    <div style="padding: 5px; color: var(--text-muted);">Loading...</div>
+                </div>
+
+                <div id="firebaseDateSelectContainer" style="display:none;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600;">Historical Scan Date</label>
+                    <select id="firebaseDateSelect" class="select-css" style="width: 100%; margin-bottom: 15px;">
+                    </select>
+                </div>
+
                 <div style="display: flex; gap: 10px; justify-content: flex-end;">
                     <button class="secondary-btn" id="cancelFirebaseBtn">Cancel</button>
                     <button class="primary-btn" id="confirmFirebaseBtn">Sync Data</button>
@@ -2843,12 +2877,12 @@
 
     <!-- UI Services -->
     <script src="js/services/UIService.js"></script>
-    <script src="js/services/ui/UIEvents.js"></script>
+    <script src="js/services/ui/UIEvents.js?v=3"></script>
     <script src="js/services/ui/UINavigation.js"></script>
-    <script src="js/services/ui/UIRenderers.js"></script>
+    <script src="js/services/ui/UIRenderers.js?v=8"></script>
     <script src="js/services/ui/UICommunity.js?v=28"></script>
     <script src="js/services/ui/UICharts.js"></script>
-    <script src="js/services/ui/UIExports.js"></script>
+    <script src="js/services/ui/UIExports.js?v=3"></script>
     <script src="js/services/ui/UISOC.js"></script>
     <script src="js/services/ui/UIGrowth.js?v=2.2.1"></script>
     <script src="js/services/ui/UIHallOfLegends.js"></script>
@@ -2861,7 +2895,7 @@
     <script src="js/core/commanders.js"></script>
     <script src="js/services/CalculatorsService.js"></script>
     <script src="js/services/MailService.js"></script>
-    <script src="js/services/FirebaseRosterService.js"></script>
+    <script src="js/services/FirebaseRosterService.js?v=3"></script>
     <script src="js/services/ui/UIMyAlliance.js"></script>
     <script src="js/services/OCRScannerService.js"></script>
 
@@ -2915,7 +2949,7 @@
 
     <!-- Main -->
     <script src="js/services/ui/UILiveFeed.js"></script>
-    <script src="js/main.js"></script>
+    <script src="js/main.js?v=4"></script>
     <script>
         // Simple inline script to display version from Config
         document.addEventListener('DOMContentLoaded', () => {
@@ -2939,8 +2973,9 @@
                     if (fbInput) {
                         const val = fbInput.value.trim();
                         localStorage.setItem('__unity_firebase_url', val);
-                        if (window.uiMyAlliance) {
-                            window.uiMyAlliance.connectFirebase(val);
+                        if (window.firebaseRosterService) {
+                            window.firebaseRosterService.init(val);
+                            if (window.uiMyAlliance) window.uiMyAlliance.bindFirebaseStatus();
                         }
                     }
                 });

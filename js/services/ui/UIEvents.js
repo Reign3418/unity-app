@@ -97,6 +97,98 @@ Object.assign(UIService.prototype, {
             });
         }
 
+        // Wipe Firebase
+        const wipeFbBtn = document.getElementById('wipeFirebaseBtn');
+        if (wipeFbBtn) {
+            wipeFbBtn.addEventListener('click', async () => {
+                const output = prompt("WARNING: You are about to irrevocably delete the entire Firebase real-time database.\n\nType 'DELETE' in all caps to confirm.");
+                if (output === 'DELETE') {
+                    if (window.firebaseRosterService) {
+                        try {
+                            wipeFbBtn.textContent = 'Wiping...';
+                            wipeFbBtn.disabled = true;
+                            await window.firebaseRosterService.wipeDatabase();
+                            alert("Firebase Database has been successfully wiped clean.");
+                        } catch (err) {
+                            alert("Failed to wipe Firebase: " + err.message);
+                        } finally {
+                            wipeFbBtn.textContent = 'Wipe Firebase';
+                            wipeFbBtn.disabled = false;
+                        }
+                    } else {
+                        alert("Firebase Sync is not connected.");
+                    }
+                } else {
+                    if (output !== null) alert("Incorrect password. Database wipe cancelled.");
+                }
+            });
+        }
+        // Bulk Firebase Upload
+        const bulkFirebaseBtn = document.getElementById('bulkFirebaseUploadBtn');
+        const bulkFirebaseInput = document.getElementById('bulkFirebaseUploadInput');
+        if (bulkFirebaseBtn && bulkFirebaseInput) {
+            bulkFirebaseBtn.addEventListener('click', () => {
+                bulkFirebaseInput.click();
+            });
+
+            bulkFirebaseInput.addEventListener('change', async (e) => {
+                const files = e.target.files;
+                if (!files || files.length === 0) return;
+
+                const originalText = bulkFirebaseBtn.innerHTML;
+                bulkFirebaseBtn.innerHTML = `<span>⏳</span> Processing ${files.length} files...`;
+                bulkFirebaseBtn.disabled = true;
+
+                let successCount = 0;
+                let failCount = 0;
+
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+                    try {
+                        // 1. Parse the file into the standard {data, date, kingdoms} format using the existing DataService pipeline
+                        if (!this.data) throw new Error("DataService is not initialized on this instance.");
+                        const parsed = await this.data.parseFile(file);
+
+                        const { data, date } = parsed;
+                        if (!data || data.length === 0 || !date) {
+                            console.warn(`[BulkImport] Skipping ${file.name}: Missing data or date.`);
+                            failCount++;
+                            continue;
+                        }
+
+                        // 2. Group records by Kingdom to handle multi-kd CSVs correctly
+                        const kingdomGroups = {};
+                        data.forEach(p => {
+                            const kId = p['_kingdom'];
+                            if (!kId) return;
+                            if (!kingdomGroups[kId]) kingdomGroups[kId] = [];
+                            kingdomGroups[kId].push(p);
+                        });
+
+                        // 3. Push each kingdom's slice directly to Firebase
+                        for (const [kId, records] of Object.entries(kingdomGroups)) {
+                            await window.uiMyAlliance.rosterService.pushFullScan(kId, date, records);
+                        }
+
+                        successCount++;
+                    } catch (err) {
+                        console.error(`[BulkImport] Error processing file ${file.name}:`, err);
+                        failCount++;
+                    }
+                }
+
+                bulkFirebaseBtn.innerHTML = `<span>✅</span> Complete!`;
+
+                setTimeout(() => {
+                    bulkFirebaseBtn.innerHTML = originalText;
+                    bulkFirebaseBtn.disabled = false;
+                    bulkFirebaseInput.value = ''; // Reset input
+
+                    alert(`Bulk Firebase Upload Complete!\n\nSuccessfully pushed: ${successCount} files.\nFailed: ${failCount} files.`);
+                }, 2000);
+            });
+        }
+
         // GitHub Integration
         this.ghService = new GitHubService();
         const ghOwner = document.getElementById('ghOwner');

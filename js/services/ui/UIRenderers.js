@@ -631,19 +631,8 @@ Object.assign(UIService.prototype, {
     },
 
     updateNPWDDropdown() {
-        const select = this.elements.npwdKingdomSelect;
-        if (!select) return;
-        select.innerHTML = '';
-        Array.from(this.data.state.loadedKingdoms).forEach(kId => {
-            const option = document.createElement('option');
-            option.value = kId;
-            option.textContent = `Kingdom ${kId}`;
-            select.appendChild(option);
-        });
-        if (this.data.state.loadedKingdoms.size > 0 && select.value === '') {
-            select.value = Array.from(this.data.state.loadedKingdoms)[0];
-            this.renderNewPhoneWhoDis(select.value);
-        }
+        // Obsolete: NPWD is now a Global Cloud Search tab instead of a localized kingdom filter.
+        // Kept empty to avoid breaking older external references.
     },
 
     updateHoHScannerDropdown() {
@@ -764,35 +753,170 @@ Object.assign(UIService.prototype, {
         });
     },
 
-    renderNewPhoneWhoDis(kingdomId) {
-        const newContainer = document.getElementById('newArrivalsContainer');
-        const departContainer = document.getElementById('departuresContainer');
-        if (!newContainer || !departContainer) return;
+    async renderNewPhoneWhoDis() {
+        const input = document.getElementById('npwdSearchInput');
+        const btn = document.getElementById('npwdSearchBtn');
+        const status = document.getElementById('npwdSearchStatus');
+        const container = document.getElementById('npwdTimelineContainer');
 
-        if (!kingdomId) {
-            newContainer.innerHTML = '<p>Please select a kingdom.</p>';
-            departContainer.innerHTML = '<p>Please select a kingdom.</p>';
+        if (!input || !btn || !container) return;
+
+        const govId = input.value.trim();
+        if (!govId) {
+            if (status) status.textContent = "Please enter a valid Governor ID or Name.";
             return;
         }
 
-        const kState = this.data.state.kingdoms[kingdomId];
-        if (!kState) return;
+        if (!window.uiMyAlliance || !window.uiMyAlliance.rosterService || !window.uiMyAlliance.rosterService.connected) {
+            if (status) status.innerHTML = `<span style="color:var(--danger-color)">Firebase is not connected in Settings.</span>`;
+            return;
+        }
 
-        const startIds = new Set(kState.startData.map(r => r['Governor ID']));
-        const endIds = new Set(kState.endData.map(r => r['Governor ID']));
+        btn.disabled = true;
+        if (status) status.innerHTML = "Searching Global Timeline... ⏳";
+        container.innerHTML = '<div style="text-align:center; margin-top:2rem; color:var(--text-muted);">Querying Cloud Database...</div>';
 
-        const newArrivals = kState.endData.filter(r => !startIds.has(r['Governor ID']));
-        const departures = kState.startData.filter(r => !endIds.has(r['Governor ID']));
+        try {
+            const data = await window.uiMyAlliance.rosterService.getGovernorHistory(govId);
 
-        const formatData = (list) => list.map(r => ({
-            'Name': r['Governor Name'],
-            'ID': r['Governor ID'],
-            'Alliance': r['Alliance Tag'],
-            'Power': Utils.parseNumber(r['Power'])
-        })).sort((a, b) => b.Power - a.Power);
+            if (!data) {
+                if (status) status.innerHTML = `<span style="color:var(--danger-color)">No records found for "${govId}".</span>`;
+                container.innerHTML = `<div class="empty-state">This governor does not exist in any uploaded Cloud Scans.</div>`;
+                btn.disabled = false;
+                return;
+            }
 
-        this.renderAnalysisTable(formatData(newArrivals), newContainer);
-        this.renderAnalysisTable(formatData(departures), departContainer);
+            if (status) status.innerHTML = `<span style="color:var(--success-color)">Found Governor Profile!</span>`;
+
+            // Build Timeline UI
+            const profile = data.profile || {};
+            const history = data.history || {};
+
+            // Sort history ascending by date (keys are like "3155_2024-05-10")
+            const historyEntries = Object.entries(history).sort((a, b) => {
+                const dateA = a[0].includes('_') ? a[0].split('_')[1] : a[0];
+                const dateB = b[0].includes('_') ? b[0].split('_')[1] : b[0];
+                return new Date(dateA) - new Date(dateB);
+            });
+
+            let lastSeenStr = "Unknown";
+            let trueName = profile.name || "Unknown Name";
+
+            if (historyEntries.length > 0) {
+                const lastEntry = historyEntries[historyEntries.length - 1]; // Latest date
+                const lastKey = lastEntry[0];
+                const lastRecord = lastEntry[1];
+                const parts = lastKey.split('_');
+                const lastKId = parts[0];
+                const lastDate = parts.slice(1).join('_');
+                lastSeenStr = `<strong>${lastDate}</strong> in <strong>Kingdom ${lastKId}</strong>`;
+                trueName = lastRecord['Governor Name'] || lastRecord['Name'] || trueName;
+            } else {
+                lastSeenStr = `<strong>${profile.lastSeenDate || "Unknown"}</strong> in <strong>Kingdom ${profile.lastSeenKingdom || "?"}</strong>`;
+            }
+
+            // Expose the raw data so the Mail Generator button can easily access the sorted history
+            window.__currentTimelineData = {
+                govId: govId,
+                name: trueName,
+                entries: historyEntries
+            };
+
+            let html = `
+                <div class="report-card" style="margin-bottom: 2rem; background: rgba(30, 41, 59, 1); border: 1px solid var(--border-color);">
+                    <div class="card-header" style="text-align:center;">
+                        <h2 style="margin:0; font-size: 2rem; color: var(--accent-primary);">${trueName}</h2>
+                        <div style="color:var(--text-secondary); font-size: 1.1rem; margin-top:5px;">ID: ${govId}</div>
+                        <div style="margin-top:10px; font-size: 1rem;">
+                            Last Seen: ${lastSeenStr}
+                        </div>
+                    </div>
+                </div>
+                
+                <h3 style="margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; display:flex; justify-content:space-between; align-items:center;">
+                    <span>Historical Timeline Tracker ⏱️</span>
+                    <button class="primary-btn" onclick="window.generateTimelineMail()" style="font-size: 0.85rem; padding: 6px 12px; display: flex; align-items: center; gap: 5px;">
+                        <span>✉️</span> Send to Mail Generator
+                    </button>
+                </h3>
+                <div style="display:flex; flex-direction:column; gap: 15px;">
+            `;
+
+            if (historyEntries.length === 0) {
+                html += `<p style="color:var(--text-muted)">No chronological timeline data recorded for this ID.</p>`;
+            } else {
+                let lastRecord = null;
+
+                historyEntries.forEach(([key, record], index) => {
+                    const parts = key.split('_');
+                    const kId = parts[0];
+                    const date = parts.slice(1).join('_'); // Handle potential underscores in date string
+
+                    const pwr = Utils.parseNumber(record['Power']);
+                    const kp = Utils.parseNumber(record['Kill Points']);
+                    const dead = Utils.parseNumber(record['Deads']);
+                    const name = record['Governor Name'] || record['Name'] || "Unknown";
+                    const tag = record['Alliance Tag'] || "None";
+
+                    // Format values
+                    let pwrStr = `<span style="color:var(--text-secondary)">${Utils.formatCompactNumber(pwr)} Power</span>`;
+                    let kpStr = `${Utils.formatCompactNumber(kp)} KP`;
+                    let deadStr = `${Utils.formatCompactNumber(dead)} Deads`;
+                    let nameChangeHTML = "";
+
+                    if (lastRecord) {
+                        const lastPwr = Utils.parseNumber(lastRecord['Power']);
+                        const lastKp = Utils.parseNumber(lastRecord['Kill Points']);
+                        const lastDead = Utils.parseNumber(lastRecord['Deads']);
+                        const lastName = lastRecord['Governor Name'] || lastRecord['Name'] || "Unknown";
+
+                        const pwrDiff = pwr - lastPwr;
+                        const kpDiff = kp - lastKp;
+                        const deadDiff = dead - lastDead;
+
+                        if (pwrDiff > 0) pwrStr += ` <span style="color:var(--success-color); font-size:0.8em; margin-left:5px;">(+${Utils.formatCompactNumber(pwrDiff)})</span>`;
+                        else if (pwrDiff < 0) pwrStr += ` <span style="color:var(--danger-color); font-size:0.8em; margin-left:5px;">(${Utils.formatCompactNumber(pwrDiff)})</span>`;
+
+                        if (kpDiff > 0) kpStr += ` <span style="color:var(--success-color); font-size:0.8em; margin-left:5px;">(+${Utils.formatCompactNumber(kpDiff)})</span>`;
+                        if (deadDiff > 0) deadStr += ` <span style="color:var(--danger-color); font-size:0.8em; margin-left:5px;">(+${Utils.formatCompactNumber(deadDiff)})</span>`;
+
+                        if (lastName !== name) {
+                            nameChangeHTML = `<div style="color:var(--warning-color); font-size: 0.85rem; margin-top:6px; font-weight:600;">⚠️ Name Change: Was previously known as "${lastName}"</div>`;
+                        }
+                    }
+
+                    html += `
+                        <div style="display:flex; flex-wrap: wrap; background: rgba(0,0,0,0.25); padding: 1.2rem; border-radius: 8px; border-left: 4px solid var(--accent-primary);">
+                            <div style="min-width: 150px; border-right: 1px solid var(--border-color); padding-right: 15px; margin-right: 15px; display:flex; flex-direction:column; justify-content:center;">
+                                <div style="font-weight:bold; color:var(--text-primary); font-size:1.1rem;">📅 ${date}</div>
+                                <div style="color:var(--accent-primary); font-weight:600; font-size: 1.1rem; margin-top:5px;">🏰 Kingdom ${kId}</div>
+                                <div style="color:var(--text-secondary); font-size: 1rem; margin-top:5px;">🛡️ Alliance: [${tag}]</div>
+                            </div>
+                            <div style="flex-grow: 1; display:flex; flex-direction:column; justify-content:center;">
+                                <div style="font-weight:600; font-size:1.2rem; color: #fff;">${name}</div>
+                                ${nameChangeHTML}
+                                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-top: 12px; font-size: 1.1rem;">
+                                    <div>⚡ ${pwrStr}</div>
+                                    <div>⚔️ ${kpStr}</div>
+                                    <div>💀 ${deadStr}</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    lastRecord = record;
+                });
+            }
+
+            html += `</div>`;
+            container.innerHTML = html;
+
+        } catch (e) {
+            console.error(e);
+            if (status) status.innerHTML = `<span style="color:var(--danger-color)">Error analyzing timeline.</span>`;
+            container.innerHTML = `<div class="empty-state">Analysis failed: ${e.message}</div>`;
+        } finally {
+            btn.disabled = false;
+        }
     },
 
     renderKingdomAnalysis() {
@@ -926,7 +1050,117 @@ Object.assign(UIService.prototype, {
         html += '</tbody></table>';
         container.innerHTML = html;
     },
-
-
-
 });
+
+window.generateTimelineMail = function () {
+    if (!window.__currentTimelineData) return;
+    const targetData = window.__currentTimelineData;
+    const M = window.__currentTimelineData.entries;
+
+    let mailText = `<b><color=#ff9900>Cross-Kingdom Status Report</color></b>\n`;
+    mailText += `Governor: ${targetData.name} (${targetData.govId})\n`;
+    mailText += `\n`;
+    mailText += `<b>Historical Tracking:</b>\n`;
+
+    // Group adjacent chronological records by Kingdom to create a timeline flow
+    const timelineSegments = [];
+    let currentSegment = null;
+
+    M.forEach(([key, record]) => {
+        const parts = key.split('_');
+        let kId = parts[0];
+
+        // Normalize KD numbers to prevent 'Rolled Up 4018' from appearing as a separate KD from '4018'
+        const kIdMatch = kId.match(/\d+/);
+        if (kIdMatch) kId = kIdMatch[0];
+
+        const date = parts.slice(1).join('_');
+
+        const pwr = Utils.parseNumber(record['Power']);
+        const kp = Utils.parseNumber(record['Kill Points']);
+        const dead = Utils.parseNumber(record['Deads']);
+        const tag = record['Alliance Tag'] || "None";
+
+        if (!currentSegment || currentSegment.kId !== kId) {
+            // Started a new Kingdom segment
+            if (currentSegment) {
+                timelineSegments.push(currentSegment);
+            }
+            currentSegment = {
+                kId: kId,
+                firstDate: date,
+                lastDate: date,
+                startPwr: pwr,
+                endPwr: pwr,
+                startKp: kp,
+                endKp: kp,
+                startDead: dead,
+                endDead: dead,
+                tags: new Set([tag]) /* ignore any 'None' if we get a real tag later, but keep as set */
+            };
+        } else {
+            // Continuing in the same kingdom, just step the end states forward
+            currentSegment.lastDate = date;
+            currentSegment.endPwr = pwr;
+            currentSegment.endKp = kp;
+            currentSegment.endDead = dead;
+            if (tag !== "None") currentSegment.tags.add(tag);
+        }
+    });
+
+    // Don't forget to push the final segment
+    if (currentSegment) {
+        timelineSegments.push(currentSegment);
+    }
+
+    timelineSegments.forEach((data) => {
+        // filter out 'None' if we have real tags
+        let tagsSet = Array.from(data.tags);
+        if (tagsSet.length > 1 && tagsSet.includes("None")) {
+            tagsSet = tagsSet.filter(t => t !== "None");
+        }
+        const tagStr = tagsSet.join(', ');
+
+        const dateStr = data.firstDate === data.lastDate ? data.firstDate : `${data.firstDate} to ${data.lastDate}`;
+
+        let pwrTrend = "";
+        let kpTrend = "";
+        let deadTrend = "";
+
+        const diffPwr = data.endPwr - data.startPwr;
+        if (diffPwr > 0) pwrTrend = ` <color=#00ff00>(+${Utils.formatCompactNumber(diffPwr)})</color>`;
+        else if (diffPwr < 0) pwrTrend = ` <color=#ff0000>(${Utils.formatCompactNumber(diffPwr)})</color>`;
+
+        const diffKp = data.endKp - data.startKp;
+        if (diffKp > 0) kpTrend = ` <color=#00ff00>(+${Utils.formatCompactNumber(diffKp)})</color>`;
+
+        const diffDead = data.endDead - data.startDead;
+        if (diffDead > 0) deadTrend = ` <color=#ff0000>(+${Utils.formatCompactNumber(diffDead)})</color>`;
+
+        mailText += `<color=#cccccc>• ${dateStr}</color> KD ${data.kId} [${tagStr}]\n`;
+        mailText += `Power: <color=#ffffff>${Utils.formatCompactNumber(data.endPwr)}</color>${pwrTrend}\n`;
+        mailText += `KP: <color=#ffffff>${Utils.formatCompactNumber(data.endKp)}</color>${kpTrend} | Deads: <color=#ffffff>${Utils.formatCompactNumber(data.endDead)}</color>${deadTrend}\n`;
+        mailText += `\n`;
+    });
+
+    // Forward this payload to the Mail Generator
+    const mailContentInput = document.getElementById('mail-input');
+    const mailTabBtn = document.querySelector('.tab-btn[data-tab="mail"]');
+
+    if (mailContentInput && mailTabBtn) {
+        // Append rather than overwrite, adding localized line breaks if text already exists
+        if (mailContentInput.value.trim().length > 0) {
+            mailContentInput.value += `\n\n${mailText}`;
+        } else {
+            mailContentInput.value = mailText;
+        }
+
+        // Trigger input event to update preview
+        mailContentInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+        // Switch Tab
+        mailTabBtn.click();
+    } else {
+        alert("Could not locate the Mail Generator tab. Please open the tool in its own window.");
+    }
+};

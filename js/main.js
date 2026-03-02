@@ -231,6 +231,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const uploadBtn = zone.querySelector('.upload-btn');
             const cloudBtn = zone.querySelector('.cloud-btn');
             const firebaseBtn = zone.querySelector('.firebase-sync-btn');
+            const firebaseExportBtn = zone.querySelector('.firebase-export-btn');
 
             // Logic for New Split UI
             if (uploadBtn) {
@@ -251,6 +252,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 firebaseBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     if (uiService) uiService.handleFirebaseImport(type);
+                });
+            }
+
+            if (firebaseExportBtn) {
+                firebaseExportBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (uiService) uiService.handleFirebaseExport(type);
                 });
             }
 
@@ -357,6 +365,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         bindSave('cloudUploadStartBtn', 'start');
         bindSave('cloudUploadMidBtn', 'mid');
         bindSave('cloudUploadEndBtn', 'end');
+
+        // New Phone Who Dis Global Search
+        const npwdSearchBtn = document.getElementById('npwdSearchBtn');
+        const npwdSearchInput = document.getElementById('npwdSearchInput');
+        if (npwdSearchBtn) {
+            npwdSearchBtn.addEventListener('click', () => {
+                if (uiService) uiService.renderNewPhoneWhoDis();
+            });
+        }
+        if (npwdSearchInput) {
+            npwdSearchInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && uiService) uiService.renderNewPhoneWhoDis();
+            });
+        }
 
         console.log("Unity Init Complete.");
 

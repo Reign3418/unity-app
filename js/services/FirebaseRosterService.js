@@ -132,14 +132,195 @@ class FirebaseRosterService {
     async getActiveKingdoms() {
         if (!this.db || !this.connected) return [];
         try {
-            const snapshot = await this.db.ref('rosters').once('value');
-            const data = snapshot.val();
-            return data ? Object.keys(data) : [];
+            const rosterSnap = await this.db.ref('rosters').once('value');
+            const kingdomsSnap = await this.db.ref('kingdoms').once('value');
+
+            const kds = new Set();
+            if (rosterSnap.exists()) Object.keys(rosterSnap.val()).forEach(k => kds.add(k));
+            if (kingdomsSnap.exists()) Object.keys(kingdomsSnap.val()).forEach(k => kds.add(k));
+
+            return Array.from(kds);
         } catch (error) {
             console.error('Firebase Fetch Kingdoms Error:', error);
             return [];
         }
     }
+
+    // ------------------------------------------------------------------------
+    // GLOBAL CLOUD TRACKING & TIMELINE
+    // ------------------------------------------------------------------------
+
+    // Push an entire scan array to the cloud in one atomic operation
+    async pushFullScan(kingdomId, scanDate, scanData) {
+        if (!this.db || !this.connected) throw new Error('Not connected to Firebase.');
+
+        let updates = {};
+        const safeDate = String(scanDate).replace(/[.#$\/\[\]\s]/g, "_");
+
+        // Helper function to sanitize object keys for Firebase
+        const sanitizeObjectKeys = (obj) => {
+            if (typeof obj !== 'object' || obj === null) return obj;
+            if (Array.isArray(obj)) return obj.map(sanitizeObjectKeys);
+
+            const newObj = {};
+            for (const [key, value] of Object.entries(obj)) {
+                // Firebase illegal characters: . # $ / [ ]
+                const safeKey = String(key).replace(/[.#$\/\[\]]/g, "_");
+                newObj[safeKey] = sanitizeObjectKeys(value);
+            }
+            return newObj;
+        };
+
+        const safeScanData = sanitizeObjectKeys(scanData);
+
+        let kingdomScanObj = {};
+
+        // 2. Add each governor to their own timeline history node
+        safeScanData.forEach(player => {
+            const rawId = player['Governor ID'] || player['ID'] || player['id'];
+            const rawName = player['Governor Name'] || player['Name'] || player['name'] || "Unknown";
+
+            // Build the primary key
+            let key = (rawId) ? String(rawId) : rawName.replace(/[.#$\/\[\]\s]/g, "_");
+
+            // Avoid pushing empty or broken keys
+            if (key !== "undefined" && key !== "Unknown") {
+                // Flatten the scan into governor objects!
+                kingdomScanObj[key] = player;
+
+                // Keep the root profile updated with the latest seen data
+                updates[`governors/${key}/profile/name`] = rawName;
+                updates[`governors/${key}/profile/lastSeenKingdom`] = kingdomId;
+                updates[`governors/${key}/profile/lastSeenDate`] = safeDate;
+
+                // Add the snapshot to their personal history tree
+                updates[`governors/${key}/history/${kingdomId}_${safeDate}`] = player;
+            }
+        });
+
+        const originalHeaders = scanData.length > 0 ? Object.keys(scanData[0]) : [];
+
+        // 1. Store the full scan array in the kingdom node for instant retrieval later
+        // We nest it inside 'data' so we can store the ordered headers alongside it
+        updates[`kingdoms/${kingdomId}/scans/${safeDate}/data`] = kingdomScanObj;
+        if (originalHeaders.length > 0) {
+            updates[`kingdoms/${kingdomId}/scans/${safeDate}/headers`] = originalHeaders;
+        }
+
+        try {
+            // Push the massive payload atomically
+            await this.db.ref().update(updates);
+            return true;
+        } catch (error) {
+            console.error('Firebase Push Full Scan Error:', error);
+            throw error;
+        }
+    }
+
+    // Retrieve a list of all historical scan dates available for a specific kingdom
+    async getAvailableScanDates(kingdomId) {
+        if (!this.db || !this.connected) throw new Error('Not connected to Firebase.');
+        try {
+            const snap = await this.db.ref(`kingdoms/${kingdomId}/scans`).once('value');
+            if (snap.exists()) {
+                // Return an array of sorted dates
+                return Object.keys(snap.val()).sort((a, b) => new Date(b) - new Date(a));
+            }
+            return [];
+        } catch (e) {
+            console.error("Error fetching available scan dates:", e);
+            return [];
+        }
+    }
+
+    // Download the massive JSON block for a specific kingdom at a specific time
+    async loadScanDetails(kingdomId, scanDate) {
+        if (!this.db || !this.connected) throw new Error('Not connected to Firebase.');
+        try {
+            const snap = await this.db.ref(`kingdoms/${kingdomId}/scans/${scanDate}`).once('value');
+            if (snap.exists()) {
+                const payload = snap.val();
+
+                let rawData = payload;
+                let originalHeaders = null;
+
+                // Support new nested structure with headers
+                if (payload && payload.data) {
+                    rawData = payload.data;
+                    originalHeaders = payload.headers;
+                }
+
+                let arr = [];
+                if (rawData && typeof rawData === 'object' && !Array.isArray(rawData)) {
+                    arr = Object.values(rawData);
+                } else {
+                    arr = rawData || [];
+                }
+
+                // Reconstruct exact column order and restore original keys containing illegal Firebase chars
+                if (originalHeaders) {
+                    const headersArray = Array.isArray(originalHeaders) ? originalHeaders : Object.values(originalHeaders);
+                    if (headersArray.length > 0) {
+                        return arr.map(row => {
+                            const newRow = {};
+                            headersArray.forEach(origKey => {
+                                // The data was saved with illegal characters replaced by '_'
+                                const safeKey = String(origKey).replace(/[.#$\/\[\]]/g, "_");
+                                if (row[safeKey] !== undefined) {
+                                    newRow[origKey] = row[safeKey];
+                                } else if (row[origKey] !== undefined) {
+                                    newRow[origKey] = row[origKey]; // Fallback
+                                }
+                            });
+                            return newRow;
+                        });
+                    }
+                }
+
+                return arr;
+            }
+            return null;
+        } catch (e) {
+            console.error("Error loading specific scan:", e);
+            throw e;
+        }
+    }
+
+    // Look up a specific Governor ID to pull their entire lifetime history
+    async getGovernorHistory(govId) {
+        if (!this.db || !this.connected) throw new Error('Not connected to Firebase.');
+        try {
+            // Make safe key
+            const safeKey = String(govId).replace(/[.#$\/\[\]\s]/g, "_");
+            const snap = await this.db.ref(`governors/${safeKey}`).once('value');
+            return snap.val();
+        } catch (e) {
+            console.error("Error fetching governor history:", e);
+            throw e;
+        }
+    }
+
+    // ------------------------------------------------------------------------
+    // DATABASE MANAGEMENT
+    // ------------------------------------------------------------------------
+
+    // Forcibly wipe the entire Firebase Realtime Database
+    async wipeDatabase() {
+        if (!this.db || !this.connected) {
+            throw new Error('Not connected to Firebase. Please configure your Database URL in Settings.');
+        }
+
+        try {
+            // Setting the root reference to null deletes all data
+            await this.db.ref('/').set(null);
+            console.warn("FIREBASE DATABASE HAS BEEN WIPED.");
+            return true;
+        } catch (error) {
+            console.error('Database Wipe Error:', error);
+            throw error;
+        }
+    }
+
     // ------------------------------------------------------------------------
     // COMMUNITY HUB METHODS
     // ------------------------------------------------------------------------
