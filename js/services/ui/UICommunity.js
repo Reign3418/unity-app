@@ -1,7 +1,24 @@
 class UICommunity {
-    constructor(firebaseService) {
-        this.firebaseService = firebaseService;
+    constructor() {
         this.sub = null;
+
+        // Initialize Dedicated Community Hub Firebase App
+        this.hubApp = null;
+        this.hubDb = null;
+        try {
+            const existingApp = firebase.apps.find(app => app.name === "CommunityHub");
+            if (!existingApp) {
+                this.hubApp = firebase.initializeApp({
+                    databaseURL: "https://communityhub-ac1f1-default-rtdb.firebaseio.com/"
+                }, "CommunityHub");
+            } else {
+                this.hubApp = existingApp;
+            }
+            this.hubDb = this.hubApp.database();
+            console.log("Community Hub connected to global dedicated server.");
+        } catch (e) {
+            console.error("Community Hub DB Init Error:", e);
+        }
 
         // Cache DOM Elements
         this.boardContainer = document.getElementById('communityFeedContainer');
@@ -56,7 +73,7 @@ class UICommunity {
             this.showStatus('Posting...', 'var(--text-secondary)');
 
             try {
-                await this.firebaseService.submitFeedback({
+                await this.submitFeedback({
                     type,
                     name,
                     message
@@ -91,7 +108,7 @@ class UICommunity {
         }
 
         // The callback fires once for every existing post, and then again for any new ones
-        this.sub = this.firebaseService.listenToFeedback((post) => {
+        this.sub = this.listenToFeedback((post) => {
             if (this.emptyState) {
                 this.emptyState.remove();
                 this.emptyState = null;
@@ -100,9 +117,35 @@ class UICommunity {
         });
 
         if (!this.sub && this.emptyState) {
-            this.emptyState.textContent = 'Not connected to Cloud Database.';
+            this.emptyState.textContent = 'Not connected to Community Database.';
             this.emptyState.style.color = 'var(--danger-color)';
         }
+    }
+
+    // ------------------------------------------------------------------------
+    // DATABASE METHODS
+    // ------------------------------------------------------------------------
+    async submitFeedback(postData) {
+        if (!this.hubDb) throw new Error("Community Hub database not initialized.");
+        const newPostRef = this.hubDb.ref('community_feedback').push();
+        await newPostRef.set({
+            ...postData,
+            timestamp: firebase.database.ServerValue.TIMESTAMP
+        });
+        return true;
+    }
+
+    listenToFeedback(callback) {
+        if (!this.hubDb) return null;
+        const feedbackRef = this.hubDb.ref('community_feedback').orderByChild('timestamp').limitToLast(100);
+        const listener = feedbackRef.on('child_added', (snapshot) => {
+            const val = snapshot.val();
+            const key = snapshot.key;
+            callback({ id: key, ...val });
+        });
+        return () => {
+            feedbackRef.off('child_added', listener);
+        };
     }
 
     renderCard(post) {

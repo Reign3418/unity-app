@@ -22,6 +22,7 @@ const UIRaceChart = {
         const resetBtn = document.getElementById('race-btn-reset');
         const metricSelect = document.getElementById('race-metric');
         const speedSelect = document.getElementById('race-speed');
+        const kingdomSelect = document.getElementById('race-kingdom-filter');
         const allianceSelect = document.getElementById('race-alliance-filter');
 
         if (playBtn) playBtn.onclick = () => this.play();
@@ -35,6 +36,11 @@ const UIRaceChart = {
 
         if (speedSelect) speedSelect.onchange = (e) => {
             this.speedMultiplier = parseFloat(e.target.value);
+        };
+
+        if (kingdomSelect) kingdomSelect.onchange = () => {
+            this.populateAllianceFilter();
+            this.reset();
         };
 
         if (allianceSelect) allianceSelect.onchange = () => {
@@ -79,11 +85,36 @@ const UIRaceChart = {
         }
     },
 
+    populateKingdomFilter() {
+        const kingdomSelect = document.getElementById('race-kingdom-filter');
+        if (!kingdomSelect) return;
+
+        const kingdoms = Object.keys(this.data.state.kingdoms || {});
+        if (kingdoms.length === 0) return;
+
+        const currentVal = kingdomSelect.value;
+        kingdomSelect.innerHTML = ''; // Keep it strict to loaded kingdoms
+
+        kingdoms.forEach(kId => {
+            const opt = document.createElement('option');
+            opt.value = kId;
+            opt.innerText = `Kingdom ${kId}`;
+            if (kId === currentVal) opt.selected = true;
+            kingdomSelect.appendChild(opt);
+        });
+
+        // If nothing was selected but options exist, select the first one
+        if (!currentVal && kingdoms.length > 0) {
+            kingdomSelect.value = kingdoms[0];
+        }
+    },
+
     populateAllianceFilter() {
         const allianceSelect = document.getElementById('race-alliance-filter');
-        if (!allianceSelect) return;
+        const kingdomSelect = document.getElementById('race-kingdom-filter');
+        if (!allianceSelect || !kingdomSelect) return;
 
-        const activeKingdomId = Object.keys(this.data.state.kingdoms)[0];
+        const activeKingdomId = kingdomSelect.value || Object.keys(this.data.state.kingdoms)[0];
         if (!activeKingdomId) return;
         const kState = this.data.state.kingdoms[activeKingdomId];
 
@@ -114,8 +145,8 @@ const UIRaceChart = {
     },
 
     prepareData() {
-        // We need Start and End data matched by ID
-        const activeKingdomId = Object.keys(this.data.state.kingdoms)[0]; // Default to first
+        const kingdomSelect = document.getElementById('race-kingdom-filter');
+        const activeKingdomId = kingdomSelect ? kingdomSelect.value : Object.keys(this.data.state.kingdoms)[0];
         if (!activeKingdomId) return [];
 
         const kState = this.data.state.kingdoms[activeKingdomId];
@@ -176,12 +207,18 @@ const UIRaceChart = {
         }
 
         // Filter out zero-growth or low-value players to improve performance?
-        // Top 20 only for the race visuals
-        return players.sort((a, b) => b.end - a.end).slice(0, 50); // Take top 50 candidates
+        // Top 100 only for the race visuals
+        return players.sort((a, b) => b.end - a.end).slice(0, 100);
     },
 
     render() {
-        // Populate filter if needed (once)
+        // Populate kingdom filter if needed
+        const kingdomSelect = document.getElementById('race-kingdom-filter');
+        if (kingdomSelect && kingdomSelect.options.length === 0) {
+            this.populateKingdomFilter();
+        }
+
+        // Populate alliance filter if needed (once)
         // Check if options > 1 (meaning more than just "All Alliances")
         const allianceSelect = document.getElementById('race-alliance-filter');
         if (allianceSelect && allianceSelect.options.length <= 1) {
@@ -226,7 +263,7 @@ const UIRaceChart = {
         // Initial Sort (Start Values)
         this.raceData.sort((a, b) => b.start - a.start);
 
-        const top10 = this.raceData.slice(0, 15); // Show top 15 on chart
+        const topPlayers = this.raceData.slice(0, 100); // Show top 100 on chart
 
         if (this.chart) {
             this.chart.destroy();
@@ -235,11 +272,11 @@ const UIRaceChart = {
         this.chart = new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: top10.map(p => p.name),
+                labels: topPlayers.map(p => p.name),
                 datasets: [{
                     label: this.currentMetric.toUpperCase(),
-                    data: top10.map(p => p.start),
-                    backgroundColor: top10.map(p => this.getColorForPlayer(p.name)), // Simple hash color
+                    data: topPlayers.map(p => p.start),
+                    backgroundColor: topPlayers.map(p => this.getColorForPlayer(p.name)), // Simple hash color
                     borderWidth: 0,
                     borderRadius: 4
                 }]
@@ -267,6 +304,14 @@ const UIRaceChart = {
             }
         });
 
+        // Dynamic Height calculation based on items
+        const container = document.querySelector('.race-chart-container');
+        if (container) {
+            // roughly 35px per bar so it stays legible
+            const calculatedHeight = Math.max(600, topPlayers.length * 35);
+            container.style.height = `${calculatedHeight}px`;
+        }
+
         this.updateDateDisplay(0);
     },
 
@@ -281,12 +326,12 @@ const UIRaceChart = {
         // 2. Sort by Current
         this.raceData.sort((a, b) => b.current - a.current);
 
-        // 3. Update Chart Data (Top 15)
-        const top15 = this.raceData.slice(0, 15);
+        // 3. Update Chart Data (Top 100)
+        const topPlayers = this.raceData.slice(0, 100);
 
-        this.chart.data.labels = top15.map(p => p.name);
-        this.chart.data.datasets[0].data = top15.map(p => p.current);
-        this.chart.data.datasets[0].backgroundColor = top15.map(p => this.getColorForPlayer(p.name));
+        this.chart.data.labels = topPlayers.map(p => p.name);
+        this.chart.data.datasets[0].data = topPlayers.map(p => p.current);
+        this.chart.data.datasets[0].backgroundColor = topPlayers.map(p => this.getColorForPlayer(p.name));
 
         this.chart.update();
         this.updateDateDisplay(progress);

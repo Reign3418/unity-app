@@ -123,6 +123,34 @@ Object.assign(UIService.prototype, {
                 }
             });
         }
+
+        // Wipe AWS DynamoDB
+        const wipeAwsBtn = document.getElementById('wipeAwsBtn');
+        if (wipeAwsBtn) {
+            wipeAwsBtn.addEventListener('click', async () => {
+                const output = prompt("WARNING: You are about to irrevocably delete the entire AWS DynamoDB table.\n\nType 'DELETE' in all caps to confirm.");
+                if (output === 'DELETE') {
+                    if (window.awsRosterService && window.awsRosterService.connected) {
+                        try {
+                            wipeAwsBtn.textContent = 'Wiping...';
+                            wipeAwsBtn.disabled = true;
+                            await window.awsRosterService.wipeDatabase();
+                            alert("AWS Database has been successfully wiped clean.");
+                        } catch (err) {
+                            alert("Failed to wipe AWS Database: " + err.message);
+                        } finally {
+                            wipeAwsBtn.textContent = 'Wipe AWS';
+                            wipeAwsBtn.disabled = false;
+                        }
+                    } else {
+                        alert("AWS Sync is not connected.");
+                    }
+                } else {
+                    if (output !== null) alert("Incorrect password. Database wipe cancelled.");
+                }
+            });
+        }
+
         // Bulk Firebase Upload
         const bulkFirebaseBtn = document.getElementById('bulkFirebaseUploadBtn');
         const bulkFirebaseInput = document.getElementById('bulkFirebaseUploadInput');
@@ -250,6 +278,49 @@ Object.assign(UIService.prototype, {
             });
         }
 
+        // ---- AWS DynamoDB Settings ----
+        const awsTableName = document.getElementById('awsTableName');
+        const awsRegion = document.getElementById('awsRegion');
+        const awsAccessKey = document.getElementById('awsAccessKey');
+        const awsSecretKey = document.getElementById('awsSecretKey');
+        const awsActiveToggle = document.getElementById('awsActiveToggle');
+        const saveAwsBtn = document.getElementById('saveAwsConfigBtn');
+
+        if (saveAwsBtn && awsActiveToggle) {
+            // Load saved config
+            const savedAwsConfig = JSON.parse(localStorage.getItem('aws_dynamo_config')) || {};
+            if (savedAwsConfig.tableName) awsTableName.value = savedAwsConfig.tableName;
+            if (savedAwsConfig.region) awsRegion.value = savedAwsConfig.region;
+            if (savedAwsConfig.accessKey) awsAccessKey.value = savedAwsConfig.accessKey;
+            if (savedAwsConfig.secretKey) awsSecretKey.value = savedAwsConfig.secretKey;
+
+            const isAwsActive = localStorage.getItem('active_cloud_provider') === 'aws';
+            awsActiveToggle.checked = isAwsActive;
+
+            // Save AWS Config
+            saveAwsBtn.addEventListener('click', () => {
+                const config = {
+                    tableName: awsTableName.value.trim(),
+                    region: awsRegion.value.trim(),
+                    accessKey: awsAccessKey.value.trim(),
+                    secretKey: awsSecretKey.value.trim()
+                };
+                localStorage.setItem('aws_dynamo_config', JSON.stringify(config));
+
+                if (window.awsRosterService) {
+                    window.awsRosterService.init(config);
+                }
+
+                alert('AWS DynamoDB configurations saved locally and updated in your current session!');
+            });
+
+            // Toggle active provider (Firebase vs AWS)
+            awsActiveToggle.addEventListener('change', (e) => {
+                const provider = e.target.checked ? 'aws' : 'firebase';
+                localStorage.setItem('active_cloud_provider', provider);
+            });
+        }
+
         // Upload Buttons
         ['start', 'mid', 'end'].forEach(type => {
             const btn = document.getElementById(`cloudUpload${type.charAt(0).toUpperCase() + type.slice(1)}Btn`);
@@ -361,7 +432,26 @@ Object.assign(UIService.prototype, {
         // New Phone Who Dis Listeners
         if (this.elements.npwdKingdomSelect) {
             this.elements.npwdKingdomSelect.addEventListener('change', (e) => {
-                this.renderNewPhoneWhoDis(e.target.value);
+                this.renderLocalTransferAnalysis(e.target.value);
+            });
+        }
+
+        const npwdSubTabs = document.getElementById('npwdSubTabs');
+        if (npwdSubTabs) {
+            const subTabs = npwdSubTabs.querySelectorAll('.upload-tab-btn');
+            subTabs.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const targetId = e.currentTarget.dataset.subtab;
+                    subTabs.forEach(b => b.classList.remove('active'));
+                    e.currentTarget.classList.add('active');
+
+                    document.querySelectorAll('#new-phone-who-dis .upload-tab-content').forEach(content => {
+                        content.classList.remove('active');
+                        if (content.dataset.content === targetId) {
+                            content.classList.add('active');
+                        }
+                    });
+                });
             });
         }
 

@@ -316,8 +316,11 @@ Object.assign(UIService.prototype, {
     },
 
     async handleFirebaseImport(type) {
+        const cloudName = localStorage.getItem('active_cloud_provider') === 'aws' ? 'AWS DynamoDB' : 'Firebase';
+        const cloudIcon = localStorage.getItem('active_cloud_provider') === 'aws' ? '☁️' : '🔥';
+
         if (!window.uiMyAlliance || !window.uiMyAlliance.rosterService || !window.uiMyAlliance.rosterService.connected) {
-            alert("Please configure your Firebase Settings in the Settings Tab to sync live rosters.");
+            alert(`Please configure your ${cloudName} Settings in the Settings Tab to sync live rosters.`);
             return;
         }
 
@@ -329,11 +332,14 @@ Object.assign(UIService.prototype, {
             const confirmBtn = document.getElementById('confirmFirebaseBtn');
             const cancelBtn = document.getElementById('cancelFirebaseBtn');
             const closeBtn = document.getElementById('closeFirebaseModal');
+            const modalTitle = document.getElementById('firebaseModalTitle');
 
             if (!modal || !checkboxesContainer || !confirmBtn || !cancelBtn || !closeBtn) {
-                alert("Firebase modal elements not found in DOM.");
+                alert("Cloud Sync modal elements not found in DOM.");
                 return;
             }
+
+            if (modalTitle) modalTitle.textContent = `Select ${cloudName} Workspace ${cloudIcon}`;
 
             modal.classList.remove('hidden');
             checkboxesContainer.innerHTML = '<div style="padding: 5px; color: var(--text-muted);">Loading Workspaces...</div>';
@@ -443,16 +449,19 @@ Object.assign(UIService.prototype, {
                             rawData = await window.uiMyAlliance.rosterService.loadScanDetails(targetKId, targetDate);
                         }
 
-                        if (!rawData || rawData.length === 0) {
-                            console.warn(`No data found in Firebase for Kingdom ${targetKId} on ${targetDate}`);
-                            continue; // skip empty
+                        // Normalize Cloud Response (AWS returns {data:[], headers}, Firebase returns [])
+                        let actualDataArray = Array.isArray(rawData) ? rawData : (rawData.data || []);
+
+                        if (!actualDataArray || actualDataArray.length === 0) {
+                            console.warn(`No valid array data found in Cloud for Kingdom ${targetKId} on ${targetDate}`);
+                            continue;
                         }
 
                         // For historical array blocks, they are already mapped if pushed by the new pushFullScan.
                         // For live rosters, we map them back to CSV keys.
                         let mappedData = [];
                         if (targetDate === "live") {
-                            mappedData = rawData.map(p => ({
+                            mappedData = actualDataArray.map(p => ({
                                 'Governor ID': p.id,
                                 'Governor Name': p.name,
                                 'Alliance Tag': p.alliance,
@@ -475,9 +484,25 @@ Object.assign(UIService.prototype, {
                         } else {
                             // It's a full JSON dump from pushFullScan
                             // Automatically inject _kingdom just in case it wasn't embedded
-                            mappedData = rawData.map(p => {
-                                p['_kingdom'] = targetKId;
-                                return p;
+                            let headers = Array.isArray(rawData) ? null : rawData.headers;
+
+                            mappedData = actualDataArray.map(p => {
+                                if (headers && headers.length > 0) {
+                                    let orderedP = {};
+                                    // 1. Force the original column order
+                                    headers.forEach(h => {
+                                        if (p[h] !== undefined) orderedP[h] = p[h];
+                                    });
+                                    // 2. Add anything extra DynamoDB might have attached or calculated keys
+                                    Object.keys(p).forEach(k => {
+                                        if (orderedP[k] === undefined) orderedP[k] = p[k];
+                                    });
+                                    orderedP['_kingdom'] = targetKId;
+                                    return orderedP;
+                                } else {
+                                    p['_kingdom'] = targetKId;
+                                    return p;
+                                }
                             });
                         }
 
@@ -486,7 +511,7 @@ Object.assign(UIService.prototype, {
                     }
 
                     if (combinedMappedData.length === 0) {
-                        alert(`No data found in Firebase for the selected Kingdom(s) on ${targetDate}`);
+                        alert(`No data found in ${cloudName} for the selected Kingdom(s) on ${targetDate}`);
                         confirmBtn.disabled = false;
                         confirmBtn.textContent = 'Sync Data';
                         return;
@@ -500,32 +525,32 @@ Object.assign(UIService.prototype, {
                     });
 
                     const blob = new Blob([content], { type: 'application/json' });
-                    const file = new File([blob], `Firebase_Sync_MultiKDs_${targetDate}.json`, { type: 'application/json' });
+                    const file = new File([blob], `Cloud_Sync_MultiKDs_${targetDate}.json`, { type: 'application/json' });
 
                     if (window.handleFilesGlobal) {
-                        await window.handleFilesGlobal([file], type, `Synced from Firebase: Kingdoms ${successfulKingdoms.join(', ')} (${targetDate})`);
+                        await window.handleFilesGlobal([file], type, `Synced from ${cloudName}: Kingdoms ${successfulKingdoms.join(', ')} (${targetDate})`);
                     } else {
                         alert("Error: Global file handler not linked.");
                     }
 
                     cleanup();
                 } catch (err) {
-                    console.error("Firebase Sync Error:", err);
+                    console.error(`${cloudName} Sync Error:`, err);
                     alert("Error syncing data: " + err.message);
-                    confirmBtn.disabled = false;
-                    confirmBtn.textContent = 'Sync Data';
                 }
             };
 
         } catch (e) {
-            console.error('Firebase Import Error:', e);
-            alert("Failed to initialize Firebase Sync: " + e.message);
+            console.error('Cloud Import Error:', e);
+            alert(`Failed to initialize ${cloudName} Sync: ` + e.message);
         }
     },
 
     async handleFirebaseExport(type) {
+        const cloudName = localStorage.getItem('active_cloud_provider') === 'aws' ? 'AWS DynamoDB' : 'Firebase';
+
         if (!window.uiMyAlliance || !window.uiMyAlliance.rosterService || !window.uiMyAlliance.rosterService.connected) {
-            alert("Please configure your Firebase Settings in the Settings Tab to sync to Cloud.");
+            alert(`Please configure your ${cloudName} Settings in the Settings Tab to sync to Cloud.`);
             return;
         }
 
@@ -579,13 +604,13 @@ Object.assign(UIService.prototype, {
         });
 
         const kingdomsStr = Object.keys(kingdomGroups).join(", ");
-        if (!confirm(`Are you sure you want to push ${data.length} governor profiles to Firebase for Kingdom(s) ${kingdomsStr} on Date: ${date}?`)) {
+        if (!confirm(`Are you sure you want to push ${data.length} governor profiles to ${cloudName} for Kingdom(s) ${kingdomsStr} on Date: ${date}?`)) {
             return;
         }
 
         try {
             const btn = document.querySelector(`.firebase-export-btn[data-type="${type}"]`);
-            const originalText = btn ? btn.textContent : 'Push to Firebase';
+            const originalText = btn ? btn.textContent : `Push to ${cloudName}`;
             if (btn) {
                 btn.disabled = true;
                 btn.textContent = 'Pushing... ⏳';
@@ -602,7 +627,7 @@ Object.assign(UIService.prototype, {
                 setTimeout(() => btn.textContent = originalText, 3000);
             }
 
-            alert("Cloud Sync Complete! Data is now safely archived in Firebase.");
+            alert(`Cloud Sync Complete! Data is now safely archived in ${cloudName}.`);
 
         } catch (e) {
             console.error(e);
@@ -610,10 +635,12 @@ Object.assign(UIService.prototype, {
             const btn = document.querySelector(`.firebase-export-btn[data-type="${type}"]`);
             if (btn) {
                 btn.disabled = false;
-                btn.textContent = '🔥 Push to Firebase';
+                const cloudIcon = cloudName === 'AWS DynamoDB' ? '☁️' : '🔥';
+                btn.textContent = `${cloudIcon} Push to ${cloudName}`;
             }
         }
     },
+
     async handleMainCloudSave(type) {
         try {
             const dataState = this.data.state;

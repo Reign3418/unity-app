@@ -47,7 +47,9 @@ class OCRScannerService {
     //  Tab switching
     // ----------------------------------------------------------------
     initTabSwitching() {
-        const subTabs = document.querySelectorAll('.upload-tab-btn');
+        const uploadSubTabs = document.getElementById('uploadSubTabs');
+        if (!uploadSubTabs) return;
+        const subTabs = uploadSubTabs.querySelectorAll('.upload-tab-btn');
         subTabs.forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const targetId = e.currentTarget.dataset.subtab;
@@ -55,7 +57,8 @@ class OCRScannerService {
                 subTabs.forEach(b => b.classList.remove('active'));
                 e.currentTarget.classList.add('active');
 
-                document.querySelectorAll('.upload-tab-content').forEach(content => {
+                // Only target content related to uploads
+                document.querySelectorAll('#upload .upload-tab-content').forEach(content => {
                     content.classList.remove('active');
                     if (content.dataset.content === targetId) {
                         content.classList.add('active');

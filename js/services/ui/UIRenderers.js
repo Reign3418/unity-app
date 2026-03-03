@@ -638,8 +638,57 @@ Object.assign(UIService.prototype, {
     },
 
     updateNPWDDropdown() {
-        // Obsolete: NPWD is now a Global Cloud Search tab instead of a localized kingdom filter.
-        // Kept empty to avoid breaking older external references.
+        const select = document.getElementById('npwdKingdomSelect');
+        if (!select) return;
+        select.innerHTML = '';
+        Array.from(this.data.state.loadedKingdoms).forEach(kId => {
+            const option = document.createElement('option');
+            option.value = kId;
+            option.textContent = `Kingdom ${kId}`;
+            select.appendChild(option);
+        });
+        if (this.data.state.loadedKingdoms.size > 0 && select.value === '') {
+            select.value = Array.from(this.data.state.loadedKingdoms)[0];
+            this.renderLocalTransferAnalysis(select.value);
+        }
+    },
+
+    renderLocalTransferAnalysis(kingdomId) {
+        const newContainer = document.getElementById('newArrivalsContainer');
+        const departContainer = document.getElementById('departuresContainer');
+        if (!newContainer || !departContainer) return;
+
+        if (!kingdomId) {
+            newContainer.innerHTML = '<p>Please select a kingdom.</p>';
+            departContainer.innerHTML = '<p>Please select a kingdom.</p>';
+            return;
+        }
+
+        const kState = this.data.state.kingdoms[kingdomId];
+        if (!kState) return;
+
+        // Ensure we handle properties carefully depending on if its CSV vs Cloud data formats
+        const startIds = new Set(kState.startData.map(r => r['Governor ID'] || r.id));
+        const endIds = new Set(kState.endData.map(r => r['Governor ID'] || r.id));
+
+        const newArrivals = kState.endData.filter(r => !startIds.has(r['Governor ID'] || r.id));
+        const departures = kState.startData.filter(r => !endIds.has(r['Governor ID'] || r.id));
+
+        const formatData = (list) => list.map(r => ({
+            'Name': r['Governor Name'] || r.name,
+            'ID': r['Governor ID'] || r.id,
+            'Alliance': r['Alliance Tag'] || r.alliance,
+            'Power': Utils.parseNumber(r['Power'] || r.power)
+        })).sort((a, b) => b.Power - a.Power);
+
+        this.renderAnalysisTable(formatData(newArrivals), newContainer);
+        this.renderAnalysisTable(formatData(departures), departContainer);
+
+        const startDateStr = this.data.state.startScanDate ? new Date(this.data.state.startScanDate).toLocaleString() : 'Unknown Start Date';
+        const endDateStr = this.data.state.endScanDate ? new Date(this.data.state.endScanDate).toLocaleString() : 'Unknown End Date';
+
+        newContainer.insertAdjacentHTML('afterbegin', `<div style="position: sticky; top: 0; z-index: 11; margin-bottom: 10px; font-size: 0.85rem; color: var(--text-primary); padding: 8px; background: rgba(16, 185, 129, 0.2); border: 1px solid var(--success-color); border-radius: 4px; text-align: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.5); backdrop-filter: blur(4px);">Detected in End Scan: <b>${endDateStr}</b></div>`);
+        departContainer.insertAdjacentHTML('afterbegin', `<div style="position: sticky; top: 0; z-index: 11; margin-bottom: 10px; font-size: 0.85rem; color: var(--text-primary); padding: 8px; background: rgba(239, 68, 68, 0.2); border: 1px solid var(--danger-color); border-radius: 4px; text-align: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.5); backdrop-filter: blur(4px);">Last seen in Start Scan: <b>${startDateStr}</b></div>`);
     },
 
     updateHoHScannerDropdown() {
@@ -1037,7 +1086,7 @@ Object.assign(UIService.prototype, {
         numericHeaders.forEach(h => maxValues[h] = Math.max(...data.map(row => row[h])));
 
         let html = '<table class="prekvk-table"><thead><tr>';
-        headers.forEach(h => html += `<th>${h}</th>`);
+        headers.forEach(h => html += `<th style="position: sticky; top: 0; z-index: 10; background: var(--card-bg); outline: 1px solid var(--border-color);">${h}</th>`);
         html += '</tr></thead><tbody>';
 
         data.forEach(row => {

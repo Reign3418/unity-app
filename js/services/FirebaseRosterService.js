@@ -321,50 +321,6 @@ class FirebaseRosterService {
         }
     }
 
-    // ------------------------------------------------------------------------
-    // COMMUNITY HUB METHODS
-    // ------------------------------------------------------------------------
-
-    // Push a new feedback post to the community board
-    async submitFeedback(postData) {
-        if (!this.db || !this.connected) {
-            throw new Error('Not connected to Firebase. Please configure your Database URL in Settings.');
-        }
-
-        try {
-            // Push generates a unique sequential key
-            const newPostRef = this.db.ref('community_feedback').push();
-            await newPostRef.set({
-                ...postData,
-                timestamp: firebase.database.ServerValue.TIMESTAMP
-            });
-            return true;
-        } catch (error) {
-            console.error('Submit Feedback Error:', error);
-            throw error;
-        }
-    }
-
-    // Listen for new feedback posts in real-time
-    listenToFeedback(callback) {
-        if (!this.db) {
-            // If not initialized yet, wait and retry silently, or the UI handles it
-            return null;
-        }
-
-        const feedbackRef = this.db.ref('community_feedback').orderByChild('timestamp').limitToLast(100);
-
-        const listener = feedbackRef.on('child_added', (snapshot) => {
-            const val = snapshot.val();
-            const key = snapshot.key;
-            callback({ id: key, ...val });
-        });
-
-        // Provide the caller a way to unsubscribe if they leave the tab
-        return () => {
-            feedbackRef.off('child_added', listener);
-        };
-    }
 }
 
 window.FirebaseRosterService = FirebaseRosterService;

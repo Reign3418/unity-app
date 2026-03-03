@@ -37,12 +37,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     console.error("UIGrowth Init Failed:", growthErr);
                 }
 
-                // Initialize Live Feed Service
-                try {
-                    if (window.uiLiveFeed) window.uiLiveFeed.init();
-                } catch (feedErr) {
-                    console.error("UILiveFeed Init Failed:", feedErr);
-                }
+
 
                 // Initialize Race to Glory
                 try {
@@ -51,13 +46,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     console.error("Race Chart Init Failed:", raceErr);
                 }
 
-                // Initialize Governance
-                try {
-                    if (window.UIGovernance) window.UIGovernance.init(dataService);
-                    if (window.UISquadBuilder) window.UISquadBuilder.init();
-                } catch (govErr) {
-                    console.error("UIGovernance Init Failed:", govErr);
-                }
+
 
                 // Initialize Calculators
                 try {
@@ -74,18 +63,29 @@ document.addEventListener('DOMContentLoaded', async () => {
                     console.error("OCR Scanner Init Failed:", ocrErr);
                 }
 
-                // Initialize Global Firebase Service
+                // Initialize Global Cloud Service
                 try {
-                    const firebaseService = new FirebaseRosterService();
-                    window.firebaseRosterService = firebaseService;
+                    const activeCloud = localStorage.getItem('active_cloud_provider') || 'firebase';
 
-                    // Automatically connect if URL saved
-                    const savedUrl = localStorage.getItem('__unity_firebase_url');
-                    if (savedUrl) {
-                        firebaseService.init(savedUrl);
+                    if (activeCloud === 'aws') {
+                        console.log("Initializing AWS DynamoDB Cloud Provider...");
+                        const awsService = new AWSRosterService();
+                        window.firebaseRosterService = awsService; // Polyfill for backwards compat
+                        window.awsRosterService = awsService; // Explicitly assign for AWS-specific functions
+
+                        const awsConfigRaw = localStorage.getItem('aws_dynamo_config');
+                        if (awsConfigRaw) awsService.init(awsConfigRaw);
+                    } else {
+                        console.log("Initializing Firebase Realtime Cloud Provider...");
+                        const firebaseService = new FirebaseRosterService();
+                        window.firebaseRosterService = firebaseService;
+
+                        // Automatically connect if URL saved
+                        const savedUrl = localStorage.getItem('__unity_firebase_url');
+                        if (savedUrl) firebaseService.init(savedUrl);
                     }
-                } catch (fbErr) {
-                    console.error("Firebase Service Init Failed:", fbErr);
+                } catch (cloudErr) {
+                    console.error("Cloud Service Init Failed:", cloudErr);
                 }
 
                 // Initialize My Alliance Cloud Roster
@@ -100,12 +100,30 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 // Initialize Community Hub
                 try {
-                    if (window.UICommunity && window.firebaseRosterService) {
-                        window.uiCommunity = new window.UICommunity(window.firebaseRosterService);
+                    if (window.UICommunity) {
+                        window.uiCommunity = new window.UICommunity();
                         window.uiCommunity.init();
                     }
                 } catch (commErr) {
                     console.error("Community Hub Init Failed:", commErr);
+                }
+
+                // Initialize MGE Planner
+                try {
+                    if (window.UIMGEPlanner) {
+                        window.uiMGEPlanner = new window.UIMGEPlanner();
+                    }
+                } catch (mgeErr) {
+                    console.error("MGE Planner Init Failed:", mgeErr);
+                }
+
+                // Initialize Kingdom Analysis
+                try {
+                    if (window.UIKingdomAnalysis) {
+                        window.uiKingdomAnalysis = new window.UIKingdomAnalysis();
+                    }
+                } catch (kaErr) {
+                    console.error("Kingdom Analysis Init Failed:", kaErr);
                 }
 
                 try {

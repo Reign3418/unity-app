@@ -42,6 +42,9 @@
             <button class="tab-btn" data-tab="prekvk-analysis"
                 data-tooltip="Start-Scan data analysis (Kingdom, Alliance, Governor profiles).">Kingdom
                 Analysis</button>
+            <button class="tab-btn" data-tab="all-kingdom-analysis"
+                data-tooltip="Aggregated Kingdom Analysis and Deltas for all uploaded kingdoms.">All Kingdom Analysis
+                📊</button>
             <button class="tab-btn" data-tab="prekvk-ranking"
                 data-tooltip="Rank kingdoms based on Start Scan power.">PreKVK Ranking</button>
             <button class="tab-btn" data-tab="new-phone-who-dis" data-tooltip="Identify new and departed players.">New
@@ -51,12 +54,10 @@
             <button class="tab-btn" data-tab="my-alliance"
                 data-tooltip="Live Cloud Roster shared with your alliance.">My Alliance 🛡️</button>
             <button class="tab-btn" data-tab="soc" data-tooltip="Season of Conquest Modes">SOC ⚔️</button>
-            <button class="tab-btn" data-tab="governance"
-                data-tooltip="The Audit: Roster Management & War Potential.">Governance ⚖️</button>
+
             <button class="tab-btn" data-tab="mail" data-tooltip="Create fancy in-game mails.">Mail Generator
                 ✉️</button>
-            <button class="tab-btn" data-tab="live-feed" data-tooltip="Real-time view of Companion App data.">Live Feed
-                📡</button>
+
             <button class="tab-btn" data-tab="settings" data-tooltip="Configure weights and settings.">Settings
                 ⚙️</button>
             <button class="tab-btn" data-tab="race-to-glory" data-tooltip="Animated Bar Chart Race.">Race to Glory
@@ -131,16 +132,18 @@
                                     </button>
                                     <button class="action-btn firebase-sync-btn" data-type="start"
                                         style="margin-top: 10px; background: rgba(59, 130, 246, 0.1); border: 1px solid var(--accent-primary); color: var(--text-primary);">
-                                        <span class="icon" style="color: var(--accent-primary);">🔥</span> Sync from
-                                        Firebase
+                                        <span class="icon" style="color: var(--accent-primary);">☁️</span> Sync from
+                                        Cloud
                                     </button>
                                 </div>
-                                <div class="card-footer hidden" id="startSaveContainer">
-                                    <button class="footer-btn save-btn" id="cloudUploadStartBtn">💾 Save to
-                                        Cloud</button>
-                                    <button class="footer-btn action-btn firebase-export-btn" data-type="start"
-                                        style="background:#ea580c; border:none; margin-left:10px; padding:0.4rem 1rem; border-radius:4px; cursor:pointer; font-weight:bold; color:#fff;">🔥
-                                        Push to Firebase</button>
+                                <div class="card-footer hidden" id="startSaveContainer"
+                                    style="display: flex; gap: 10px; width: 100%;">
+                                    <button class="footer-btn save-btn" id="cloudUploadStartBtn"
+                                        style="flex: 1; margin: 0; padding: 0.6rem; font-weight: bold;">💾 Save to
+                                        GitHub</button>
+                                    <button class="footer-btn firebase-export-btn" data-type="start"
+                                        style="flex: 1; margin: 0; padding: 0.6rem; font-weight: bold; background: #ea580c;">☁️
+                                        Push to Cloud</button>
                                 </div>
                                 <input type="file" id="startScanInput" accept=".xlsx, .csv, .json" multiple hidden>
                                 <div id="startScanDetails" class="file-details" style="display: none;"></div>
@@ -164,15 +167,18 @@
                                     </button>
                                     <button class="action-btn firebase-sync-btn" data-type="mid"
                                         style="margin-top: 10px; background: rgba(59, 130, 246, 0.1); border: 1px solid var(--accent-primary); color: var(--text-primary);">
-                                        <span class="icon" style="color: var(--accent-primary);">🔥</span> Sync from
-                                        Firebase
+                                        <span class="icon" style="color: var(--accent-primary);">☁️</span> Sync from
+                                        Cloud
                                     </button>
                                 </div>
-                                <div class="card-footer hidden" id="midSaveContainer">
-                                    <button class="footer-btn save-btn" id="cloudUploadMidBtn">💾 Save to Cloud</button>
-                                    <button class="footer-btn action-btn firebase-export-btn" data-type="mid"
-                                        style="background:#ea580c; border:none; margin-left:10px; padding:0.4rem 1rem; border-radius:4px; cursor:pointer; font-weight:bold; color:#fff;">🔥
-                                        Push to Firebase</button>
+                                <div class="card-footer hidden" id="midSaveContainer"
+                                    style="display: flex; gap: 10px; width: 100%;">
+                                    <button class="footer-btn save-btn" id="cloudUploadMidBtn"
+                                        style="flex: 1; margin: 0; padding: 0.6rem; font-weight: bold;">💾 Save to
+                                        GitHub</button>
+                                    <button class="footer-btn firebase-export-btn" data-type="mid"
+                                        style="flex: 1; margin: 0; padding: 0.6rem; font-weight: bold; background: #ea580c;">☁️
+                                        Push to Cloud</button>
                                 </div>
                                 <input type="file" id="midScanInput" accept=".xlsx, .csv, .json" multiple hidden>
                                 <div id="midScanDetails" class="file-details" style="display: none;"></div>
@@ -196,15 +202,18 @@
                                     </button>
                                     <button class="action-btn firebase-sync-btn" data-type="end"
                                         style="margin-top: 10px; background: rgba(59, 130, 246, 0.1); border: 1px solid var(--accent-primary); color: var(--text-primary);">
-                                        <span class="icon" style="color: var(--accent-primary);">🔥</span> Sync from
-                                        Firebase
+                                        <span class="icon" style="color: var(--accent-primary);">☁️</span> Sync from
+                                        Cloud
                                     </button>
                                 </div>
-                                <div class="card-footer hidden" id="endSaveContainer">
-                                    <button class="footer-btn save-btn" id="cloudUploadEndBtn">💾 Save to Cloud</button>
-                                    <button class="footer-btn action-btn firebase-export-btn" data-type="end"
-                                        style="background:#ea580c; border:none; margin-left:10px; padding:0.4rem 1rem; border-radius:4px; cursor:pointer; font-weight:bold; color:#fff;">🔥
-                                        Push to Firebase</button>
+                                <div class="card-footer hidden" id="endSaveContainer"
+                                    style="display: flex; gap: 10px; width: 100%;">
+                                    <button class="footer-btn save-btn" id="cloudUploadEndBtn"
+                                        style="flex: 1; margin: 0; padding: 0.6rem; font-weight: bold;">💾 Save to
+                                        GitHub</button>
+                                    <button class="footer-btn firebase-export-btn" data-type="end"
+                                        style="flex: 1; margin: 0; padding: 0.6rem; font-weight: bold; background: #ea580c;">☁️
+                                        Push to Cloud</button>
                                 </div>
                                 <input type="file" id="endScanInput" accept=".xlsx, .csv, .json" multiple hidden>
                                 <div id="endScanDetails" class="file-details" style="display: none;"></div>
@@ -291,6 +300,14 @@
                             </div>
                         </div>
                     </div>
+
+                    <div
+                        style="margin-top: 30px; padding-top: 20px; border-top: 1px dashed var(--border-color); display: flex; justify-content: center;">
+                        <button id="resetDataBtn"
+                            style="background: rgba(239, 68, 68, 0.1); color: var(--danger-color, #ef4444); border: 1px solid var(--danger-color, #ef4444); padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 0.95em; transition: all 0.2s; display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 1.2em;">🗑️</span> Clear All Loaded Scans
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -341,6 +358,32 @@
 
     </div> <!-- End Prekvk Analysis -->
 
+    <!-- ==================== ALL KINGDOM ANALYSIS ==================== -->
+    <div id="all-kingdom-analysis" class="tab-content" style="display: none;">
+        <div class="card" style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div>
+                <h2>All Kingdom Analysis 📊</h2>
+                <p class="text-secondary">Comprehensive Power, KP, and Deads deltas aggregated across all loaded Kingdom
+                    Scans simultaneously.</p>
+                <p id="all-kingdom-dates" class="text-secondary" style="margin-top: 10px; font-size: 0.9em;"></p>
+            </div>
+            <div
+                style="display: flex; align-items: center; gap: 10px; background: rgba(0,0,0,0.2); padding: 10px 15px; border-radius: 8px;">
+                <label style="font-weight: bold; font-size: 0.9em; color: var(--text-secondary);">Layout:</label>
+                <select id="all-kingdom-view-toggle" class="select-css"
+                    style="padding: 6px 30px 6px 10px; font-size: 0.9em;">
+                    <option value="card" selected>Cards (Detailed)</option>
+                    <option value="list">List (Compact)</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="all-kingdom-analysis-container"
+            style="display: flex; flex-direction: row; gap: 20px; overflow-x: auto; padding-bottom: 20px;">
+            <!-- Generated Cards stack here -->
+        </div>
+    </div>
+
     <!-- PreKVK Ranking Tab -->
     <div id="prekvk-ranking" class="tab-content">
         <div class="card">
@@ -378,29 +421,67 @@
     <!-- New Phone Who Dis Tab -->
     <div id="new-phone-who-dis" class="tab-content">
         <div class="card">
-            <div class="results-header">
-                <h2 data-tooltip="Search the Global Cloud Timeline for any Governor.">Cross-Kingdom Background Check
-                </h2>
+            <div class="results-header" style="flex-direction: column; align-items: flex-start; gap: 15px;">
+                <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+                    <h2
+                        data-tooltip="Search the Global Cloud Timeline for any Governor, or view local kingdom arrivals and departures.">
+                        New Phone Who Dis</h2>
+                </div>
+                <div class="kingdom-subtabs" id="npwdSubTabs" style="width: 100%;">
+                    <button class="upload-tab-btn active" data-subtab="npwd-timeline">Cross-Kingdom Timeline
+                        Check</button>
+                    <button class="upload-tab-btn" data-subtab="npwd-transfers">Local Transfer Analysis</button>
+                </div>
             </div>
 
-            <div class="controls"
-                style="margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px;">
-                <div class="input-group" style="flex-direction: row; align-items: flex-end; gap: 10px;">
-                    <div>
-                        <label>Governor ID</label>
-                        <input type="text" id="npwdSearchInput" class="config-input" placeholder="e.g. 12345678"
-                            style="width: 250px;">
+            <!-- Timeline Check Subtab -->
+            <div class="upload-tab-content active" data-content="npwd-timeline">
+                <div class="controls"
+                    style="margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px;">
+                    <div class="input-group" style="flex-direction: row; align-items: flex-end; gap: 10px;">
+                        <div>
+                            <label>Governor ID</label>
+                            <input type="text" id="npwdSearchInput" class="config-input" placeholder="e.g. 12345678"
+                                style="width: 250px;">
+                        </div>
+                        <button class="primary-btn" id="npwdSearchBtn">Search Timeline</button>
+                        <div id="npwdSearchStatus"
+                            style="color: var(--text-muted); font-size: 0.9em; margin-left: 10px;">
+                        </div>
                     </div>
-                    <button class="primary-btn" id="npwdSearchBtn">Search Timeline</button>
-                    <div id="npwdSearchStatus" style="color: var(--text-muted); font-size: 0.9em; margin-left: 10px;">
+                </div>
+
+                <div class="npwd-container">
+                    <div id="npwdTimelineContainer" class="prekvk-wrapper">
+                        <p style="text-align:center; color: var(--text-muted); margin-top: 2rem;">Enter a Governor ID to
+                            search the Cloud Database.</p>
                     </div>
                 </div>
             </div>
 
-            <div class="npwd-container">
-                <div id="npwdTimelineContainer" class="prekvk-wrapper">
-                    <p style="text-align:center; color: var(--text-muted); margin-top: 2rem;">Enter a Governor ID to
-                        search the Cloud Database.</p>
+            <!-- Transfer Analysis Subtab -->
+            <div class="upload-tab-content" data-content="npwd-transfers">
+                <div class="controls"
+                    style="margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px;">
+                    <div class="input-group">
+                        <label for="npwdKingdomSelect">Select Kingdom to Analyze:</label>
+                        <select id="npwdKingdomSelect" class="prekvk-select"></select>
+                    </div>
+                </div>
+
+                <div class="npwd-layout" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div class="npwd-column">
+                        <h3 class="status-complete"
+                            style="margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 5px;">
+                            🔥 New Arrivals (In End Scan, Not Start Scan)</h3>
+                        <div id="newArrivalsContainer" class="table-container"></div>
+                    </div>
+                    <div class="npwd-column">
+                        <h3 class="status-incomplete"
+                            style="margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 5px;">
+                            ☠️ Departures / Missing (In Start Scan, Not End Scan)</h3>
+                        <div id="departuresContainer" class="table-container"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -744,128 +825,7 @@
             </div>
         </div>
     </div>
-    <div id="governance" class="tab-content">
-        <div class="card">
-            <div class="results-header">
-                <h2>Governance Dashboard ⚖️</h2>
-                <div class="input-group" style="margin: 0 1rem;">
-                    <select id="govKingdomSelect" class="prekvk-select">
-                        <!-- Populated by JS -->
-                    </select>
-                </div>
-            </div>
 
-            <!-- Tab Navigation within Governance -->
-            <div class="subtabs-container" style="margin-bottom: 20px;">
-                <button class="subtab-btn active" data-subtab="audit">The Audit 📉</button>
-                <button class="subtab-btn" data-subtab="purge">The Purge List 📋</button>
-                <button class="subtab-btn" data-subtab="war-potential">War Potential ⚔️</button>
-                <button class="subtab-btn" data-subtab="squad-builder">Squad Builder 🛡️</button>
-            </div>
-
-            <!-- 1. The Audit (Quadrant Analysis) -->
-            <div id="audit-ui" class="gov-section subtab-content active" data-content="audit">
-                <div class="chart-container" style="height: 500px; position: relative;">
-                    <canvas id="auditChart"></canvas>
-                </div>
-                <div id="audit-details" class="audit-panel hidden"
-                    style="margin-top: 20px; padding: 15px; background: rgba(0,0,0,0.2); border-radius: 8px;">
-                    <!-- Filled by JS on click -->
-                    <h3 id="ad-name">Player Name</h3>
-                    <div id="ad-stats" style="display: flex; gap: 20px;"></div>
-                    <div id="ad-badge" style="margin-top: 10px; font-weight: bold;"></div>
-                </div>
-            </div>
-
-            <!-- 2. The Purge List -->
-            <div id="purge-ui" class="gov-section subtab-content" data-content="purge">
-                <div class="control-bar" style="display: flex; justify-content: space-between; margin-bottom: 15px;">
-                    <div class="filters">
-                        <label>Threshold (KP/Power): <select id="purgeThreshold">
-                                <option value="0.5">Below 0.5</option>
-                                <option value="1">Below 1.0</option>
-                                <option value="2">Below 2.0</option>
-                            </select></label>
-                    </div>
-                    <button id="copyPurgeListBtn" class="secondary-btn">Copy List 📋</button>
-                </div>
-                <div class="table-container">
-                    <table class="unity-table" id="purgeTable">
-                        <thead>
-                            <tr>
-                                <th>Governor</th>
-                                <th>Power</th>
-                                <th>Period KP ⚔️</th>
-                                <th>Efficiency</th>
-                                <th>Archetype</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- 3. War Potential -->
-            <div id="war-potential-ui" class="gov-section subtab-content" data-content="war-potential">
-                <div class="stats-grid" id="warStatsGrid">
-                    <!-- Cards injected by JS -->
-                </div>
-            </div>
-
-            <!-- 4. Squad Builder -->
-            <div id="squad-builder-ui" class="gov-section subtab-content" data-content="squad-builder">
-                <div class="squad-workspace">
-                    <!-- Left: Commander Pool -->
-                    <div class="commander-pool-panel">
-                        <h3>Commander Pool</h3>
-                        <div class="pool-filters">
-                            <button class="filter-btn active" data-type="all">All</button>
-                            <button class="filter-btn" data-type="Infantry">Inf</button>
-                            <button class="filter-btn" data-type="Cavalry">Cav</button>
-                            <button class="filter-btn" data-type="Archer">Arc</button>
-                            <button class="filter-btn" data-type="Leadership">Ldr</button>
-                        </div>
-                        <div id="commanderPoolGrid" class="pool-grid">
-                            <!-- Commanders injected here -->
-                        </div>
-                    </div>
-
-                    <!-- Right: Squad Canvas -->
-                    <div class="squad-canvas-panel">
-                        <h3>New Squad</h3>
-                        <div class="squad-slots">
-                            <div class="cmd-slot primary" data-slot="primary">
-                                <div class="slot-label">Primary</div>
-                                <div class="slot-content">Select Commander</div>
-                            </div>
-                            <div class="synergy-badge" id="squadSynergy">???</div>
-                            <div class="cmd-slot secondary" data-slot="secondary">
-                                <div class="slot-label">Secondary</div>
-                                <div class="slot-content">Select Commander</div>
-                            </div>
-                        </div>
-
-                        <!-- Skill Sliders -->
-                        <div id="skillConfig" class="skill-config hidden">
-                            <div class="skill-row">
-                                <label>Primary Skills:</label>
-                                <input type="text" id="skillInput1" value="5555" maxlength="4">
-                            </div>
-                            <div class="skill-row">
-                                <label>Secondary Skills:</label>
-                                <input type="text" id="skillInput2" value="5555" maxlength="4">
-                            </div>
-                        </div>
-
-                        <div class="squad-actions">
-                            <button id="saveSquadBtn" class="primary-btn">Save Squad 💾</button>
-                            <button id="resetSquadBtn" class="secondary-btn">Reset ↺</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
     <!-- Smart Welcome Modal -->
     <div id="welcomeModal" class="modal-overlay hidden">
         <div class="modal-content glass-panel" style="max-width: 500px; text-align: center;">
@@ -1057,6 +1017,56 @@
                 </div>
             </div>
 
+            <!-- AWS DynamoDB Card -->
+            <div class="card" style="display: flex; flex-direction: column; height: 100%;">
+                <div class="results-header"
+                    style="margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
+                    <h3 style="margin: 0; display: flex; align-items: center; gap: 10px;">
+                        ☁️ AWS DynamoDB Sync
+                    </h3>
+                    <label
+                        style="display: flex; align-items: center; gap: 8px; cursor: pointer; background: rgba(0,0,0,0.3); padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border-color);">
+                        <span style="font-size: 0.9rem; color: var(--text-primary); font-weight: 500;">Enable AWS
+                            Sync</span>
+                        <input type="checkbox" id="awsActiveToggle"
+                            style="width: 18px; height: 18px; cursor: pointer; accent-color: var(--accent-primary);">
+                    </label>
+                </div>
+
+                <div style="flex-grow: 1; margin-bottom: 1.5rem;">
+                    <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
+                        <strong>Purpose:</strong> A high-capacity alternative to Firebase. If toggled
+                        <strong>ON</strong>, all syncing diverts to AWS.
+                    </p>
+                    <p style="font-size: 0.9rem; color: var(--success-color); margin-bottom: 1rem;">
+                        <strong>Cost:</strong> Free Tier includes 25GB Storage & 200M requests per month.
+                    </p>
+                </div>
+
+                <div class="controls" style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 0;">
+                    <div class="input-group">
+                        <label>AWS DynamoDB Table Name</label>
+                        <input type="text" id="awsTableName" class="config-input" placeholder="e.g. unity_rosters">
+                    </div>
+                    <div class="input-group">
+                        <label>AWS Region</label>
+                        <input type="text" id="awsRegion" class="config-input" placeholder="e.g. us-east-1">
+                    </div>
+                    <div class="input-group">
+                        <label>Access Key ID</label>
+                        <input type="password" id="awsAccessKey" class="config-input" placeholder="AKIA...">
+                    </div>
+                    <div class="input-group">
+                        <label>Secret Access Key</label>
+                        <input type="password" id="awsSecretKey" class="config-input"
+                            placeholder="wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY">
+                    </div>
+
+                    <button id="saveAwsConfigBtn" class="primary-btn"
+                        style="align-self: flex-end; margin-top: auto;">Save AWS DB</button>
+                </div>
+            </div>
+
             <!-- Data Management Card -->
             <div class="card"
                 style="display: flex; flex-direction: column; height: 100%; border: 1px solid rgba(239, 68, 68, 0.3);">
@@ -1105,12 +1115,15 @@
                     </div>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-top: auto;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 1rem; margin-top: auto;">
                     <button id="resetDataBtn" class="primary-btn"
                         style="background: var(--warning-color); border-color: var(--warning-color); color: #000; box-shadow: none;">Clear
-                        Loaded Scans</button>
+                        Loaded</button>
                     <button id="wipeFirebaseBtn" class="primary-btn danger-btn"
                         style="background: #ea580c; border-color: #ea580c; box-shadow: none;">Wipe Firebase</button>
+                    <button id="wipeAwsBtn" class="primary-btn danger-btn"
+                        style="background: #eab308; border-color: #eab308; color: #000; box-shadow: none;">Wipe
+                        AWS</button>
                     <button id="factoryResetBtn" class="primary-btn danger-btn"
                         style="background: var(--danger-color); box-shadow: none;">Factory Reset</button>
                 </div>
@@ -1923,16 +1936,7 @@
     </div>
 
     <!-- Live Feed Tab -->
-    <div id="live-feed" class="tab-content">
-        <div class="card text-center" style="padding: 4rem 2rem;">
-            <div style="font-size: 4rem; margin-bottom: 1rem;">🔒</div>
-            <h2 style="color: var(--danger-color); margin-bottom: 1rem;">Access Restricted</h2>
-            <p style="color: var(--text-secondary); max-width: 500px; margin: 0 auto;">
-                You do not have the required permissions to view the real-time Live Feed data.
-                Please contact an administrator if you believe you should have access.
-            </p>
-        </div>
-    </div>
+
 
     <!-- Mail Generator Tab -->
     <div id="mail" class="tab-content">
@@ -2143,6 +2147,8 @@
                 data-tooltip="Searchable table of raw stats from the End Scan.">Overview</button>
             <button class="subtab-btn" data-subtab="growth"
                 data-tooltip="AI-driven analysis of player growth, activity, and archetypes.">Growth Analysis</button>
+            <button class="subtab-btn" data-subtab="kingdom-analysis"
+                data-tooltip="Macro-level Kingdom and Alliance power deltas between scans.">Kingdom Analysis</button>
             <button class="subtab-btn" data-subtab="alliance-duel"
                 data-tooltip="Compare two alliances side-by-side.">Alliance Duel ⚔️</button>
             <button class="subtab-btn" data-subtab="scatter" data-tooltip="Plots Power (X) vs Kill Points (Y).">Scatter
@@ -2158,9 +2164,81 @@
             <button class="subtab-btn" data-subtab="alliance-merge"
                 data-tooltip="Simulate merging multiple alliances and distributing members by power.">Alliance Merge
                 🤝</button>
+            <button class="subtab-btn" data-subtab="mge-planner"
+                data-tooltip="Allocate Governors to fixed MGE positions and generate mail exports.">Fixed MGE
+                👑</button>
             <button class="subtab-btn" data-subtab="config">Configuration</button>
             <button class="subtab-btn" data-subtab="results"
                 data-tooltip="Final DKP calculations, targets, and bonuses.">Results</button>
+        </div>
+
+        <!-- KINGDOM ANALYSIS -->
+        <div class="subtab-content" data-content="kingdom-analysis"></div>
+
+        <!-- FIXED MGE PLANNER -->
+        <div class="subtab-content" data-content="mge-planner">
+            <div class="card">
+                <div
+                    style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+                    <div>
+                        <h2>Fixed MGE Allocator 👑</h2>
+                        <p class="text-secondary">Assign loaded Governors to Fixed MGE Ranks and automatically generate
+                            Kingdom Mail exports.</p>
+                    </div>
+                    <button class="mge-export-btn" id="mgeExportMailBtn"
+                        style="background: var(--accent-primary); border: none; padding: 10px 15px; border-radius: 6px; color: white; cursor: pointer; font-weight: bold;">✉️
+                        Send to Mail Generator</button>
+                </div>
+
+                <div class="wc-container" style="height: 600px;">
+                    <!-- Sidebar: Player Pool -->
+                    <div class="wc-sidebar">
+                        <div class="wc-header">
+                            <h3>Kingdom Pool</h3>
+                            <input type="text" placeholder="Search Players..." class="wc-search-input mge-search">
+                            <select class="wc-search-input mge-alliance-filter" style="margin-top: 5px;">
+                                <option value="">All Alliances</option>
+                            </select>
+
+                            <div style="margin-top:10px; display: flex; flex-direction: column; gap: 8px;">
+                                <div
+                                    style="display: flex; gap: 10px; align-items: center; justify-content: space-between;">
+                                    <label style="font-size: 0.8em; color: var(--text-secondary);">Sort by:</label>
+                                    <select class="wc-search-input mge-sort-select"
+                                        style="padding: 4px; width: 60%; margin: 0;">
+                                        <option value="power">Power</option>
+                                        <option value="kp">Kill Points</option>
+                                        <option value="deads">Deads</option>
+                                        <option value="name">Name A-Z</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="wc-pool-list wc-pool mge-pool"
+                            ondrop="if(window.uiMGEPlanner) uiMGEPlanner.drop(event, this)"
+                            ondragover="if(window.uiMGEPlanner) uiMGEPlanner.allowDrop(event)">
+                            <!-- Draggable Players Injected Here -->
+                        </div>
+                    </div>
+
+                    <!-- Main Area: MGE Assignment Slots -->
+                    <div class="wc-main" style="display: flex; flex-direction: column; overflow: hidden; height: 100%;">
+                        <div class="wc-options"
+                            style="display:flex; justify-content:space-between; align-items:center;">
+                            <div style="display:flex; gap:10px;">
+                                <button class="wc-btn mge-add-target-btn">+ Add MGE Rank</button>
+                                <button class="wc-btn wc-btn-secondary mge-clear-all-btn">Clear All</button>
+                            </div>
+                            <button id="mgeExportMailBtn" class="primary-btn" style="display:none;">✉️ Export to Mail
+                                Generator</button>
+                        </div>
+                        <div class="wc-workspace mge-target-container"
+                            style="flex: 1; margin-top: 0; padding-top: 20px; height: 100%; border-top: 1px solid rgba(255, 255, 255, 0.1); overflow-y: auto; display: flex; flex-wrap: wrap; gap: 20px; align-content: flex-start;">
+                            <!-- MGE Targets Injected Here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="subtab-content active" data-content="overview">
@@ -2782,6 +2860,13 @@
             <div class="race-controls"
                 style="display: flex; gap: 20px; align-items: center; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px; margin-bottom: 20px; flex-wrap: wrap;">
                 <div class="control-group" style="display: flex; align-items: center; gap: 10px;">
+                    <label style="font-weight: 600;">Kingdom:</label>
+                    <select id="race-kingdom-filter" class="select-css">
+                        <!-- Populated dynamically via JS -->
+                    </select>
+                </div>
+
+                <div class="control-group" style="display: flex; align-items: center; gap: 10px;">
                     <label style="font-weight: 600;">Alliance:</label>
                     <select id="race-alliance-filter" class="select-css">
                         <option value="">All Alliances</option>
@@ -2815,7 +2900,7 @@
             </div>
 
             <div class="race-chart-container"
-                style="position: relative; height: 600px; width: 100%; filter: drop-shadow(0 0 10px rgba(0,0,0,0.5));">
+                style="position: relative; height: 3500px; width: 100%; filter: drop-shadow(0 0 10px rgba(0,0,0,0.5));">
                 <canvas id="raceChart"></canvas>
             </div>
         </div>
@@ -2873,11 +2958,16 @@
     <script src="js/core/config.js?v=2.3"></script>
     <script src="js/core/utils.js"></script>
 
+    <!-- Cloud Providers -->
+    <script src="https://sdk.amazonaws.com/js/aws-sdk-2.1400.0.min.js"></script>
+
     <!-- Services -->
     <script src="js/services/GitHubService.js"></script>
     <script src="js/services/StorageService.js"></script>
     <script src="js/services/CalculationService.js"></script>
     <script src="js/services/DataService.js"></script>
+    <script src="js/services/FirebaseRosterService.js"></script>
+    <script src="js/services/AWSRosterService.js"></script>
 
     <!-- UI Services -->
     <script src="js/services/UIService.js"></script>
@@ -2885,6 +2975,7 @@
     <script src="js/services/ui/UINavigation.js"></script>
     <script src="js/services/ui/UIRenderers.js?v=9"></script>
     <script src="js/services/ui/UICommunity.js?v=28"></script>
+    <script src="js/services/ui/UIMGEPlanner.js"></script>
     <script src="js/services/ui/UICharts.js"></script>
     <script src="js/services/ui/UIExports.js?v=3"></script>
     <script src="js/services/ui/UISOC.js"></script>
@@ -2894,8 +2985,9 @@
     <script src="js/services/ui/UIWarCouncil.js"></script>
     <script src="js/services/ui/UIAllianceMerge.js"></script>
     <script src="js/services/ui/UIRaceChart.js"></script>
-    <script src="js/services/ui/UIGovernance.js"></script>
+
     <script src="js/services/ui/UISquadBuilder.js"></script>
+    <script src="js/services/ui/UIKingdomAnalysis.js"></script>
     <script src="js/core/commanders.js"></script>
     <script src="js/services/CalculatorsService.js"></script>
     <script src="js/services/MailService.js"></script>
@@ -2952,7 +3044,7 @@
 
 
     <!-- Main -->
-    <script src="js/services/ui/UILiveFeed.js"></script>
+
     <script src="js/main.js?v=4"></script>
     <script>
         // Simple inline script to display version from Config

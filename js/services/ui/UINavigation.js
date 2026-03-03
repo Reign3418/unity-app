@@ -56,12 +56,15 @@ Object.assign(UIService.prototype, {
             this.updateNPWDDropdown();
         } else if (tabId === 'prekvk-ranking') {
             this.renderPreKVKRanking();
-        } else if (tabId === 'governance') {
-            if (window.UIGovernance) window.UIGovernance.render();
+
         } else if (tabId === 'soc') {
             this.switchSOCSubTab('storm-of-stratagems');
         } else if (tabId === 'race-to-glory') {
             if (window.UIRaceChart) window.UIRaceChart.render();
+        } else if (tabId === 'all-kingdom-analysis') {
+            if (window.uiKingdomAnalysis) {
+                window.uiKingdomAnalysis.renderAllKingdoms(this.data, 'all-kingdom-analysis-container');
+            }
         }
         this.data.state.activeKingdomId = null;
     },
@@ -114,9 +117,7 @@ Object.assign(UIService.prototype, {
                 const insightsId = document.getElementById('rosterInsights');
                 if (insightsId) insightsId.innerHTML = '<p>No data available for analysis.</p>';
             }
-        } else if (subTabId === 'governance') {
-            const kState = this.data.state.kingdoms[kingdomId];
-            if (kState.calculatedData.length > 0) this.renderGovernanceTab(kingdomId, kState.calculatedData);
+
         } else if (subTabId === 'alliance-duel') {
             this.renderAllianceDuel(kingdomId);
         } else if (subTabId === 'hall-of-legends') {
@@ -128,6 +129,14 @@ Object.assign(UIService.prototype, {
         } else if (subTabId === 'alliance-merge') {
             if (window.UIAllianceMerge) {
                 window.UIAllianceMerge.init(this.data, kingdomId);
+            }
+        } else if (subTabId === 'mge-planner') {
+            if (window.uiMGEPlanner) {
+                window.uiMGEPlanner.init(this.data, kingdomId);
+            }
+        } else if (subTabId === 'kingdom-analysis') {
+            if (window.uiKingdomAnalysis) {
+                window.uiKingdomAnalysis.init(this.data, kingdomId);
             }
         }
     },
