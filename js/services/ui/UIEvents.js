@@ -72,12 +72,123 @@ Object.assign(UIService.prototype, {
             });
         }
 
+        // --------------------------------------------------------------------
+        // MASTER WIPE LOCK LOGIC (HOTEL SAFE)
+        // --------------------------------------------------------------------
+        const toggleWipeLockBtn = document.getElementById('toggleWipeLockBtn');
+        const wipePasswordInput = document.getElementById('wipePasswordInput');
+        const wipeLockStatus = document.getElementById('wipeLockStatus');
+
+        // Helper to check whichever DB is currently active for the lock
+        const fetchActiveLock = async () => {
+            if (window.awsRosterService && window.awsRosterService.connected) {
+                return await window.awsRosterService.getWipeLock();
+            } else if (window.firebaseRosterService && window.firebaseRosterService.connected) {
+                return await window.firebaseRosterService.getWipeLock();
+            }
+            return localStorage.getItem('unityWipeLock');
+        };
+
+        const updateLockUI = async () => {
+            const currentLock = await fetchActiveLock();
+            if (currentLock) {
+                // Safe is locked
+                if (wipeLockStatus) wipeLockStatus.innerHTML = '🔒 Locked';
+                if (toggleWipeLockBtn) {
+                    toggleWipeLockBtn.textContent = 'Unlock';
+                    toggleWipeLockBtn.style.background = 'var(--text-muted)';
+                }
+            } else {
+                // Safe is unlocked
+                if (wipeLockStatus) wipeLockStatus.innerHTML = '🔓 Unlocked';
+                if (toggleWipeLockBtn) {
+                    toggleWipeLockBtn.textContent = 'Lock';
+                    toggleWipeLockBtn.style.background = 'var(--accent-primary)';
+                }
+            }
+        };
+
+        // UI Initialization checks lock state
+        if (wipeLockStatus) updateLockUI();
+
+        if (toggleWipeLockBtn && wipePasswordInput) {
+            toggleWipeLockBtn.addEventListener('click', async () => {
+                // Prevent multi-clicks
+                toggleWipeLockBtn.disabled = true;
+
+                try {
+                    const inputVal = wipePasswordInput.value.trim();
+                    const currentLock = await fetchActiveLock();
+
+                    if (!currentLock) {
+                        // UNLOCKED -> LOCKING
+                        if (!inputVal) {
+                            alert("To lock the safe, enter a password first.");
+                            return;
+                        }
+
+                        // Write to all active databases
+                        if (window.awsRosterService && window.awsRosterService.connected) await window.awsRosterService.setWipeLock(inputVal);
+                        if (window.firebaseRosterService && window.firebaseRosterService.connected) await window.firebaseRosterService.setWipeLock(inputVal);
+                        localStorage.setItem('unityWipeLock', inputVal); // Fallback
+
+                        wipePasswordInput.value = '';
+                        await updateLockUI();
+                        alert("Safe Locked Globally. You will need this password to wipe databases or unlock the safe.");
+                    } else {
+                        // LOCKED -> UNLOCKING
+                        if (!inputVal) {
+                            alert("Enter the active password to unlock the safe.");
+                            return;
+                        }
+                        if (inputVal === currentLock) {
+                            // Valid password: Remove locks
+                            if (window.awsRosterService && window.awsRosterService.connected) await window.awsRosterService.setWipeLock(null);
+                            if (window.firebaseRosterService && window.firebaseRosterService.connected) await window.firebaseRosterService.setWipeLock(null);
+                            localStorage.removeItem('unityWipeLock');
+
+                            wipePasswordInput.value = '';
+                            await updateLockUI();
+                            alert("Safe Unlocked. Wipe buttons are now accessible via 'DELETE'.");
+                        } else {
+                            alert("Incorrect Master Password.");
+                        }
+                    }
+                } catch (e) {
+                    console.error("Lock Toggle Error", e);
+                    alert("Failed to toggle safe lock state check console for details.");
+                } finally {
+                    toggleWipeLockBtn.disabled = false;
+                }
+            });
+        }
+
+        // Helper to validate wipe intent
+        const requestWipeClearance = async (actionName) => {
+            const currentLock = await fetchActiveLock();
+            if (currentLock) {
+                // Locked mode: requires exact password
+                const output = prompt(`[LOCKED] Enter Master Wipe Password to execute ${actionName}:`);
+                if (output === null) return false; // Cancelled
+                if (output === currentLock) return true;
+                alert("Incorrect Master Password. Action denied.");
+                return false;
+            } else {
+                // Unlocked mode: standard confirmation
+                const output = prompt(`WARNING: You are about to irrevocably execute ${actionName}.\n\nType 'DELETE' in all caps to confirm.`);
+                if (output === null) return false;
+                if (output === 'DELETE') return true;
+                alert("Incorrect confirmation string. Action cancelled.");
+                return false;
+            }
+        };
+
         // Factory Reset
-        const factoryBtn = document.getElementById('factoryResetBtn');
-        if (factoryBtn) {
-            factoryBtn.addEventListener('click', async () => {
-                const output = prompt("TYPE 'unity' TO CONFIRM FACTORY RESET.\nThis will wipe ALL data, settings, and local files permanently.");
-                if (output === 'unity') {
+        const resetBtn = document.getElementById('factoryResetBtn');
+        if (resetBtn) {
+            resetBtn.addEventListener('click', async () => {
+                const isCleared = await requestWipeClearance('Factory Reset');
+                if (isCleared) {
                     try {
                         localStorage.clear();
                         if (this.data && this.data.storage && this.data.storage.db) {
@@ -91,8 +202,6 @@ Object.assign(UIService.prototype, {
                         alert("Reset failed: " + e.message);
                         location.reload();
                     }
-                } else {
-                    if (output !== null) alert("Incorrect password. Reset cancelled.");
                 }
             });
         }
@@ -101,8 +210,8 @@ Object.assign(UIService.prototype, {
         const wipeFbBtn = document.getElementById('wipeFirebaseBtn');
         if (wipeFbBtn) {
             wipeFbBtn.addEventListener('click', async () => {
-                const output = prompt("WARNING: You are about to irrevocably delete the entire Firebase real-time database.\n\nType 'DELETE' in all caps to confirm.");
-                if (output === 'DELETE') {
+                const isCleared = await requestWipeClearance('Wipe Firebase Database');
+                if (isCleared) {
                     if (window.firebaseRosterService) {
                         try {
                             wipeFbBtn.textContent = 'Wiping...';
@@ -118,8 +227,6 @@ Object.assign(UIService.prototype, {
                     } else {
                         alert("Firebase Sync is not connected.");
                     }
-                } else {
-                    if (output !== null) alert("Incorrect password. Database wipe cancelled.");
                 }
             });
         }
@@ -128,8 +235,8 @@ Object.assign(UIService.prototype, {
         const wipeAwsBtn = document.getElementById('wipeAwsBtn');
         if (wipeAwsBtn) {
             wipeAwsBtn.addEventListener('click', async () => {
-                const output = prompt("WARNING: You are about to irrevocably delete the entire AWS DynamoDB table.\n\nType 'DELETE' in all caps to confirm.");
-                if (output === 'DELETE') {
+                const isCleared = await requestWipeClearance('Wipe AWS DynamoDB Table');
+                if (isCleared) {
                     if (window.awsRosterService && window.awsRosterService.connected) {
                         try {
                             wipeAwsBtn.textContent = 'Wiping...';
@@ -145,8 +252,6 @@ Object.assign(UIService.prototype, {
                     } else {
                         alert("AWS Sync is not connected.");
                     }
-                } else {
-                    if (output !== null) alert("Incorrect password. Database wipe cancelled.");
                 }
             });
         }

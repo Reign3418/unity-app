@@ -496,4 +496,56 @@ class AWSRosterService {
             throw new Error('Failed to wipe table: ' + error.message);
         }
     }
+
+    // ------------------------------------------------------------------------
+    // GLOBAL WIPE LOCK
+    // ------------------------------------------------------------------------
+    async getWipeLock() {
+        if (!this.db || !this.connected) return null;
+        try {
+            const params = {
+                TableName: this.tableName,
+                Key: {
+                    PK: 'CONFIG',
+                    SK: 'wipeLock'
+                }
+            };
+            const result = await this.db.get(params).promise();
+            return result.Item ? result.Item.value : null;
+        } catch (error) {
+            console.error('AWS Fetch Wipe Lock Error:', error);
+            return null;
+        }
+    }
+
+    async setWipeLock(password) {
+        if (!this.db || !this.connected) throw new Error('Not connected to AWS.');
+        try {
+            if (password) {
+                const params = {
+                    TableName: this.tableName,
+                    Item: {
+                        PK: 'CONFIG',
+                        SK: 'wipeLock',
+                        value: password,
+                        updatedAt: new Date().toISOString()
+                    }
+                };
+                await this.db.put(params).promise();
+            } else {
+                const params = {
+                    TableName: this.tableName,
+                    Key: {
+                        PK: 'CONFIG',
+                        SK: 'wipeLock'
+                    }
+                };
+                await this.db.delete(params).promise();
+            }
+            return true;
+        } catch (error) {
+            console.error('AWS Set Wipe Lock Error:', error);
+            throw error;
+        }
+    }
 }

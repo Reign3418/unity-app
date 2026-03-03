@@ -1113,6 +1113,29 @@
                             EVERYTHING in local storage. Erases API keys, GitHub tokens, settings, and loaded data.
                             Cannot be undone.</p>
                     </div>
+
+                    <div
+                        style="padding: 1rem; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 8px;">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                            <h4 style="font-size: 0.95rem; margin: 0; color: var(--text-primary);">🔐 Master Wipe Lock
+                            </h4>
+                            <span id="wipeLockStatus"
+                                style="font-size: 0.85rem; font-weight: bold; color: var(--success-color);">🔓
+                                Unlocked</span>
+                        </div>
+                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 10px;">
+                            Like a hotel safe. Type any password and click 'Lock' to secure the Database wipe buttons.
+                            Type the active password and click 'Unlock' to allow wiping.
+                        </p>
+                        <div style="display: flex; gap: 10px;">
+                            <input type="password" id="wipePasswordInput" class="config-input"
+                                placeholder="Enter custom lock string..."
+                                style="flex: 1; padding: 8px; border-radius: 4px; border: 1px solid #444; background: rgba(0,0,0,0.2); color: white;">
+                            <button id="toggleWipeLockBtn" class="primary-btn"
+                                style="background: var(--accent-primary); width: 100px;">Lock</button>
+                        </div>
+                    </div>
                 </div>
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 1rem; margin-top: auto;">

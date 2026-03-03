@@ -321,6 +321,35 @@ class FirebaseRosterService {
         }
     }
 
+    // ------------------------------------------------------------------------
+    // GLOBAL WIPE LOCK
+    // ------------------------------------------------------------------------
+    async getWipeLock() {
+        if (!this.db || !this.connected) return null;
+        try {
+            const snap = await this.db.ref('config/wipeLock').once('value');
+            return snap.val() || null;
+        } catch (error) {
+            console.error('Firebase Fetch Wipe Lock Error:', error);
+            return null;
+        }
+    }
+
+    async setWipeLock(password) {
+        if (!this.db || !this.connected) throw new Error('Not connected to Firebase.');
+        try {
+            if (password) {
+                await this.db.ref('config/wipeLock').set(password);
+            } else {
+                await this.db.ref('config/wipeLock').remove();
+            }
+            return true;
+        } catch (error) {
+            console.error('Firebase Set Wipe Lock Error:', error);
+            throw error;
+        }
+    }
+
 }
 
 window.FirebaseRosterService = FirebaseRosterService;
