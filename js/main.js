@@ -36,7 +36,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 } catch (growthErr) {
                     console.error("UIGrowth Init Failed:", growthErr);
                 }
-
+                // Initialize World Clock
+                try {
+                    const uiClock = new UIClock();
+                    uiClock.init();
+                } catch (clockErr) {
+                    console.error("UIClock Init Failed:", clockErr);
+                }
 
 
                 // Initialize Race to Glory
@@ -57,10 +63,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 // Initialize OCR Scanner
                 try {
-                    const ocrService = new OCRScannerService();
-                    window.ocrService = ocrService;
+                    new OCRScannerService();
                 } catch (ocrErr) {
                     console.error("OCR Scanner Init Failed:", ocrErr);
+                }
+
+                // Initialize Recruit Scanner
+                try {
+                    const recruitSvc = new RecruitScannerService();
+                    window.recruitScannerService = recruitSvc;
+                } catch (recruitErr) {
+                    console.error("Recruit Scanner Init Failed:", recruitErr);
                 }
 
                 // Initialize Global Cloud Service
@@ -111,7 +124,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // Initialize MGE Planner
                 try {
                     if (window.UIMGEPlanner) {
-                        window.uiMGEPlanner = new window.UIMGEPlanner();
+                        window.uiMGEPlanner = window.UIMGEPlanner;
                     }
                 } catch (mgeErr) {
                     console.error("MGE Planner Init Failed:", mgeErr);

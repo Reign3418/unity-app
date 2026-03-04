@@ -256,6 +256,36 @@ Object.assign(UIService.prototype, {
             });
         }
 
+        // Firebase Global Config
+        const firebaseDbUrl = document.getElementById('firebaseDbUrl');
+        const saveFirebaseBtn = document.getElementById('saveSettingsBtn');
+        if (firebaseDbUrl) firebaseDbUrl.value = localStorage.getItem('__unity_firebase_url') || '';
+
+        if (saveFirebaseBtn) {
+            saveFirebaseBtn.addEventListener('click', () => {
+                const url = firebaseDbUrl ? firebaseDbUrl.value.trim() : '';
+                localStorage.setItem('__unity_firebase_url', url);
+                alert("Firebase Database URL saved. Unity will attempt to connect...");
+
+                if (window.firebaseRosterService) {
+                    window.firebaseRosterService.init(url);
+                }
+            });
+        }
+
+        // Recruiting Firebase Config
+        const recruitFirebaseUrl = document.getElementById('recruitFirebaseUrl');
+        const saveRecruitBtn = document.getElementById('saveRecruitDbBtn');
+        if (recruitFirebaseUrl) recruitFirebaseUrl.value = localStorage.getItem('__unity_recruit_firebase_url') || 'https://recruitingroster-default-rtdb.firebaseio.com/';
+
+        if (saveRecruitBtn) {
+            saveRecruitBtn.addEventListener('click', () => {
+                const url = recruitFirebaseUrl.value.trim();
+                localStorage.setItem('__unity_recruit_firebase_url', url);
+                alert("Recruiting Database URL saved! Scanned applicants will now be pushed here.");
+            });
+        }
+
         // Bulk Firebase Upload
         const bulkFirebaseBtn = document.getElementById('bulkFirebaseUploadBtn');
         const bulkFirebaseInput = document.getElementById('bulkFirebaseUploadInput');

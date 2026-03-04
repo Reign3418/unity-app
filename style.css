@@ -4350,6 +4350,7 @@ tbody tr:nth-child(even) {
     margin-bottom: 0.5rem;
     text-transform: uppercase;
     background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+    background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
@@ -4651,4 +4652,250 @@ tbody tr:nth-child(even) {
         transform: translate(15px, -20px) scale(1.5);
         opacity: 0;
     }
+}
+
+/* --- World Clock Styling --- */
+.world-clock-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    margin-top: 3rem;
+    align-items: center;
+}
+
+.clock-box {
+    background: rgba(30, 41, 59, 0.5);
+    border: 1px solid var(--border-color);
+    border-radius: 0.75rem;
+    padding: 0.75rem 1rem;
+    text-align: center;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.2s ease;
+    backdrop-filter: blur(4px);
+}
+
+.clock-box:hover {
+    border-color: var(--accent-secondary);
+    background: rgba(30, 41, 59, 0.8);
+    transform: translateY(-2px);
+}
+
+.clock-utc-center {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    /* Spans two rows slightly to stand out */
+    padding: 1.5rem 2rem;
+    border: 2px solid var(--accent-primary);
+    background: linear-gradient(145deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.9));
+    box-shadow: 0 0 20px rgba(99, 102, 241, 0.2), inset 0 0 10px rgba(99, 102, 241, 0.1);
+    transform: scale(1.02);
+}
+
+.clock-utc-center:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 25px rgba(99, 102, 241, 0.3), inset 0 0 15px rgba(99, 102, 241, 0.2);
+}
+
+.clock-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.25rem;
+    font-weight: 600;
+}
+
+.clock-time {
+    font-size: 1.25rem;
+    color: var(--text-primary);
+    font-family: 'Courier New', Courier, monospace;
+    /* Digital feel */
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+.clock-utc-center .clock-label {
+    font-size: 1rem;
+    color: var(--accent-light);
+}
+
+.clock-utc-center .clock-time {
+    font-size: 2.25rem;
+    color: var(--white);
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+}
+
+.clock-date {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    margin-top: 0.15rem;
+}
+
+.clock-utc-center .clock-date {
+    font-size: 0.85rem;
+}
+
+/* Responsive adjustments for World Clock */
+@media (max-width: 900px) {
+    .world-clock-container {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .clock-utc-center {
+        grid-column: 1 / -1;
+        grid-row: auto;
+        transform: scale(1);
+    }
+}
+
+@media (max-width: 500px) {
+    .world-clock-container {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* --- MAIL GENERATOR --- */
+.mail-layout {
+    display: grid;
+    grid-template-columns: 2fr 3fr;
+    /* Wider preview */
+    gap: 1.5rem;
+    height: 100%;
+    min-height: 600px;
+}
+
+.mail-panel {
+    display: flex;
+    flex-direction: column;
+    background: var(--card-bg);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+}
+
+.mail-panel .panel-header {
+    background: rgba(0, 0, 0, 0.4);
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    font-weight: 600;
+}
+
+/* Mail Tool Buttons */
+.square-tool-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    width: 60px;
+    height: 60px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 0;
+}
+
+.square-tool-btn:hover {
+    background: var(--card-hover);
+    border-color: var(--accent-primary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.square-tool-btn:active {
+    transform: translateY(0);
+}
+
+.square-tool-btn small {
+    font-size: 0.7em;
+    color: var(--text-secondary);
+}
+
+.square-tool-btn:hover small {
+    color: var(--text-primary);
+}
+
+/* Base Select Style explicitly overridden to prevent invisible text */
+#size-select option {
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+}
+
+#mail-input:focus {
+    outline: none;
+    background: rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Hover Dropdown Menus */
+.hover-dropdown-container {
+    position: relative;
+    /* ensure absolute children rank to this */
+}
+
+.hover-dropdown-container:hover .hover-dropdown-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.hover-dropdown-menu {
+    position: absolute;
+    top: 100%;
+    /* Drop straight down */
+    left: 0;
+    z-index: 100;
+    /* Ensure it floats above text area */
+    margin-top: 0.5rem;
+    /* Gap below the button */
+
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    padding: 0.5rem;
+    min-width: 180px;
+}
+
+.gradient-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.gradient-list-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    transition: background-color 0.2s;
+    width: 100%;
+    text-align: left;
+}
+
+.gradient-list-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.gradient-list-btn div {
+    flex: 1;
+    height: 16px;
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.gradient-list-btn span {
+    font-size: 0.85em;
+    min-width: 70px;
 }

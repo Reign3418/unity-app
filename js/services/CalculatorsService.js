@@ -10,6 +10,7 @@ class CalculatorsService {
         this.currentActiveTab = 'calc-speedups';
 
         this.initEventListeners();
+        this.initStarlightCalculator();
     }
 
     initEventListeners() {
@@ -40,7 +41,7 @@ class CalculatorsService {
                 });
 
                 this.currentActiveTab = targetId;
-                applyCustomLayout(targetId === 'calc-troops' || targetId === 'calc-flag');
+                applyCustomLayout(['calc-troops', 'calc-flag', 'calc-starlight'].includes(targetId));
                 this.calculateTotal(); // Recalculate if switching
             });
         });
@@ -65,6 +66,46 @@ class CalculatorsService {
                 this.calculateTotal();
             });
         }
+    }
+
+    initStarlightCalculator() {
+        this.starlightCurrent = document.getElementById('starlightCurrentStar');
+        this.starlightTarget = document.getElementById('starlightTargetStar');
+        if (!this.starlightCurrent || !this.starlightTarget) return;
+
+        this.starlightData = {
+            1: { normal: 0, blessed: 0, dazzling: 0 },
+            2: { normal: 0, blessed: 0, dazzling: 0 },
+            3: { normal: 6, blessed: 1, dazzling: 1 },
+            4: { normal: 65, blessed: 17, dazzling: 9 },
+            5: { normal: 160, blessed: 40, dazzling: 20 },
+            6: { normal: 510, blessed: 120, dazzling: 60 }
+        };
+
+        const calculate = () => {
+            let current = parseInt(this.starlightCurrent.value) || 3;
+            let target = parseInt(this.starlightTarget.value) || 6;
+
+            if (current >= target) {
+                target = current + 1;
+                if (target > 6) { target = 6; current = 5; }
+                this.starlightTarget.value = target;
+                this.starlightCurrent.value = current;
+            }
+
+            let startReqs = this.starlightData[current];
+            let endReqs = this.starlightData[target];
+
+            document.getElementById('starlightNormalReq').textContent = (endReqs.normal - startReqs.normal).toLocaleString();
+            document.getElementById('starlightBlessedReq').textContent = (endReqs.blessed - startReqs.blessed).toLocaleString();
+            document.getElementById('starlightDazzlingReq').textContent = (endReqs.dazzling - startReqs.dazzling).toLocaleString();
+        };
+
+        this.starlightCurrent.addEventListener('change', calculate);
+        this.starlightTarget.addEventListener('change', calculate);
+
+        // Initial paint
+        calculate();
     }
 
     calculateTotal() {
