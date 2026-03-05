@@ -65,6 +65,11 @@ Object.assign(UIService.prototype, {
             if (window.uiKingdomAnalysis) {
                 window.uiKingdomAnalysis.renderAllKingdoms(this.data, 'all-kingdom-analysis-container');
             }
+        } else if (tabId === 'camps') {
+            if (window.uiCamps) {
+                window.uiCamps.updateCampKingdomSelects();
+                window.uiCamps.renderCampsDashboard();
+            }
         }
         this.data.state.activeKingdomId = null;
     },

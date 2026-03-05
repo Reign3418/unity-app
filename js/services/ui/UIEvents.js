@@ -256,6 +256,80 @@ Object.assign(UIService.prototype, {
             });
         }
 
+        // --- Export / Import Settings ---
+        const exportSettingsBtn = document.getElementById('exportSettingsBtn');
+        const importSettingsBtn = document.getElementById('importSettingsBtn');
+        const importSettingsInput = document.getElementById('importSettingsInput');
+
+        if (exportSettingsBtn) {
+            exportSettingsBtn.addEventListener('click', () => {
+                const configToExport = {
+                    active_cloud_provider: localStorage.getItem('active_cloud_provider'),
+                    __unity_firebase_url: localStorage.getItem('__unity_firebase_url'),
+                    __unity_recruit_firebase_url: localStorage.getItem('__unity_recruit_firebase_url'),
+                    aws_dynamo_config: localStorage.getItem('aws_dynamo_config'),
+                    unity_gh_config: localStorage.getItem('unity_gh_config'),
+                    geminiApiKey: localStorage.getItem('geminiApiKey'),
+                    geminiApiModel: localStorage.getItem('geminiApiModel')
+                };
+
+                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(configToExport, null, 2));
+                const downloadAnchorNode = document.createElement('a');
+                downloadAnchorNode.setAttribute("href", dataStr);
+                downloadAnchorNode.setAttribute("download", "unity_config.json");
+                document.body.appendChild(downloadAnchorNode); // required for firefox
+                downloadAnchorNode.click();
+                downloadAnchorNode.remove();
+            });
+        }
+
+        if (importSettingsBtn && importSettingsInput) {
+            importSettingsBtn.addEventListener('click', () => {
+                importSettingsInput.click();
+            });
+
+            importSettingsInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const importedConfig = JSON.parse(event.target.result);
+
+                        // Set the keys if they exist in the uploaded JSON
+                        const keysToImport = [
+                            'active_cloud_provider', '__unity_firebase_url', '__unity_recruit_firebase_url',
+                            'aws_dynamo_config', 'unity_gh_config', 'geminiApiKey', 'geminiApiModel'
+                        ];
+
+                        let importedCount = 0;
+                        keysToImport.forEach(key => {
+                            if (importedConfig[key] !== undefined && importedConfig[key] !== null) {
+                                localStorage.setItem(key, importedConfig[key]);
+                                importedCount++;
+                            }
+                        });
+
+                        // Clear input so same file can be selected again
+                        importSettingsInput.value = '';
+
+                        if (importedCount > 0) {
+                            alert(`Successfully imported ${importedCount} configuration keys. The app will now reload to apply the changes.`);
+                            location.reload(); // Reload to initialize services with new keys and update UI elements
+                        } else {
+                            alert('No valid configuration keys found in the file.');
+                        }
+
+                    } catch (err) {
+                        alert('Error parsing the configuration file. Please ensure it is a valid unity_config.json file.');
+                        console.error('Config Import Error:', err);
+                    }
+                };
+                reader.readAsText(file);
+            });
+        }
+
         // Firebase Global Config
         const firebaseDbUrl = document.getElementById('firebaseDbUrl');
         const saveFirebaseBtn = document.getElementById('saveSettingsBtn');

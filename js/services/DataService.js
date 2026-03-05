@@ -10,6 +10,7 @@ class DataService {
             startScanDate: null,
             midScanDate: null,
             endScanDate: null,
+            camps: [], // Array of { id, name, color, kingdoms: [] }
             soc: {
                 activeSubTab: 'overview',
                 zones: {} // Use 'socStart', 'socPass4', etc.
@@ -90,6 +91,7 @@ class DataService {
         // 1. Restore Base Content
         this.state.kingdoms = savedState.kingdoms;
         this.state.loadedKingdoms = new Set(savedState.loadedKingdoms || [targetKingdomId]);
+        this.state.camps = savedState.camps || [];
         this.state.soc = savedState.soc || {};
 
         // Restore Dates (Default)
@@ -131,6 +133,7 @@ class DataService {
                 startScanDate: this.state.startScanDate,
                 midScanDate: this.state.midScanDate,
                 endScanDate: this.state.endScanDate,
+                camps: this.state.camps,
                 soc: this.state.soc
             };
 

@@ -61,6 +61,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                     console.error("Calculators Init Failed:", calcErr);
                 }
 
+                // Initialize Camps Feature
+                try {
+                    if (window.UICamps) {
+                        window.uiCamps = new window.UICamps(dataService);
+                    }
+                } catch (campsErr) {
+                    console.error("UICamps Init Failed:", campsErr);
+                }
+
                 // Initialize OCR Scanner
                 try {
                     new OCRScannerService();
@@ -78,7 +87,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 // Initialize Global Cloud Service
                 try {
-                    const activeCloud = localStorage.getItem('active_cloud_provider') || 'firebase';
+                    let activeCloud = 'firebase';
+                    try {
+                        activeCloud = localStorage.getItem('active_cloud_provider') || 'firebase';
+                    } catch (e) {
+                        console.warn("Could not read 'active_cloud_provider' from localStorage.", e);
+                    }
 
                     if (activeCloud === 'aws') {
                         console.log("Initializing AWS DynamoDB Cloud Provider...");
@@ -86,16 +100,25 @@ document.addEventListener('DOMContentLoaded', async () => {
                         window.firebaseRosterService = awsService; // Polyfill for backwards compat
                         window.awsRosterService = awsService; // Explicitly assign for AWS-specific functions
 
-                        const awsConfigRaw = localStorage.getItem('aws_dynamo_config');
-                        if (awsConfigRaw) awsService.init(awsConfigRaw);
+                        try {
+                            const awsConfigRaw = localStorage.getItem('aws_dynamo_config');
+                            if (awsConfigRaw) awsService.init(awsConfigRaw);
+                        } catch (awsStorageErr) {
+                            console.warn("Failed reading 'aws_dynamo_config' from localStorage.", awsStorageErr);
+                        }
+
                     } else {
                         console.log("Initializing Firebase Realtime Cloud Provider...");
                         const firebaseService = new FirebaseRosterService();
                         window.firebaseRosterService = firebaseService;
 
                         // Automatically connect if URL saved
-                        const savedUrl = localStorage.getItem('__unity_firebase_url');
-                        if (savedUrl) firebaseService.init(savedUrl);
+                        try {
+                            const savedUrl = localStorage.getItem('__unity_firebase_url');
+                            if (savedUrl) firebaseService.init(savedUrl);
+                        } catch (firebaseStorageErr) {
+                            console.warn("Failed reading '__unity_firebase_url' from localStorage.", firebaseStorageErr);
+                        }
                     }
                 } catch (cloudErr) {
                     console.error("Cloud Service Init Failed:", cloudErr);

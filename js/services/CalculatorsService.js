@@ -41,7 +41,7 @@ class CalculatorsService {
                 });
 
                 this.currentActiveTab = targetId;
-                applyCustomLayout(['calc-troops', 'calc-flag', 'calc-starlight'].includes(targetId));
+                applyCustomLayout(['calc-troops', 'calc-flag', 'calc-starlight', 'calc-flag-builder', 'calc-name-scanner'].includes(targetId));
                 this.calculateTotal(); // Recalculate if switching
             });
         });

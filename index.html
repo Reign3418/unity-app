@@ -7,19 +7,19 @@
     <title>Unity</title>
     <link rel="stylesheet" href="style.css?v=28">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script
+    <script defer src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script defer
         src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
-    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/pca-js@1.0.0/pca.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+    <script defer src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/pca-js@1.0.0/pca.min.js"></script>
 
     <!-- Firebase SDK (Compat version for simplicity in vanilla JS) -->
-    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-database-compat.js"></script>
+    <script defer src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
+    <script defer src="https://www.gstatic.com/firebasejs/10.9.0/firebase-database-compat.js"></script>
 
     <!-- Tesseract.js for AI OCR: purpose-built text extraction from images -->
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 </head>
 
 <body>
@@ -54,6 +54,8 @@
             <button class="tab-btn" data-tab="my-alliance"
                 data-tooltip="Live Cloud Roster shared with your alliance.">My Alliance 🛡️</button>
             <button class="tab-btn" data-tab="soc" data-tooltip="Season of Conquest Modes">SOC ⚔️</button>
+            <button class="tab-btn" data-tab="camps" data-tooltip="Macro view for Camp aggregated statistics">Camps
+                🤝</button>
 
             <button class="tab-btn" data-tab="mail" data-tooltip="Create fancy in-game mails.">Mail Generator
                 ✉️</button>
@@ -1083,6 +1085,115 @@
         </div>
     </div>
 
+    <!-- NEW CAMPS TAB -->
+    <div id="camps" class="tab-content" style="display: none;">
+        <div class="card">
+            <div class="results-header"
+                style="justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 15px;">
+                <div>
+                    <h2>Camps Comparison Dashboard</h2>
+                    <p class="text-secondary" style="margin-top:0.5rem;">Group your loaded kingdoms into macro Camps to
+                        evaluate overall KVK performance.</p>
+                </div>
+
+                <div class="input-group"
+                    style="margin: 0; display: flex; flex-direction: row; align-items: flex-end; flex-wrap: wrap; gap: 15px;">
+                    <!-- DKP Mode Toggle -->
+                    <div class="input-group" style="margin: 0; align-items: center; flex-direction: row; gap: 5px;">
+                        <label style="margin: 0;">DKP Mode:</label>
+                        <select id="campsDkpMode" class="prekvk-select" style="min-width: 100px;">
+                            <option value="basic">Basic</option>
+                            <option value="advanced">Advanced (HoH Scan)</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group" style="margin: 0; align-items: center; flex-direction: row; gap: 5px;">
+                        <label style="margin: 0;">T4 Pts:</label>
+                        <input type="number" id="campsT4Weight" class="config-input" value="10" step="1"
+                            style="width: 70px; padding: 4px 8px;">
+                    </div>
+                    <div class="input-group" style="margin: 0; align-items: center; flex-direction: row; gap: 5px;">
+                        <label style="margin: 0;">T5 Pts:</label>
+                        <input type="number" id="campsT5Weight" class="config-input" value="20" step="1"
+                            style="width: 70px; padding: 4px 8px;">
+                    </div>
+
+                    <!-- Basic Only Input -->
+                    <div id="basicCampsInputs" class="input-group"
+                        style="margin: 0; align-items: center; flex-direction: row; gap: 5px;">
+                        <label style="margin: 0;">Deads Pts:</label>
+                        <input type="number" id="campsDeadWeight" class="config-input" value="30" step="1"
+                            style="width: 70px; padding: 4px 8px;">
+                    </div>
+
+                    <!-- Advanced Only Inputs -->
+                    <div id="advancedCampsInputs" class="input-group hidden"
+                        style="margin: 0; align-items: center; flex-direction: row; gap: 5px;">
+                        <label style="margin: 0; color: var(--accent-primary);">T4 Deads Pts:</label>
+                        <input type="number" id="campsT4DeadWeight" class="config-input" value="50" step="1"
+                            style="width: 70px; padding: 4px 8px; border-color: var(--accent-primary);">
+                        <label style="margin: 0; margin-left: 5px; color: var(--accent-primary);">T5 Deads Pts:</label>
+                        <input type="number" id="campsT5DeadWeight" class="config-input" value="100" step="1"
+                            style="width: 70px; padding: 4px 8px; border-color: var(--accent-primary);">
+                    </div>
+                </div>
+            </div>
+
+            <div class="camp-container" style="display: flex; flex-direction: column; gap: 20px; margin-top: 1.5rem;">
+
+                <!-- Camp Configuration Panel -->
+                <div class="camp-config-panel panel glass-panel">
+                    <h3 style="margin-bottom: 1rem;">Camp Roster Setup</h3>
+                    <div class="input-group" style="flex-direction: row; align-items: flex-end; gap: 10px;">
+                        <div>
+                            <label for="newCampName">Camp Name:</label>
+                            <input type="text" id="newCampName" class="config-input" placeholder="e.g. Blue Camp">
+                        </div>
+                        <div>
+                            <label for="newCampColor">Camp Color:</label>
+                            <input type="color" id="newCampColor" class="config-input" value="#3b82f6"
+                                style="padding:0; height:38px; width:60px; cursor: pointer;">
+                        </div>
+                        <div>
+                            <label>Assign Kingdoms:</label>
+                            <div id="campKingdomSelects"
+                                style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 5px; color: var(--text-primary); align-items: center; min-height: 38px;">
+                                <!-- Checkboxes generated by JS based on loadedKingdoms -->
+                                <span style="font-style: italic; opacity:0.7;">No kingdoms loaded yet.</span>
+                            </div>
+                        </div>
+                        <button id="addCampBtn" class="primary-btn" style="height: 38px; white-space: nowrap;">+ Add
+                            Camp</button>
+                    </div>
+                </div>
+
+                <!-- Existing Camps List & Summary Table -->
+                <div class="camp-results-panel table-container">
+                    <table class="dkp-table" id="campComparisonTable">
+                        <thead>
+                            <tr>
+                                <th>Camp Name</th>
+                                <th>Kingdoms</th>
+                                <th>Players Evaluated</th>
+                                <th>Total Start Power</th>
+                                <th>Power Diff (Δ)</th>
+                                <th>T4 Kills</th>
+                                <th>T5 Kills</th>
+                                <th>Total Deads</th>
+                                <th>Total KP</th>
+                                <th>Aggregated DKP</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Generated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Smart Welcome Modal -->
     <div id="welcomeModal" class="modal-overlay hidden">
         <div class="modal-content glass-panel" style="max-width: 500px; text-align: center;">
@@ -1408,47 +1519,69 @@
                         <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0;">Hard wipe of
                             EVERYTHING in local storage. Erases API keys, GitHub tokens, settings, and loaded data.
                             Cannot be undone.</p>
+                        <button id="factoryResetBtn" class="primary-btn"
+                            style="width: 100%; margin-top: 1rem; background: var(--danger-color);">Wipe All
+                            Data</button>
                     </div>
 
                     <div
-                        style="padding: 1rem; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 8px;">
-                        <div
-                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                            <h4 style="font-size: 0.95rem; margin: 0; color: var(--text-primary);">🔐 Master Wipe Lock
-                            </h4>
-                            <span id="wipeLockStatus"
-                                style="font-size: 0.85rem; font-weight: bold; color: var(--success-color);">🔓
-                                Unlocked</span>
-                        </div>
-                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 10px;">
-                            Like a hotel safe. Type any password and click 'Lock' to secure the Database wipe buttons.
-                            Type the active password and click 'Unlock' to allow wiping.
-                        </p>
+                        style="margin-top: 1.5rem; padding: 1rem; background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 8px;">
+                        <h4 style="font-size: 0.95rem; margin-bottom: 0.5rem; color: var(--success-color);">⚙️ Export /
+                            Import Settings</h4>
+                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Export your API
+                            keys and cloud settings to a file, or import configuration from a teammate.</p>
                         <div style="display: flex; gap: 10px;">
-                            <input type="password" id="wipePasswordInput" class="config-input"
-                                placeholder="Enter custom lock string..."
-                                style="flex: 1; padding: 8px; border-radius: 4px; border: 1px solid #444; background: rgba(0,0,0,0.2); color: white;">
-                            <button id="toggleWipeLockBtn" class="primary-btn"
-                                style="background: var(--accent-primary); width: 100px;">Lock</button>
+                            <button id="exportSettingsBtn" class="secondary-btn" style="flex: 1;">📥 Export
+                                Config</button>
+                            <input type="file" id="importSettingsInput" accept=".json" style="display: none;">
+                            <button id="importSettingsBtn" class="secondary-btn" style="flex: 1;">📤 Import
+                                Config</button>
                         </div>
                     </div>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0;">Hard wipe of
+                        EVERYTHING in local storage. Erases API keys, GitHub tokens, settings, and loaded data.
+                        Cannot be undone.</p>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 1rem; margin-top: auto;">
-                    <button id="resetDataBtn" class="primary-btn"
-                        style="background: var(--warning-color); border-color: var(--warning-color); color: #000; box-shadow: none;">Clear
-                        Loaded</button>
-                    <button id="wipeFirebaseBtn" class="primary-btn danger-btn"
-                        style="background: #ea580c; border-color: #ea580c; box-shadow: none;">Wipe Firebase</button>
-                    <button id="wipeAwsBtn" class="primary-btn danger-btn"
-                        style="background: #eab308; border-color: #eab308; color: #000; box-shadow: none;">Wipe
-                        AWS</button>
-                    <button id="factoryResetBtn" class="primary-btn danger-btn"
-                        style="background: var(--danger-color); box-shadow: none;">Factory Reset</button>
+                <div
+                    style="padding: 1rem; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 8px;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                        <h4 style="font-size: 0.95rem; margin: 0; color: var(--text-primary);">🔐 Master Wipe Lock
+                        </h4>
+                        <span id="wipeLockStatus"
+                            style="font-size: 0.85rem; font-weight: bold; color: var(--success-color);">🔓
+                            Unlocked</span>
+                    </div>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 10px;">
+                        Like a hotel safe. Type any password and click 'Lock' to secure the Database wipe buttons.
+                        Type the active password and click 'Unlock' to allow wiping.
+                    </p>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="password" id="wipePasswordInput" class="config-input"
+                            placeholder="Enter custom lock string..."
+                            style="flex: 1; padding: 8px; border-radius: 4px; border: 1px solid #444; background: rgba(0,0,0,0.2); color: white;">
+                        <button id="toggleWipeLockBtn" class="primary-btn"
+                            style="background: var(--accent-primary); width: 100px;">Lock</button>
+                    </div>
                 </div>
             </div>
 
-        </div> <!-- Close .settings-grid -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 1rem; margin-top: auto;">
+                <button id="resetDataBtn" class="primary-btn"
+                    style="background: var(--warning-color); border-color: var(--warning-color); color: #000; box-shadow: none;">Clear
+                    Loaded</button>
+                <button id="wipeFirebaseBtn" class="primary-btn danger-btn"
+                    style="background: #ea580c; border-color: #ea580c; box-shadow: none;">Wipe Firebase</button>
+                <button id="wipeAwsBtn" class="primary-btn danger-btn"
+                    style="background: #eab308; border-color: #eab308; color: #000; box-shadow: none;">Wipe
+                    AWS</button>
+                <button id="factoryResetBtn" class="primary-btn danger-btn"
+                    style="background: var(--danger-color); box-shadow: none;">Factory Reset</button>
+            </div>
+        </div>
+
+    </div> <!-- Close .settings-grid -->
     </div>
 
     <!-- Community Hub Tab (NEW) -->
@@ -1545,6 +1678,9 @@
             <button class="calc-tab-btn" data-subtab="calc-troops">🗡️ Troop Training</button>
             <button class="calc-tab-btn" data-subtab="calc-flag">🚩 Alliance Flag</button>
             <button class="calc-tab-btn" data-subtab="calc-starlight">✨ Starlight</button>
+            <button class="calc-tab-btn" data-subtab="calc-flag-builder">🗺️ Territory Builder</button>
+            <button class="calc-tab-btn" data-subtab="calc-name-scanner"
+                style="border-left: 1px solid rgba(255,255,255,0.1); margin-left: 10px;">👁️ Name Scanner</button>
         </div>
 
         <div class="card calc-layout" style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px;">
@@ -2326,6 +2462,228 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- Flag Builder Subtab -->
+        <div class="calc-tab-content calc-layout" data-content="calc-flag-builder" style="width:100%;">
+            <div style="grid-column: 1 / -1; margin-bottom: 15px;">
+                <h2>🗺️ Alliance Territory Builder</h2>
+                <p style="color:var(--text-muted); font-size:0.9rem;">Interactive tool for planning your alliance
+                    territory expansion and calculating jumps to targets.</p>
+            </div>
+
+            <div id="calc-flag-builder" style="grid-column: 1 / -1; width: 100%; min-height: 700px;">
+                <div class="flag-builder-layout"
+                    style="display: grid; grid-template-columns: 280px 1fr; gap: 20px; height: 100%;">
+                    <!-- Toolbar -->
+                    <div class="flag-toolbar"
+                        style="background: var(--card-bg); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 15px;">
+                        <h3 style="margin-top: 0; margin-bottom: 5px;">Build Tools</h3>
+
+                        <div class="flag-tools" style="display: flex; flex-direction: column; gap: 8px;">
+                            <label class="flag-tool-label"
+                                style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                                <input type="radio" name="flag-tool" value="select" checked>
+                                <span>🖱️ Select / Move</span>
+                            </label>
+                            <label class="flag-tool-label"
+                                style="display:flex; align-items:flex-start; gap:8px; cursor:pointer;">
+                                <input type="radio" name="flag-tool" value="fortress" style="margin-top:4px;">
+                                <div>
+                                    <span>🏰 Place Alliance Fortress</span>
+                                    <small
+                                        style="display:block; color:var(--text-muted); font-size:0.75em; margin-top:2px;">Grid:
+                                        4x4 | Territory: 12x12</small>
+                                </div>
+                            </label>
+                            <label class="flag-tool-label"
+                                style="display:flex; align-items:flex-start; gap:8px; cursor:pointer;">
+                                <input type="radio" name="flag-tool" value="flag" style="margin-top:4px;">
+                                <div>
+                                    <span>🚩 Place Alliance Flag</span>
+                                    <small
+                                        style="display:block; color:var(--text-muted); font-size:0.75em; margin-top:2px;">Grid:
+                                        1x1 | Territory: 7x7</small>
+                                </div>
+                            </label>
+                            <label class="flag-tool-label"
+                                style="display:flex; align-items:flex-start; gap:8px; cursor:pointer;">
+                                <input type="radio" name="flag-tool" value="target" style="margin-top:4px;">
+                                <div>
+                                    <span>🎯 Place Target Pin</span>
+                                    <small
+                                        style="display:block; color:var(--text-muted); font-size:0.75em; margin-top:2px;">Calculates
+                                        jumps needed</small>
+                                </div>
+                            </label>
+                            <label class="flag-tool-label"
+                                style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                                <input type="radio" name="flag-tool" value="erase">
+                                <span>🧽 Delete Object</span>
+                            </label>
+                        </div>
+
+                        <hr style="border-color: var(--border-color); margin: 5px 0;">
+
+                        <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 10px;">
+                            <input type="file" id="fb-map-upload" accept="image/*" style="display: none;">
+                            <button id="fb-btn-upload-map" class="secondary-btn"
+                                style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                                <span>🗺️</span> Upload Map Background
+                            </button>
+
+                            <!-- Map Adjustment Controls -->
+                            <div class="map-controls"
+                                style="display: flex; flex-direction: column; gap: 8px; background: rgba(0,0,0,0.1); padding: 10px; border-radius: 6px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <label style="font-size: 0.8em; color: var(--text-muted);">Map Scale</label>
+                                    <span id="fb-scale-val"
+                                        style="font-size: 0.8em; color: var(--accent-primary);">100%</span>
+                                </div>
+                                <input type="range" id="fb-map-scale" min="10" max="300" value="100"
+                                    class="styled-slider">
+
+                                <div
+                                    style="display: flex; justify-content: space-between; align-items: center; margin-top: 5px;">
+                                    <label style="font-size: 0.8em; color: var(--text-muted);">Map Opacity</label>
+                                    <span id="fb-opacity-val"
+                                        style="font-size: 0.8em; color: var(--accent-primary);">50%</span>
+                                </div>
+                                <input type="range" id="fb-map-opacity" min="0" max="100" value="50"
+                                    class="styled-slider">
+                            </div>
+                        </div>
+
+                        <div class="flag-stats" style="background: rgba(0,0,0,0.2); padding: 10px; border-radius: 6px;">
+                            <h4 style="margin-top: 0; margin-bottom: 10px; color: var(--accent-primary);">Predictor
+                                Stats</h4>
+                            <div
+                                style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.9em;">
+                                <span style="color: var(--text-secondary);">Flags Placed:</span>
+                                <span id="fb-placed-count" style="font-weight: bold;">0</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; font-size: 0.9em;">
+                                <span style="color: var(--text-secondary);">Flags to Target:</span>
+                                <span id="fb-target-estimate"
+                                    style="font-weight: bold; color: var(--accent-primary);">0</span>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: auto; display: flex; flex-direction: column; gap: 10px;">
+                            <label
+                                style="font-size: 0.85em; display: flex; align-items: center; gap: 5px; color: var(--text-secondary); cursor: pointer;">
+                                <input type="checkbox" id="fb-snap-grid" checked>
+                                Snap to Grid
+                            </label>
+                            <button id="fb-clear-btn" class="secondary-btn"
+                                style="border-color: rgba(239, 68, 68, 0.3); color: var(--danger-color); font-weight: bold;">🗑️
+                                Clear Grid</button>
+                        </div>
+                    </div>
+
+                    <!-- Canvas Area -->
+                    <div class="flag-canvas-container" id="fb-canvas-container"
+                        style="position: relative; overflow: hidden; background: #2a2a2e; border: 1px solid var(--border-color); border-radius: 8px; cursor: default;">
+                        <canvas id="flagBuilderCanvas"
+                            style="display: block; touch-action: none; width: 100%; height: 100%;"></canvas>
+
+                        <!-- Map Control Overlay -->
+                        <div
+                            style="position: absolute; bottom: 15px; right: 15px; display: flex; flex-direction: column; gap: 5px; background: rgba(0,0,0,0.5); padding: 5px; border-radius: 6px;">
+                            <button id="fb-zoom-in" class="icon-btn"
+                                style="background: var(--card-bg); width: 30px; height: 30px; border-radius: 4px; border: 1px solid var(--border-color); color: var(--text-primary); cursor: pointer;">+</button>
+                            <button id="fb-zoom-out" class="icon-btn"
+                                style="background: var(--card-bg); width: 30px; height: 30px; border-radius: 4px; border: 1px solid var(--border-color); color: var(--text-primary); cursor: pointer;">-</button>
+                            <button id="fb-zoom-reset" class="icon-btn"
+                                style="background: var(--card-bg); width: 30px; height: 30px; border-radius: 4px; border: 1px solid var(--border-color); color: var(--text-primary); font-size: 0.8em; cursor: pointer;">R</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Name Scanner Subtab -->
+        <div class="calc-tab-content calc-layout" data-content="calc-name-scanner" style="width:100%; height:800px;">
+            <div class="flag-builder-container"
+                style="display: grid; grid-template-columns: 320px 1fr; gap: 20px; height: 100%; border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden;">
+
+                <!-- Left Toolbar -->
+                <div class="flag-toolbar"
+                    style="background: rgba(0,0,0,0.3); padding: 15px; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; overflow-y: auto;">
+                    <div style="margin-bottom: 20px;">
+                        <h3
+                            style="margin-top: 0; display: flex; align-items: center; gap: 8px; color: var(--text-primary);">
+                            <span>👁️</span> Name Scanner
+                        </h3>
+                        <p style="font-size: 0.85em; color: var(--text-muted); margin-bottom: 0;">Upload multiple battle
+                            report screenshots. The AI will extract and merge all visible names.</p>
+                    </div>
+
+                    <div id="nsDropZone"
+                        style="border: 2px dashed var(--border-color); border-radius: 8px; cursor: pointer; text-align: center; padding: 25px 10px; transition: all 0.3s; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.1); margin-bottom: 15px;">
+                        <span style="font-size: 2rem; margin-bottom: 5px;">📸</span>
+                        <h4 style="margin: 0; font-size: 0.9em; color: var(--text-primary);">Drag Images Here</h4>
+                        <p style="margin: 5px 0 0 0; color: var(--text-muted); font-size: 0.75em;">or click to browse
+                        </p>
+                        <input type="file" id="nsFileInput" multiple accept="image/*" style="display: none;">
+                    </div>
+
+                    <div
+                        style="background: rgba(0,0,0,0.2); border-radius: 6px; padding: 10px; margin-bottom: 15px; flex-grow: 1; display: flex; flex-direction: column;">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <h4 style="margin: 0; font-size: 0.9em; color: var(--accent-primary);">Queue</h4>
+                        </div>
+                        <div id="nsQueueList"
+                            style="display: flex; flex-direction: column; gap: 5px; overflow-y: auto; flex-grow: 1; max-height: 250px;">
+                            <span
+                                style="color:var(--text-muted); font-style:italic; font-size: 0.8em; text-align: center; margin-top: 10px;"
+                                id="nsEmptyState">No images added.</span>
+                        </div>
+                    </div>
+
+                    <button id="nsProcessBtn" class="primary-btn"
+                        style="width: 100%; padding: 12px; margin-bottom: 10px; display: none;">Scan Queue with
+                        AI</button>
+                    <button id="nsClearBtn" class="secondary-btn"
+                        style="width: 100%; border-color: rgba(239, 68, 68, 0.3); color: var(--danger-color); font-size: 0.9em;">🗑️
+                        Clear Session</button>
+                </div>
+
+                <!-- Right Canvas / Results -->
+                <div style="padding: 20px; display: flex; flex-direction: column; background: var(--bg-primary);">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 15px;">
+                        <div>
+                            <h3 style="margin: 0 0 5px 0;">Extracted Roster</h3>
+                            <span style="font-size: 0.85em; color: var(--text-muted);">Total Names: <b id="nsTotalNames"
+                                    style="color: var(--accent-primary);">0</b></span>
+                        </div>
+
+                        <div style="display: flex; gap: 10px;">
+                            <div class="mail-category-tabs"
+                                style="display: flex; background: rgba(0,0,0,0.2); padding: 3px; border-radius: 6px; border: 1px solid var(--border-color);">
+                                <button id="nsFilterExact" class="mail-category-btn active"
+                                    style="padding: 6px 15px; font-size: 0.85rem;" data-filter="exact">Exact
+                                    Dedupe</button>
+                                <button id="nsFilterSim" class="mail-category-btn"
+                                    style="padding: 6px 15px; font-size: 0.85rem;" data-filter="similarity">Smart Filter
+                                    (Typo)</button>
+                            </div>
+                            <button id="nsCopyBtn" class="primary-btn"
+                                style="padding: 6px 15px; font-size: 0.9em; display: flex; align-items: center; gap: 5px;">📋
+                                Copy</button>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 20px; flex-grow: 1;">
+                        <textarea id="nsResultsArea" class="mail-input"
+                            style="flex-grow: 1; resize: none; font-family: monospace; font-size: 0.9em; background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); border-radius: 6px; padding: 15px; color: #E5E7EB;"
+                            readonly placeholder="Scanned names will appear here..."></textarea>
+                    </div>
+                </div>
+
             </div>
         </div>
 
@@ -3519,6 +3877,8 @@
     <script src="js/services/ui/UIWarCouncil.js"></script>
     <script src="js/services/ui/UIAllianceMerge.js"></script>
     <script src="js/services/ui/UIRaceChart.js"></script>
+    <script src="js/services/ui/UIFlagBuilder.js"></script>
+    <script src="js/services/ui/UINameScanner.js"></script>
 
     <script src="js/services/ui/UIKingdomAnalysis.js"></script>
     <script src="js/core/commanders.js"></script>
@@ -3578,8 +3938,9 @@
     </footer>
 
 
-    <!-- Main -->
-
+    <script src="js/services/ui/UISOC.js" defer></script>
+    <script src="js/services/ui/UICamps.js" defer></script>
+    <script src="js/services/ui/UICharts.js" defer></script>
     <script src="js/main.js?v=4"></script>
     <script>
         // Simple inline script to display version from Config

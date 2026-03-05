@@ -4884,6 +4884,11 @@ tbody tr:nth-child(even) {
     text-align: left;
 }
 
+.gradient-list-btn span {
+    font-size: 0.85em;
+    min-width: 70px;
+}
+
 .gradient-list-btn:hover {
     background: rgba(255, 255, 255, 0.1);
 }
@@ -4895,7 +4900,59 @@ tbody tr:nth-child(even) {
     border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.gradient-list-btn span {
-    font-size: 0.85em;
-    min-width: 70px;
+/* =========================================================================
+   Alliance Territory Flag Builder
+   ========================================================================= */
+
+.flag-builder-layout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 20px;
+    height: 700px;
+}
+
+.flag-tool-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 15px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    user-select: none;
+}
+
+.flag-tool-label:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* Hide the actual radio button */
+.flag-tool-label input[type="radio"] {
+    display: none;
+}
+
+/* Style when selected */
+.flag-tool-label:has(input[type="radio"]:checked) {
+    background: rgba(99, 102, 241, 0.15);
+    /* Primary accent */
+    border-color: var(--accent-primary);
+    box-shadow: inset 2px 0 0 var(--accent-primary);
+}
+
+.flag-tool-btn {
+    font-size: 0.95em;
+    font-weight: 500;
+}
+
+.flag-canvas-container {
+    background-color: #2a2a2e;
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    background-size: 20px 20px;
+    /* matches tilesize */
+    box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.5);
+    transition: cursor 0.1s;
 }
