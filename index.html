@@ -1033,7 +1033,8 @@
                                         <label style="margin: 0; margin-right: 10px;">Season Start Date:</label>
                                         <input type="datetime-local" id="socStartDateInput" class="config-input"
                                             style="width: auto;">
-                                        <button id="generateTimelineBtn" class="primary-btn"
+                                        <button class="primary-btn generate-timeline-btn" data-target="socTimelineList"
+                                            data-input="socStartDateInput" data-format="storm-of-stratagems"
                                             style="margin-left: 10px;">Generate Timeline 🚀</button>
                                     </div>
                                 </div>
@@ -1057,7 +1058,23 @@
                         <h3>King of the Nile</h3>
                     </div>
                     <div id="siege-of-orleans-ui" class="soc-section hidden">
-                        <h3>Siege of Orleans</h3>
+                        <div class="card timeline-card">
+                            <div class="timeline-header"
+                                style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px;">
+                                <h3>Siege of Orleans: KVK Schedule</h3>
+                                <div class="input-group" style="flex-direction: row; align-items: center; margin: 0;">
+                                    <label style="margin: 0; margin-right: 10px;">Season Start Date:</label>
+                                    <input type="datetime-local" id="sooStartDateInput" class="config-input"
+                                        style="width: auto;">
+                                    <button class="primary-btn generate-timeline-btn" data-target="sooTimelineList"
+                                        data-input="sooStartDateInput" data-format="siege-of-orleans"
+                                        style="margin-left: 10px;">Generate Timeline 🚀</button>
+                                </div>
+                            </div>
+                            <div class="timeline-container" id="sooTimelineList">
+                                <p class="text-muted">Select a start date to generate the timeline.</p>
+                            </div>
+                        </div>
                     </div>
                     <div id="strife-of-eight-ui" class="soc-section hidden">
                         <h3>Strife of the Eight</h3>

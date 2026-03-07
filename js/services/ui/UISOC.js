@@ -1,7 +1,7 @@
 // ==========================================
 // SOC TIMELINE DATA
 // ==========================================
-const SOC_PHASES = [
+const STORM_OF_STRATAGEMS_PHASES = [
     { name: "Registration Phase", duration: 72, type: "pre-kvk" },
     { name: "Team Up Phase", duration: 24, type: "pre-kvk" },
     { name: "Matchmaking Phase", duration: 120, type: "pre-kvk" },
@@ -36,6 +36,40 @@ const SOC_PHASES = [
     { name: "Ebullient", duration: 72, type: "chronicle" }
 ];
 
+const SIEGE_OF_ORLEANS_PHASES = [
+    { name: "Selection of KvK format", duration: 72, type: "pre-kvk" },
+    { name: "Matchmaking phase", duration: 144, type: "pre-kvk" },
+    { name: "Preparation phase", duration: 24, type: "pre-kvk" },
+    { name: "Marauder", duration: 48, type: "pre-kvk" },
+    { name: "Troop training", duration: 48, type: "pre-kvk" },
+    { name: "Fort hunt", duration: 48, type: "pre-kvk" },
+    { name: "First steps", duration: 2, type: "chronicle" },
+    { name: "Eye for an eye", duration: 48, type: "chronicle" },
+    { name: "Turf wars", duration: 48, type: "chronicle" },
+    { name: "Retribution", duration: 24, type: "chronicle" },
+    { name: "Revenge", duration: 48, type: "chronicle" },
+    { name: "Hand in hand", duration: 48, type: "chronicle" },
+    { name: "Storm Clouds", duration: 48, type: "chronicle" },
+    { name: "Wolves and Lambs", duration: 48, type: "chronicle" },
+    { name: "Pilgrimage", duration: 48, type: "chronicle" },
+    { name: "Sacrificial Offering", duration: 24, type: "chronicle" },
+    { name: "Hall of unity", duration: 48, type: "chronicle" },
+    { name: "Strife and conflict", duration: 48, type: "chronicle" },
+    { name: "Pushing forward", duration: 48, type: "chronicle" },
+    { name: "Wolves and Lambs", duration: 48, type: "chronicle" },
+    { name: "Indomitable Contender", duration: 48, type: "chronicle" },
+    { name: "Siege the Land", duration: 0, type: "chronicle", events: [{ name: "Mottes lvl 13", delay: 0, type: "minor-event" }] },
+    { name: "Drums of war", duration: 48, type: "chronicle" },
+    { name: "Access granted", duration: 48, type: "chronicle" },
+    { name: "Wolves and Lambs", duration: 72, type: "chronicle" },
+    { name: "Arrows nocked", duration: 48, type: "chronicle" },
+    { name: "Brink of Annihilation", duration: 48, type: "chronicle" },
+    { name: "In my name", duration: 72, type: "chronicle" },
+    { name: "Indomitable Contender", duration: 48, type: "chronicle" },
+    { name: "Suppression", duration: 48, type: "chronicle" },
+    { name: "Pilgrimage", duration: 72, type: "chronicle" }
+];
+
 Object.assign(UIService.prototype, {
     initSOC() {
         // Setup SOC Side Nav
@@ -51,27 +85,32 @@ Object.assign(UIService.prototype, {
             });
         }
 
-        // Timeline Date Input Listener
-        const startDateInput = document.getElementById('socStartDateInput');
-        const generateTimelineBtn = document.getElementById('generateTimelineBtn');
+        // Timeline Date Input Listeners via Event Delegation
+        document.addEventListener('click', (e) => {
+            const btn = e.target.closest('.generate-timeline-btn');
+            if (!btn) return;
 
-        if (startDateInput) {
-            // Keep change listener for convenience
-            startDateInput.addEventListener('change', (e) => {
-                if (e.target.value) this.renderTimeline(e.target.value);
-            });
-        }
+            const targetId = btn.dataset.target;
+            const inputId = btn.dataset.input;
+            const format = btn.dataset.format;
 
-        if (generateTimelineBtn) {
-            generateTimelineBtn.addEventListener('click', () => {
-                const dateVal = document.getElementById('socStartDateInput').value;
-                if (dateVal) {
-                    this.renderTimeline(dateVal);
-                } else {
-                    alert("Please select a Season Start Date first! 📅");
-                }
-            });
-        }
+            console.log("Timeline button clicked!", { targetId, inputId, format });
+
+            const dateInput = document.getElementById(inputId);
+            if (!dateInput) {
+                console.warn("Could not find date input field:", inputId);
+                return;
+            }
+
+            const dateVal = dateInput.value;
+            if (dateVal) {
+                console.log("Calling renderTimeline with date:", dateVal);
+                this.renderTimeline(dateVal, format, targetId);
+            } else {
+                console.warn("No dateVal found in input");
+                alert("Please select a Season Start Date first! 📅");
+            }
+        });
 
         document.querySelectorAll('.cloud-link').forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -115,8 +154,8 @@ Object.assign(UIService.prototype, {
         }
     },
 
-    renderTimeline(startDateStr) {
-        const container = document.getElementById('socTimelineList');
+    renderTimeline(startDateStr, format, targetId) {
+        const container = document.getElementById(targetId || 'socTimelineList');
         if (!container) return;
 
         if (!startDateStr) {
@@ -124,11 +163,16 @@ Object.assign(UIService.prototype, {
             return;
         }
 
+        let phasesArray = STORM_OF_STRATAGEMS_PHASES;
+        if (format === 'siege-of-orleans') {
+            phasesArray = SIEGE_OF_ORLEANS_PHASES;
+        }
+
         let currentDate = new Date(startDateStr);
         let html = '';
-        const format = (d) => d.toLocaleString('en-GB', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+        const formatTime = (d) => d.toLocaleString('en-GB', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 
-        SOC_PHASES.forEach(phase => {
+        phasesArray.forEach(phase => {
             const phaseStart = new Date(currentDate);
             // Calculate End Date: Start + Duration (hours)
             const phaseEnd = new Date(currentDate.getTime() + (phase.duration * 60 * 60 * 1000));
@@ -137,7 +181,7 @@ Object.assign(UIService.prototype, {
             html += `
                 <div class="timeline-item ${phase.type}">
                     <div class="timeline-time">
-                        <div class="time-start">${format(phaseStart)}</div>
+                        <div class="time-start">${formatTime(phaseStart)}</div>
                         <div class="time-duration">${phase.duration}h</div>
                     </div>
                     <div class="timeline-content">
@@ -155,7 +199,7 @@ Object.assign(UIService.prototype, {
                     html += `
                         <div class="timeline-item event-item ${evt.type}">
                             <div class="timeline-time">
-                                <div class="time-event">${format(eventTime)}</div>
+                                <div class="time-event">${formatTime(eventTime)}</div>
                             </div>
                             <div class="timeline-content event-card">
                                 <h4>${evt.name}</h4>
@@ -183,14 +227,16 @@ Object.assign(UIService.prototype, {
             });
         }
 
-        // 2. Content Sections - Force Visibility via Inline Style
+        // 2. Content Sections - Force Visibility
         document.querySelectorAll('.soc-section').forEach(el => {
             el.style.display = 'none'; // Hide all first
+            el.classList.add('hidden');
         });
 
         const target = document.getElementById(`${subtabId}-ui`);
         if (target) {
             target.style.display = 'block'; // Force Show
+            target.classList.remove('hidden');
         }
     },
 

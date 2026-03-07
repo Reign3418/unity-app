@@ -548,6 +548,7 @@ Respond ONLY with a valid JSON object matching this structure identically:
                 color: this.resColors[res],
                 percent: percent,
                 deficit: deficit,
+                cost: cost,
                 timeStr: timeStr,
                 isBottleneck: false
             });
@@ -686,6 +687,12 @@ Respond ONLY with a valid JSON object matching this structure identically:
         if (this.lastMaxBuildable > 0) {
             report += `<color=#00ff00>Max Buildable Flags: <b>${this.lastMaxBuildable}</b></color>\n\n`;
         }
+
+        report += `<b>Current Target Costs:</b>\n`;
+        this.lastResults.forEach(r => {
+            report += `${r.name}: ${this.fmt(r.cost)}\n`;
+        });
+        report += `\n`;
 
         report += `<b>Current Deficits:</b>\n`;
         this.lastResults.forEach(r => {
