@@ -175,6 +175,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     if (window.HoHScannerCalc) {
                         window.hohScanner = new window.HoHScannerCalc();
                     }
+                    if (window.AdminAuthService) {
+                        window.adminAuth = new window.AdminAuthService(dataService);
+                    }
                 } catch (calcErr) {
                     console.error("CalculatorsService Init Failed:", calcErr);
                 }

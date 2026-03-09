@@ -308,6 +308,54 @@ class AWSRosterService {
         }
     }
 
+    // Look up a specific Governor ID to pull their entire lifetime history
+    // Queries the GOV_HISTORY partition
+    async getGovernorHistory(govId) {
+        if (!this.db || !this.connected) throw new Error('Not connected to AWS');
+
+        try {
+            const safeKey = String(govId).replace(/[.#$\/\[\]\s]/g, "_");
+            const params = {
+                TableName: this.tableName,
+                KeyConditionExpression: 'PK = :pk',
+                ExpressionAttributeValues: {
+                    ':pk': `GOV_HISTORY#${safeKey}`
+                }
+            };
+
+            const result = await this.db.query(params).promise();
+            if (!result.Items || result.Items.length === 0) return null;
+
+            // Transform DynamoDB items back into a "history" object dictionary like Firebase does: { "1818_2024-05-01": { playerObj } }
+            const historyObj = {
+                profile: { name: "", lastSeenKingdom: "", lastSeenDate: "" },
+                history: {}
+            };
+
+            result.Items.forEach(item => {
+                // Determine Kingdom and Date from the SK (e.g. "SCAN#1818#2024-05-01")
+                const skParts = item.SK.split('#');
+                if (skParts.length >= 3) {
+                    const kId = skParts[1];
+                    const date = skParts.slice(2).join('#');
+                    const historyKey = `${kId}_${date}`;
+                    historyObj.history[historyKey] = item.attributes;
+
+                    // Update root profile summary with latest seen
+                    historyObj.profile.name = item.attributes['Governor Name'] || item.attributes['Name'] || item.attributes['name'] || historyObj.profile.name;
+                    historyObj.profile.lastSeenKingdom = kId;
+                    historyObj.profile.lastSeenDate = date;
+                }
+            });
+
+            return Object.keys(historyObj.history).length > 0 ? historyObj : null;
+
+        } catch (error) {
+            console.error("AWS Roster Service: getGovernorHistory Error", error);
+            throw error;
+        }
+    }
+
     async loadScanDetails(kingdomId, scanDate) {
         if (!this.db || !this.connected) throw new Error('Not connected to AWS');
 

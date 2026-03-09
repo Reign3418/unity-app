@@ -18,11 +18,10 @@
     <script defer src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
     <script defer src="https://www.gstatic.com/firebasejs/10.9.0/firebase-database-compat.js"></script>
 
-    <!-- Tesseract.js for AI OCR: purpose-built text extraction from images -->
     <script defer src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-</head>
+    <script defer src="https://sdk.amazonaws.com/js/aws-sdk-2.1465.0.min.js"></script>
 
-<body>
+
     <div class="container">
         <header>
             <div class="header-content">
@@ -71,6 +70,8 @@
                 💬</button>
             <button class="tab-btn" data-tab="calculators"
                 data-tooltip="Quickly calculate items and values.">Calculators 🧮</button>
+            <button class="tab-btn" data-tab="admin" style="opacity: 0.3;" data-tooltip="Requires Passcode.">Admin
+                🔒</button>
         </div>
 
         <div class="tabs hidden" id="kingdomTabs" style="margin-top: 1rem;">
@@ -617,7 +618,132 @@
 
     </div> <!-- End Prekvk Analysis -->
 
-    <!-- ==================== ALL KINGDOM ANALYSIS ==================== -->
+    <!-- ==================== ADMIN SYSTEM ==================== -->
+    <div id="admin" class="tab-content" style="display: none;">
+        <div class="card" id="admin-lock-screen">
+            <h2 style="text-align: center; margin-bottom: 20px; color: var(--danger-color);">Restricted Access 🔒</h2>
+            <div
+                style="max-width: 400px; margin: 0 auto; background: rgba(0,0,0,0.2); padding: 30px; border-radius: 12px; border: 1px solid var(--border-color); text-align: center;">
+                <p style="color: var(--text-secondary); margin-bottom: 20px;">Please enter the designated Administrator
+                    passcode to access this panel.</p>
+                <input type="password" id="adminPasscode" class="config-input" placeholder="Enter Passcode..."
+                    style="width: 100%; text-align: center; margin-bottom: 20px; font-size: 1.2rem; letter-spacing: 5px;">
+                <button class="primary-btn" id="adminUnlockBtn"
+                    style="width: 100%; background: var(--danger-color);">Unlock Panel</button>
+            </div>
+        </div>
+
+        <div class="card" id="admin-access-screen" style="display: none;">
+            <div class="results-header" style="flex-direction: column; align-items: flex-start;">
+                <h2 style="color: var(--warning-color);">System Administrator Panel 🛡️</h2>
+                <p class="text-secondary">Welcome, Admin. Use these tools to manage external application access.</p>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr; gap: 20px; margin-top: 20px;">
+                <!-- Master Credentials Storage -->
+                <div
+                    style="background: rgba(0,0,0,0.2); padding: 20px; border-radius: 12px; border: 1px solid var(--border-color);">
+                    <h3 style="margin-bottom: 10px; display: flex; align-items: center; gap: 10px;">
+                        👑 Master IAM Credentials
+                        <span
+                            style="font-size: 0.7em; background: rgba(59, 130, 246, 0.2); color: var(--accent-primary); padding: 4px 8px; border-radius: 4px;">Local
+                            Storage Only</span>
+                    </h3>
+                    <p style="color: var(--text-secondary); font-size: 0.9em; margin-bottom: 20px; line-height: 1.5;">
+                        To generate temporary keys, you must provide a Master Key with `iam:CreateUser` permissions.
+                        These keys are saved securely in your browser and will <strong>never</strong> be included if you
+                        "Export Configuration".
+                    </p>
+                    <div style="display: grid; grid-template-columns: 1fr; gap: 15px; margin-bottom: 15px;">
+                        <input type="text" id="adminAwsAccessKey" class="custom-input"
+                            placeholder="Admin Access Key ID (AKIA...)">
+                        <input type="password" id="adminAwsSecretKey" class="custom-input"
+                            placeholder="Admin Secret Access Key">
+                    </div>
+                    <button class="primary-btn" id="saveAdminAwsConfigBtn"
+                        style="background: var(--accent-primary);">Save Master Credentials</button>
+                    <div id="adminAwsFeedback" style="font-size: 0.9em; font-weight: bold; margin-top: 10px;"></div>
+                </div>
+
+                <!-- AWS Key Generator Tool -->
+                <div
+                    style="background: rgba(0,0,0,0.2); padding: 20px; border-radius: 12px; border: 1px dashed var(--warning-color);">
+                    <h3 style="margin-bottom: 10px; display: flex; align-items: center; gap: 10px;">
+                        🔑 Generate Temporary AWS Access Key
+                        <span
+                            style="font-size: 0.7em; background: rgba(234, 179, 8, 0.2); color: var(--warning-color); padding: 4px 8px; border-radius: 4px;">Configurable
+                            Expiry</span>
+                        Expiry</span>
+                    </h3>
+
+                    <p style="color: var(--text-secondary); font-size: 0.9em; margin-bottom: 20px; line-height: 1.5;">
+                        This tool creates a new AWS IAM User and generates an Access Key / Secret Key pair.
+                        It automatically attaches an inline policy restricting access exclusively to your DynamoDB
+                        table,
+                        and strictly revokes permissions after the chosen period.
+                        <br><br><span style="color: var(--danger-color); font-weight: bold;">Requirements:</span> Your
+                        primary AWS key stored in the Unity Settings Tab must have IAM creation permissions
+                        (`iam:CreateUser`, `iam:CreateAccessKey`, `iam:PutUserPolicy`).
+                    </p>
+
+                    <div
+                        style="display: flex; gap: 10px; margin-bottom: 15px; align-items: center; background: rgba(0,0,0,0.4); padding: 10px; border-radius: 8px;">
+                        <label for="tempAwsExpiry"
+                            style="color: var(--text-secondary); font-weight: 500;">Expiration:</label>
+                        <select id="tempAwsExpiry" class="custom-select"
+                            style="min-width: 120px; padding: 6px 12px; background: rgba(30, 41, 59, 1); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 4px;">
+                            <option value="3">3 Days</option>
+                            <option value="5">5 Days</option>
+                            <option value="7" selected>7 Days</option>
+                            <option value="custom">Custom...</option>
+                        </select>
+                        <input type="number" id="tempAwsCustomDays" placeholder="0" min="1" max="365"
+                            style="display: none; max-width: 70px; padding: 6px 10px; background: rgba(0,0,0,0.5); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 4px; text-align: center;">
+                        <span id="tempAwsCustomLabel" style="display: none; color: var(--text-secondary);">Days</span>
+                    </div>
+
+                    <button class="primary-btn" id="generateTempAwsBtn"
+                        style="background: var(--warning-color); color: #000; font-weight: bold; margin-bottom: 15px;">
+                        ⚡ Generate Credentials
+                    </button>
+
+                    <div id="tempAwsFeedback" style="font-size: 0.9em; font-weight: bold; margin-bottom: 15px;"></div>
+
+                    <!-- Output Area -->
+                    <div id="tempAwsCredentialsOutput"
+                        style="display: none; background: rgba(0, 0, 0, 0.5); padding: 20px; border-radius: 8px; border: 1px solid var(--success-color);">
+                        <p style="color: var(--success-color); font-weight: bold; margin-bottom: 15px;">Share these
+                            safely! The Secret Key cannot be viewed again once you leave this page.</p>
+
+                        <div
+                            style="display: grid; grid-template-columns: 140px 1fr; gap: 10px; align-items: center; margin-bottom: 10px;">
+                            <label style="color: var(--text-secondary); font-size: 0.9em; text-align: right;">Access Key
+                                ID:</label>
+                            <code id="tempAccessKeyDisplay"
+                                style="background: var(--card-bg); padding: 8px 12px; border-radius: 4px; border: 1px solid var(--border-color); color: var(--text-primary); user-select: all; font-size: 1.1em;">----</code>
+                        </div>
+
+                        <div
+                            style="display: grid; grid-template-columns: 140px 1fr; gap: 10px; align-items: center; margin-bottom: 10px;">
+                            <label style="color: var(--text-secondary); font-size: 0.9em; text-align: right;">Secret
+                                Access Key:</label>
+                            <code id="tempSecretKeyDisplay"
+                                style="background: var(--card-bg); padding: 8px 12px; border-radius: 4px; border: 1px solid var(--border-color); color: var(--danger-color); user-select: all; font-size: 1.1em;">----</code>
+                        </div>
+
+                        <div
+                            style="display: grid; grid-template-columns: 140px 1fr; gap: 10px; align-items: center; margin-top: 20px;">
+                            <label
+                                style="color: var(--text-secondary); font-size: 0.9em; text-align: right;">Auto-Expires
+                                On:</label>
+                            <span id="tempExpirationDisplay"
+                                style="color: var(--warning-color); font-weight: bold; padding-left: 12px;">----</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
     <div id="all-kingdom-analysis" class="tab-content" style="display: none;">
         <div class="card" style="display: flex; justify-content: space-between; align-items: flex-start;">
             <div>
@@ -1525,20 +1651,32 @@
                             Loaded Scans</h4>
                         <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">Removes all
                             currently loaded Kingdom CSVs from your immediate active session.</p>
-                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0;">Use this to switch
+                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Use this to switch
                             tasks without mixing new data. <em>(Your cloud saves and app settings remain safe.)</em></p>
+
+                        <button id="resetDataBtn" class="primary-btn"
+                            style="width: 100%; background: var(--warning-color); border-color: var(--warning-color); color: #000; box-shadow: none;">Clear
+                            Loaded Data</button>
                     </div>
 
                     <div
                         style="padding: 1rem; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px;">
                         <h4 style="font-size: 0.95rem; margin-bottom: 0.5rem; color: var(--danger-color);">⚠️ Factory
-                            Reset</h4>
-                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0;">Hard wipe of
-                            EVERYTHING in local storage. Erases API keys, GitHub tokens, settings, and loaded data.
-                            Cannot be undone.</p>
+                            Reset & Data Wipes</h4>
+                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Destructive
+                            operations. These actions will irrevocably erase databases, settings, and local data.</p>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                            <button id="wipeFirebaseBtn" class="primary-btn danger-btn"
+                                style="background: #ea580c; border-color: #ea580c; box-shadow: none; font-size: 0.85rem;">Wipe
+                                Firebase</button>
+                            <button id="wipeAwsBtn" class="primary-btn danger-btn"
+                                style="background: #eab308; border-color: #eab308; color: #000; box-shadow: none; font-size: 0.85rem;">Wipe
+                                AWS</button>
+                        </div>
+
                         <button id="factoryResetBtn" class="primary-btn"
-                            style="width: 100%; margin-top: 1rem; background: var(--danger-color);">Wipe All
-                            Data</button>
+                            style="width: 100%; background: var(--danger-color);">Full Factory Reset</button>
                     </div>
 
                     <div
@@ -1582,19 +1720,6 @@
                             style="background: var(--accent-primary); width: 100px;">Lock</button>
                     </div>
                 </div>
-            </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 1rem; margin-top: auto;">
-                <button id="resetDataBtn" class="primary-btn"
-                    style="background: var(--warning-color); border-color: var(--warning-color); color: #000; box-shadow: none;">Clear
-                    Loaded</button>
-                <button id="wipeFirebaseBtn" class="primary-btn danger-btn"
-                    style="background: #ea580c; border-color: #ea580c; box-shadow: none;">Wipe Firebase</button>
-                <button id="wipeAwsBtn" class="primary-btn danger-btn"
-                    style="background: #eab308; border-color: #eab308; color: #000; box-shadow: none;">Wipe
-                    AWS</button>
-                <button id="factoryResetBtn" class="primary-btn danger-btn"
-                    style="background: var(--danger-color); box-shadow: none;">Factory Reset</button>
             </div>
         </div>
 
@@ -3900,6 +4025,7 @@
     <script src="js/services/ui/UIKingdomAnalysis.js"></script>
     <script src="js/core/commanders.js"></script>
     <script src="js/services/CalculatorsService.js"></script>
+    <script src="js/services/AdminAuthService.js"></script>
     <script src="js/services/MailTemplates.js"></script>
     <script src="js/services/MailService.js"></script>
     <script src="js/services/FirebaseRosterService.js?v=3"></script>
@@ -3955,7 +4081,6 @@
     </footer>
 
 
-    <script src="js/services/ui/UISOC.js" defer></script>
     <script src="js/services/ui/UICamps.js" defer></script>
     <script src="js/services/ui/UICharts.js" defer></script>
     <script src="js/main.js?v=4"></script>
@@ -3991,6 +4116,6 @@
             }
         });
     </script>
-</body>
+    </body>
 
 </html>

@@ -640,6 +640,10 @@ Object.assign(UIService.prototype, {
     updateNPWDDropdown() {
         const select = document.getElementById('npwdKingdomSelect');
         if (!select) return;
+
+        // Preserve current selection if valid
+        const currentVal = select.value;
+
         select.innerHTML = '';
         Array.from(this.data.state.loadedKingdoms).forEach(kId => {
             const option = document.createElement('option');
@@ -647,9 +651,22 @@ Object.assign(UIService.prototype, {
             option.textContent = `Kingdom ${kId}`;
             select.appendChild(option);
         });
-        if (this.data.state.loadedKingdoms.size > 0 && select.value === '') {
-            select.value = Array.from(this.data.state.loadedKingdoms)[0];
+
+        if (this.data.state.loadedKingdoms.size > 0) {
+            // Restore previous selection or default to the first available kingdom
+            if (currentVal && this.data.state.loadedKingdoms.has(currentVal)) {
+                select.value = currentVal;
+            } else {
+                select.value = Array.from(this.data.state.loadedKingdoms)[0];
+            }
+            // Always dispatch a visual render when this dropdown is updated
             this.renderLocalTransferAnalysis(select.value);
+        } else {
+            // Clear out the view if all kingdoms were deleted
+            const newContainer = document.getElementById('newArrivalsContainer');
+            const departContainer = document.getElementById('departuresContainer');
+            if (newContainer) newContainer.innerHTML = '<p>Please select a kingdom.</p>';
+            if (departContainer) departContainer.innerHTML = '<p>Please select a kingdom.</p>';
         }
     },
 
@@ -667,19 +684,38 @@ Object.assign(UIService.prototype, {
         const kState = this.data.state.kingdoms[kingdomId];
         if (!kState) return;
 
-        // Ensure we handle properties carefully depending on if its CSV vs Cloud data formats
-        const startIds = new Set(kState.startData.map(r => r['Governor ID'] || r.id));
-        const endIds = new Set(kState.endData.map(r => r['Governor ID'] || r.id));
-
-        const newArrivals = kState.endData.filter(r => !startIds.has(r['Governor ID'] || r.id));
-        const departures = kState.startData.filter(r => !endIds.has(r['Governor ID'] || r.id));
-
         const formatData = (list) => list.map(r => ({
             'Name': r['Governor Name'] || r.name,
             'ID': r['Governor ID'] || r.id,
             'Alliance': r['Alliance Tag'] || r.alliance,
             'Power': Utils.parseNumber(r['Power'] || r.power)
         })).sort((a, b) => b.Power - a.Power);
+
+        // If we only have ONE scan (Start OR End), just show what we have!
+        if (kState.startData.length > 0 && kState.endData.length === 0) {
+            newContainer.innerHTML = '<div class="empty-state">Waiting for End Scan to compare...</div>';
+            this.renderAnalysisTable(formatData(kState.startData), departContainer);
+
+            const startDateStr = this.data.state.startScanDate ? new Date(this.data.state.startScanDate).toLocaleString() : 'Unknown Start Date';
+            departContainer.insertAdjacentHTML('afterbegin', `<div style="position: sticky; top: 0; z-index: 11; margin-bottom: 10px; font-size: 0.85rem; color: var(--text-primary); padding: 8px; background: rgba(239, 68, 68, 0.2); border: 1px solid var(--danger-color); border-radius: 4px; text-align: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.5); backdrop-filter: blur(4px);">Currently Loaded Start Scan: <b>${startDateStr}</b></div>`);
+            return;
+        }
+
+        if (kState.endData.length > 0 && kState.startData.length === 0) {
+            departContainer.innerHTML = '<div class="empty-state">Waiting for Start Scan to compare...</div>';
+            this.renderAnalysisTable(formatData(kState.endData), newContainer);
+
+            const endDateStr = this.data.state.endScanDate ? new Date(this.data.state.endScanDate).toLocaleString() : 'Unknown End Date';
+            newContainer.insertAdjacentHTML('afterbegin', `<div style="position: sticky; top: 0; z-index: 11; margin-bottom: 10px; font-size: 0.85rem; color: var(--text-primary); padding: 8px; background: rgba(16, 185, 129, 0.2); border: 1px solid var(--success-color); border-radius: 4px; text-align: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.5); backdrop-filter: blur(4px);">Currently Loaded End Scan: <b>${endDateStr}</b></div>`);
+            return;
+        }
+
+        // We have BOTH scans, calculate differences
+        const startIds = new Set(kState.startData.map(r => r['Governor ID'] || r.id));
+        const endIds = new Set(kState.endData.map(r => r['Governor ID'] || r.id));
+
+        const newArrivals = kState.endData.filter(r => !startIds.has(r['Governor ID'] || r.id));
+        const departures = kState.startData.filter(r => !endIds.has(r['Governor ID'] || r.id));
 
         this.renderAnalysisTable(formatData(newArrivals), newContainer);
         this.renderAnalysisTable(formatData(departures), departContainer);
