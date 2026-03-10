@@ -44,6 +44,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                     console.error("UIClock Init Failed:", clockErr);
                 }
 
+                // Initialize Events Calendar
+                try {
+                    if (window.CalendarService && window.UICalendarRenderer) {
+                        window.calendarService = new window.CalendarService();
+                        window.uiCalendarRenderer = new window.UICalendarRenderer();
+                        window.uiCalendarRenderer.render(); // Initial fetch
+                    }
+                } catch (calErr) {
+                    console.error("Calendar Init Failed:", calErr);
+                }
 
                 // Initialize Race to Glory
                 try {

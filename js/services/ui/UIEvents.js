@@ -487,6 +487,36 @@ Object.assign(UIService.prototype, {
             });
         }
 
+        // ---- Google Calendar Settings ----
+        const googleCalendarIdInput = document.getElementById('googleCalendarId');
+        const googleCalendarApiKeyInput = document.getElementById('googleCalendarApiKey');
+        const saveCalendarConfigBtn = document.getElementById('saveCalendarConfigBtn');
+
+        if (saveCalendarConfigBtn) {
+            // Load existing
+            if (googleCalendarIdInput) googleCalendarIdInput.value = localStorage.getItem('google_calendar_id') || '';
+            if (googleCalendarApiKeyInput) googleCalendarApiKeyInput.value = localStorage.getItem('google_calendar_api_key') || '';
+
+            saveCalendarConfigBtn.addEventListener('click', () => {
+                const calId = googleCalendarIdInput ? googleCalendarIdInput.value.trim() : '';
+                const apiKey = googleCalendarApiKeyInput ? googleCalendarApiKeyInput.value.trim() : '';
+
+                if (window.calendarService) {
+                    window.calendarService.updateConfig(calId, apiKey);
+                } else {
+                    localStorage.setItem('google_calendar_id', calId);
+                    localStorage.setItem('google_calendar_api_key', apiKey);
+                }
+
+                alert('Google Calendar configuration saved locally!');
+
+                // Immediately try to re-render events if configured
+                if (window.calendarService && window.uiCalendarRenderer) {
+                    window.uiCalendarRenderer.render();
+                }
+            });
+        }
+
         // ---- AWS DynamoDB Settings ----
         const awsTableName = document.getElementById('awsTableName');
         const awsRegion = document.getElementById('awsRegion');

@@ -140,7 +140,7 @@ class AdminAuthService {
 
         try {
             const adminConfig = JSON.parse(localStorage.getItem('admin_aws_master_config'));
-            const generalConfig = this.dataService.state.awsConfig;
+            const generalConfig = JSON.parse(localStorage.getItem('aws_dynamo_config')) || {};
 
             if (!adminConfig || !adminConfig.accessKey) {
                 this.tempAwsFeedback.textContent = "❌ Please configure and save your Master IAM Credentials above first.";

@@ -62,6 +62,9 @@
             <button class="tab-btn" data-tab="recruiting"
                 data-tooltip="Scan applicants using the 2426 v3.0 logic">Recruiting 🎯</button>
 
+            <button class="tab-btn" data-tab="events" data-tooltip="Live Master Schedule & Google Calendar Sync">Events
+                📅</button>
+
             <button class="tab-btn" data-tab="settings" data-tooltip="Configure weights and settings.">Settings
                 ⚙️</button>
             <button class="tab-btn" data-tab="race-to-glory" data-tooltip="Animated Bar Chart Race.">Race to Glory
@@ -236,6 +239,48 @@
                 </div>
             </div> <!-- End Recruiting Tab -->
 
+            <!-- ==================== EVENTS TAB ==================== -->
+            <div id="events" class="tab-content" style="display: none;">
+                <div class="card" style="min-height: 600px; display: flex; flex-direction: column;">
+                    <div class="results-header" style="margin-bottom: 1.5rem; justify-content: space-between;">
+                        <div>
+                            <h2 style="margin: 0; display: flex; align-items: center; gap: 10px;">📅 Master Event
+                                Schedule</h2>
+                            <p style="color: var(--text-muted); margin-top: 5px; margin-bottom: 0;">Sync alliance events
+                                directly to your personal calendar so you never miss a rally!</p>
+                        </div>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <button id="syncAppleCalendarBtn" class="primary-btn"
+                                style="background: rgba(255,255,255,0.1); color: white; display: flex; gap: 8px; align-items: center;">
+                                <span>📱</span> Subscribe (Apple/Outlook)
+                            </button>
+                            <button id="syncGoogleCalendarBtn" class="primary-btn"
+                                style="background: #4285F4; color: white; border-color: #4285F4; display: flex; gap: 8px; align-items: center;">
+                                <span>G</span> Add to Google Calendar
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Filter / Status Bar -->
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color);">
+                        <div style="display: flex; gap: 15px; color: var(--text-secondary); font-size: 0.9rem;">
+                            <span id="eventsStatusLoader"
+                                style="color: var(--warning-color); font-style: italic;">Fetching live
+                                schedule...</span>
+                        </div>
+                        <button class="secondary-btn" id="refreshEventsBtn" style="padding: 5px 15px;">🔄
+                            Refresh</button>
+                    </div>
+
+                    <!-- Events Container -->
+                    <div id="calendarEventsContainer"
+                        style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 1.5rem;">
+                        <!-- Events dynamically populated here by UICalendarRenderer -->
+                    </div>
+                </div>
+            </div> <!-- End Events Tab -->
+
             <!-- Welcome Tab -->
             <div id="welcome" class="tab-content active">
                 <div class="card text-center"
@@ -286,12 +331,31 @@
                             </div>
                         </div>
 
-                        <!-- Center Row (UTC Prominent) -->
-                        <div style="display: flex; justify-content: center;">
-                            <div class="clock-box clock-utc-center" id="clock-utc">
+                        <!-- Center Row (UTC Prominent & Converter) -->
+                        <div
+                            style="display: flex; justify-content: center; align-items: stretch; gap: 1rem; margin-bottom: 0.5rem; flex-wrap: wrap;">
+                            <div class="clock-box clock-utc-center" id="clock-utc"
+                                style="margin: 0; flex: 1; max-width: 400px;">
                                 <div class="clock-label">Universal Coordinated Time (UTC)</div>
                                 <div class="clock-time">--:--:--</div>
                                 <div class="clock-date" style="margin-top: 1rem;">---</div>
+                            </div>
+
+                            <!-- Custom UTC Input Converter -->
+                            <div class="clock-box clock-utc-center" id="clock-converter-panel"
+                                style="margin: 0; display: flex; flex-direction: column; justify-content: center; padding: 1rem; border: 1px dashed var(--border-color); flex: 1; max-width: 300px;">
+                                <div class="clock-label" style="color: var(--accent-primary);">Time Converter (UTC)
+                                </div>
+                                <div
+                                    style="display: flex; gap: 10px; margin-top: 10px; align-items: center; justify-content: center;">
+                                    <input type="time" id="customUtcTimeInput" class="config-input"
+                                        style="font-size: 1.2rem; padding: 5px; text-align: center; border: 1px solid var(--border-color); border-radius: 4px; background: rgba(0,0,0,0.3); color: white;">
+                                    <button class="secondary-btn" id="clearUtcTimeBtn"
+                                        style="padding: 5px 15px;">Clear</button>
+                                </div>
+                                <div class="clock-label"
+                                    style="font-size: 0.75rem; margin-top: 10px; color: var(--text-muted); text-transform: none;">
+                                    Enter a UTC time to freeze & convert all clocks</div>
                             </div>
                         </div>
 
@@ -1617,6 +1681,66 @@
                 </div>
             </div>
 
+            <!-- Google Calendar Card -->
+            <div class="card" style="display: flex; flex-direction: column; height: 100%;">
+                <div class="results-header"
+                    style="margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                    <h3 style="margin: 0; display: flex; align-items: center; gap: 10px;">
+                        📅 Google Calendar Sync
+                    </h3>
+                </div>
+
+                <div style="flex-grow: 1; margin-bottom: 1.5rem;">
+                    <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
+                        <strong>Purpose:</strong> Drives the live Events tab schedule so players can subscribe via
+                        iOS/Android.
+                    </p>
+                    <p style="font-size: 0.9rem; color: var(--success-color); margin-bottom: 1rem;">
+                        <strong>Cost:</strong> 100% Free
+                    </p>
+
+                    <h4 style="font-size: 0.95rem; margin-bottom: 0.5rem; color: var(--text-primary);">Setup Guide:</h4>
+                    <ol
+                        style="font-size: 0.85rem; color: var(--text-muted); padding-left: 1.2rem; margin-bottom: 1rem; display: flex; flex-direction: column; gap: 0.4rem;">
+                        <li><a href="https://calendar.google.com" target="_blank"
+                                style="color: var(--accent-primary);">Open Google Calendar</a> and create a new Calendar
+                            for your Alliance.</li>
+                        <li>Hover over the new calendar in the left sidebar, click the three dots, and select
+                            <strong>Settings and sharing</strong>.
+                        </li>
+                        <li>Under <em>Access permissions for events</em>, check <strong>Make available to
+                                public</strong>.</li>
+                        <li>Scroll down to <em>Integrate calendar</em> and copy the <strong>Calendar ID</strong> <span
+                                style="opacity: 0.7;">(e.g., xyz@group.calendar.google.com)</span>. Paste it below.</li>
+                        <li>Go to the <a href="https://console.cloud.google.com/apis/credentials" target="_blank"
+                                style="color: var(--accent-primary);">Google Cloud Console</a>. Create a Project if you
+                            haven't already.</li>
+                        <li>Click <strong>+ CREATE CREDENTIALS</strong> > <strong>API Key</strong>. Paste the generated
+                            key below.</li>
+                        <li>Finally, go to the <a
+                                href="https://console.cloud.google.com/apis/library/calendar-json.googleapis.com"
+                                target="_blank" style="color: var(--accent-primary);">API Library</a> and click
+                            <strong>ENABLE</strong> for the Google Calendar API.
+                        </li>
+                    </ol>
+                </div>
+
+                <div class="controls" style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 0;">
+                    <div class="input-group">
+                        <label>Public Calendar ID</label>
+                        <input type="text" id="googleCalendarId" class="config-input"
+                            placeholder="xyz123@group.calendar.google.com">
+                    </div>
+                    <div class="input-group">
+                        <label>Google Calendar API Key</label>
+                        <input type="password" id="googleCalendarApiKey" class="config-input" placeholder="AIzaSy...">
+                    </div>
+
+                    <button id="saveCalendarConfigBtn" class="primary-btn"
+                        style="align-self: flex-end; margin-top: auto;">Save Calendar Config</button>
+                </div>
+            </div>
+
             <!-- Data Management Card -->
             <div class="card"
                 style="display: flex; flex-direction: column; height: 100%; border: 1px solid rgba(239, 68, 68, 0.3);">
@@ -1675,6 +1799,12 @@
                                 AWS</button>
                         </div>
 
+                        <p
+                            style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 10px; text-align: center;">
+                            Hard wipe of
+                            EVERYTHING in local storage. Erases API keys, GitHub tokens, settings, and loaded data.
+                            Cannot be undone.</p>
+
                         <button id="factoryResetBtn" class="primary-btn"
                             style="width: 100%; background: var(--danger-color);">Full Factory Reset</button>
                     </div>
@@ -1693,9 +1823,6 @@
                                 Config</button>
                         </div>
                     </div>
-                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0;">Hard wipe of
-                        EVERYTHING in local storage. Erases API keys, GitHub tokens, settings, and loaded data.
-                        Cannot be undone.</p>
                 </div>
 
                 <div
@@ -4000,6 +4127,7 @@
     <script src="js/services/StorageService.js"></script>
     <script src="js/services/CalculationService.js"></script>
     <script src="js/services/DataService.js"></script>
+    <script src="js/services/CalendarService.js"></script>
     <script src="js/services/AWSRosterService.js?v=4"></script>
 
     <!-- UI Services -->
@@ -4008,6 +4136,7 @@
     <script src="js/services/ui/UIEvents.js?v=3"></script>
     <script src="js/services/ui/UINavigation.js"></script>
     <script src="js/services/ui/UIRenderers.js?v=9"></script>
+    <script src="js/services/ui/UICalendarRenderer.js"></script>
     <script src="js/services/ui/UICommunity.js?v=28"></script>
     <script src="js/services/ui/UIMGEPlanner.js"></script>
     <script src="js/services/ui/UICharts.js"></script>

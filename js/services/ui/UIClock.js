@@ -21,19 +21,45 @@ class UIClock {
         ];
 
         this.intervalId = null;
+        this.customTimeInput = null;
+        this.clearBtn = null;
     }
 
     init() {
+        this.customTimeInput = document.getElementById('customUtcTimeInput');
+        this.clearBtn = document.getElementById('clearUtcTimeBtn');
+
+        if (this.customTimeInput) {
+            this.customTimeInput.addEventListener('input', () => this.tick());
+        }
+        if (this.clearBtn) {
+            this.clearBtn.addEventListener('click', () => {
+                if (this.customTimeInput) {
+                    this.customTimeInput.value = '';
+                    this.tick();
+                }
+            });
+        }
+
         // Run immediately once
         this.tick();
 
         // Setup interval for every second
         this.intervalId = setInterval(() => this.tick(), 1000);
-        console.log("World Clock initialized.");
+        console.log("World Clock initialized with Converter.");
     }
 
     tick() {
-        const now = new Date();
+        let referenceTime = new Date();
+        let isFrozen = false;
+
+        // If the user has typed a time into the converter, freeze the clocks to that time
+        if (this.customTimeInput && this.customTimeInput.value) {
+            const [hours, minutes] = this.customTimeInput.value.split(':');
+            referenceTime = new Date();
+            referenceTime.setUTCHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0);
+            isFrozen = true;
+        }
 
         this.clocks.forEach(clock => {
             const container = document.getElementById(clock.id);
@@ -49,9 +75,9 @@ class UIClock {
                     timeZone: clock.timeZone,
                     hour: '2-digit',
                     minute: '2-digit',
-                    second: '2-digit',
+                    second: isFrozen ? undefined : '2-digit', // Hide seconds if frozen
                     hour12: !isUTC // UTC 24hr, others 12hr AM/PM
-                }).format(now);
+                }).format(referenceTime);
 
                 const dateStr = new Intl.DateTimeFormat('en-US', {
                     timeZone: clock.timeZone,
@@ -59,10 +85,22 @@ class UIClock {
                     year: 'numeric',
                     month: 'short',
                     day: 'numeric'
-                }).format(now);
+                }).format(referenceTime);
 
                 timeEl.textContent = timeStr;
                 dateEl.textContent = dateStr;
+
+                // Visual freeze feedback
+                const converterPanel = document.getElementById('clock-converter-panel');
+                if (isFrozen) {
+                    timeEl.style.color = "var(--accent-primary)";
+                    container.style.borderColor = "var(--accent-primary)";
+                    if (converterPanel) converterPanel.style.borderColor = "var(--accent-primary)";
+                } else {
+                    timeEl.style.color = "";
+                    container.style.borderColor = "";
+                    if (converterPanel) converterPanel.style.borderColor = "var(--border-color)";
+                }
             }
         });
     }
