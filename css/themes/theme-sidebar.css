@@ -1,0 +1,313 @@
+/* =========================================
+   Theme: Sidebar (Default Dark Mode)
+   Description: Persistent left navigation, dark glassmorphism
+   ========================================= */
+
+body.theme-sidebar {
+    --nav-width: 260px;
+    --nav-width-collapsed: 80px;
+    --header-height: 70px;
+    
+    /* Layout Overrides */
+    display: flex;
+}
+
+.theme-sidebar #app-container {
+    display: flex;
+    width: 100vw;
+    height: 100vh;
+}
+
+/* --- Navigation Sidebar --- */
+.theme-sidebar #main-sidebar {
+    width: var(--nav-width);
+    height: 100vh;
+    background: rgba(15, 23, 42, 0.95);
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    z-index: 100;
+    transition: width 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+.theme-sidebar .sidebar-brand {
+    height: var(--header-height);
+    display: flex;
+    align-items: center;
+    padding: 0 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    gap: 1rem;
+}
+
+.theme-sidebar .app-logo {
+    height: 32px;
+    width: auto;
+}
+
+.theme-sidebar .sidebar-brand h1 {
+    font-size: 1.25rem;
+    margin: 0;
+    background: var(--accent-gradient);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.theme-sidebar .sidebar-menu {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+/* Custom Scrollbar for Sidebar */
+.theme-sidebar .sidebar-menu::-webkit-scrollbar {
+    width: 6px;
+}
+.theme-sidebar .sidebar-menu::-webkit-scrollbar-track {
+    background: transparent;
+}
+.theme-sidebar .sidebar-menu::-webkit-scrollbar-thumb {
+    background: var(--border-hover);
+    border-radius: 3px;
+}
+
+.theme-sidebar .nav-section-title {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    padding: 1rem 1.5rem 0.25rem;
+    margin-top: 0.5rem;
+    font-weight: 600;
+}
+
+.theme-sidebar .nav-btn {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    width: calc(100% - 1.5rem);
+    margin: 0 0.75rem;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    background: transparent;
+    color: var(--text-secondary);
+    border: none;
+    text-align: left;
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.theme-sidebar .nav-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-primary);
+}
+
+.theme-sidebar .nav-btn.active {
+    background: var(--accent-primary);
+    color: white;
+}
+
+.theme-sidebar .nav-btn.active .nav-icon {
+    opacity: 1;
+}
+
+.theme-sidebar .nav-icon {
+    font-size: 1.2rem;
+    width: 24px;
+    text-align: center;
+    opacity: 0.7;
+}
+
+.theme-sidebar .sidebar-spacer {
+    flex: 1;
+}
+
+/* Collapsible Category */
+.theme-sidebar .nav-category-wrapper {
+    display: flex;
+    flex-direction: column;
+}
+
+.theme-sidebar .nav-category-btn {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    width: calc(100% - 1.5rem);
+    margin: 0 0.75rem;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    background: transparent;
+    color: var(--text-secondary);
+    border: none;
+    text-align: left;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.theme-sidebar .nav-category-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-primary);
+}
+
+.theme-sidebar .nav-chevron {
+    margin-left: auto;
+    font-size: 0.7rem;
+    transition: transform 0.2s;
+}
+
+.theme-sidebar .nav-category-content {
+    display: none;
+    flex-direction: column;
+    padding-left: 2.5rem;
+    gap: 0.25rem;
+    margin-top: 0.25rem;
+}
+
+.theme-sidebar .nav-category-wrapper.expanded .nav-category-content {
+    display: flex;
+}
+
+.theme-sidebar .nav-category-wrapper.expanded .nav-chevron {
+    transform: rotate(180deg);
+}
+
+.theme-sidebar .nav-btn.sub-nav {
+    padding: 0.5rem;
+    font-size: 0.85rem;
+    margin: 0 0.75rem 0 0;
+    width: calc(100% - 0.75rem);
+}
+
+/* --- Main Workspace --- */
+.theme-sidebar #main-workspace {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background-color: var(--bg-color);
+    background-image: 
+        radial-gradient(circle at 15% 50%, rgba(99, 102, 241, 0.05) 0%, transparent 25%),
+        radial-gradient(circle at 85% 30%, rgba(139, 92, 246, 0.05) 0%, transparent 25%);
+}
+
+/* --- Top Header Bar --- */
+.theme-sidebar #top-bar {
+    height: var(--header-height);
+    background: transparent;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 2rem;
+    flex-shrink: 0;
+    z-index: 50;
+}
+
+.theme-sidebar .top-bar-left {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.theme-sidebar #current-page-title {
+    font-size: 1.25rem;
+    margin: 0;
+    color: var(--text-primary);
+}
+
+/* Dynamic subtabs in header */
+.theme-sidebar #dynamic-kingdom-tabs {
+    display: flex;
+    gap: 0.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 0.25rem;
+    border-radius: 0.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.theme-sidebar .kingdom-tab-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    padding: 0.4rem 0.8rem;
+    border-radius: 0.25rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.theme-sidebar .kingdom-tab-btn:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.theme-sidebar .kingdom-tab-btn.active {
+    background: var(--card-bg);
+    color: var(--text-primary);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+/* --- Content Area --- */
+.theme-sidebar #content-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 2rem;
+    position: relative;
+    scrollbar-color: var(--border-hover) transparent;
+    scrollbar-width: thin;
+}
+
+/* Maintain backwards compatibility for existing tab-content */
+.theme-sidebar .tab-content {
+    display: none;
+    animation: fadeIn 0.3s ease;
+}
+
+.theme-sidebar .tab-content.active {
+    display: block;
+}
+
+/* Sidebar Tooltip Orientation override (Pop Right instead of Down) */
+.theme-sidebar .sidebar-menu [data-tooltip]::after {
+    top: 50% !important;
+    left: 100% !important;
+    bottom: auto !important;
+    transform: translateY(-50%) translateX(10px) !important;
+}
+
+.theme-sidebar .sidebar-menu [data-tooltip]:hover::after {
+    transform: translateY(-50%) translateX(5px) !important;
+}
+
+.theme-sidebar .sidebar-menu [data-tooltip]::before {
+    top: 50% !important;
+    left: 100% !important;
+    bottom: auto !important;
+    transform: translateY(-50%) !important;
+    border-color: transparent var(--card-bg) transparent transparent !important;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Overrides for specific elements in sidebar mode to prevent overlap */
+.theme-sidebar .container {
+    padding: 0;
+    margin: 0;
+    max-width: 100%;
+}
+
+/* Hide the old tabs and header if they still exist in DOM */
+.theme-sidebar .container > header,
+.theme-sidebar .container > .tabs {
+    display: none !important;
+}

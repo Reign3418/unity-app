@@ -1,0 +1,257 @@
+/* =========================================
+   Theme: Floating (Mac OS Dock Style)
+   Description: Centered layout, floating bottom navigation dock, glassmorphism
+   ========================================= */
+
+body.theme-floating {
+    --bg-color: #050505;
+    --card-bg: rgba(20, 20, 25, 0.6);
+    --border-color: rgba(255, 255, 255, 0.1);
+    
+    background-color: var(--bg-color);
+    background-image: 
+        radial-gradient(circle at 50% -20%, rgba(99, 102, 241, 0.15), transparent 50%),
+        radial-gradient(circle at -20% 80%, rgba(139, 92, 246, 0.15), transparent 40%),
+        radial-gradient(circle at 120% 80%, rgba(59, 130, 246, 0.15), transparent 40%);
+    background-attachment: fixed;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.theme-floating #app-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    position: relative;
+    padding-bottom: 90px; /* Space for the dock */
+}
+
+/* --- Navigation (Floating Dock) --- */
+.theme-floating #main-sidebar {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    height: 70px;
+    background: rgba(15, 15, 20, 0.6);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 35px;
+    display: flex;
+    align-items: center;
+    padding: 0 1rem;
+    z-index: 1000;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    width: auto;
+    max-width: 90vw;
+}
+
+.theme-floating .sidebar-brand {
+    display: none; /* Hide brand entirely in dock mode */
+}
+
+.theme-floating .sidebar-menu {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    height: 100%;
+    overflow: visible; /* Prevents tooltip clipping */
+    scrollbar-width: none;
+}
+
+.theme-floating .sidebar-menu::-webkit-scrollbar {
+    display: none;
+}
+
+/* Tooltip Override: Pop UP instead of Down */
+.theme-floating .sidebar-menu [data-tooltip]::after {
+    top: auto !important;
+    bottom: 130% !important;
+    left: 50% !important;
+    transform: translateX(-50%) translateY(10px) !important;
+}
+
+.theme-floating .sidebar-menu [data-tooltip]:hover::after {
+    transform: translateX(-50%) translateY(0) !important;
+}
+
+/* Flip the caret pointing downward */
+.theme-floating .sidebar-menu [data-tooltip]::before {
+    top: auto !important;
+    bottom: 110% !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    border-color: var(--card-bg) transparent transparent transparent !important;
+}
+
+.theme-floating .sidebar-menu [data-tooltip]:hover::before {
+    bottom: 110% !important;
+}
+
+.theme-floating .nav-section-title {
+    display: none;
+}
+
+.theme-floating .sidebar-spacer {
+    width: 2px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.1);
+    margin: 0 0.5rem;
+    flex: none;
+}
+
+.theme-floating .sidebar-footer {
+    display: none;
+}
+
+/* Nav Buttons as Dock Icons */
+.theme-floating .nav-btn,
+.theme-floating .nav-category-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 50px;
+    border-radius: 15px;
+    background: transparent;
+    color: var(--text-secondary);
+    border: none;
+    position: relative;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    padding: 0;
+    margin: 0;
+}
+
+.theme-floating .nav-icon {
+    font-size: 1.5rem;
+    transition: transform 0.2s;
+}
+
+.theme-floating .nav-text {
+    display: none;
+}
+
+.theme-floating .nav-btn:hover,
+.theme-floating .nav-category-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    transform: translateY(-5px) scale(1.1);
+}
+
+.theme-floating .nav-btn.active {
+    background: rgba(99, 102, 241, 0.2);
+    color: var(--accent-light);
+    box-shadow: inset 0 0 0 1px rgba(99, 102, 241, 0.5);
+}
+
+/* Active indicator dot */
+.theme-floating .nav-btn.active::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--accent-light);
+    box-shadow: 0 0 5px var(--accent-light);
+}
+
+/* Dropdown styling for category in dock */
+.theme-floating .nav-category-content {
+    display: none;
+    position: absolute;
+    bottom: 110%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(15, 15, 20, 0.8);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 1rem;
+    padding: 0.5rem;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+    flex-direction: column;
+    min-width: 150px;
+}
+
+.theme-floating .nav-category-wrapper.expanded .nav-category-content {
+    display: flex;
+}
+
+.theme-floating .nav-chevron {
+    display: none;
+}
+
+.theme-floating .nav-category-content .nav-btn {
+    width: 100%;
+    height: auto;
+    padding: 0.75rem;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 0.5rem;
+    border-radius: 0.5rem;
+}
+
+.theme-floating .nav-category-content .nav-text {
+    display: block;
+    position: static;
+    opacity: 1;
+    transform: none;
+    background: transparent;
+    padding: 0;
+    border: none;
+}
+
+/* --- Main Workspace --- */
+.theme-floating #main-workspace {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+
+/* --- Top Header Bar --- */
+.theme-floating #top-bar {
+    background: transparent;
+    padding: 2rem 2rem 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: none;
+}
+
+.theme-floating #current-page-title {
+    font-size: 2rem;
+    background: var(--accent-gradient);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 700;
+}
+
+/* --- Content Area --- */
+.theme-floating #content-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 2rem;
+    max-width: 1600px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+/* Glass Cards */
+.theme-floating .card {
+    background: var(--card-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    border-radius: 1.5rem;
+}
+
+.theme-floating .container > header,
+.theme-floating .container > .tabs {
+    display: none !important;
+}
