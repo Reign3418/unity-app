@@ -17,6 +17,7 @@ class AdminAuthService {
         this.expirySelect = document.getElementById('tempAwsExpiry');
         this.customDaysInput = document.getElementById('tempAwsCustomDays');
         this.customDaysLabel = document.getElementById('tempAwsCustomLabel');
+        this.kingdomInput = document.getElementById('tempAwsKingdom');
 
         // Admin Master Credentials
         this.adminAwsAccessKey = document.getElementById('adminAwsAccessKey');
@@ -95,8 +96,8 @@ class AdminAuthService {
         const hashedInput = this.hashPasscode(code);
 
         if (hashedInput === this.PASSCODE_HASH) {
-            this.adminLockScreen.style.display = 'none';
-            this.adminAccessScreen.style.display = 'block';
+            this.adminLockScreen.classList.add('hidden');
+            this.adminAccessScreen.classList.remove('hidden');
 
             // Load saved admin credentials if they exist
             const savedAdminConfig = JSON.parse(localStorage.getItem('admin_aws_master_config')) || {};
@@ -167,8 +168,14 @@ class AdminAuthService {
             const tableName = generalConfig.tableName;
 
             // 2. Generate Unique User Name
+            const kingdomRestriction = this.kingdomInput ? this.kingdomInput.value.trim() : "";
             const randomId = Math.random().toString(36).substring(2, 8).toUpperCase();
-            const userName = `Unity_Temp_Analyst_${randomId}`;
+            
+            // Embed the kingdom restriction directly into the IAM Username so the client can auto-detect it later
+            let userName = `Unity_Temp_Analyst_${randomId}`;
+            if (kingdomRestriction) {
+                userName += `_K${kingdomRestriction}`;
+            }
 
             // 3. Create the User
             this.tempAwsFeedback.textContent = `Creating IAM User: ${userName}...`;
@@ -216,6 +223,15 @@ class AdminAuthService {
                 ]
             };
 
+            if (kingdomRestriction) {
+                this.tempAwsFeedback.textContent = `Attaching ${expirationDays}-day restrictions PLUS Locking to Kingdom ${kingdomRestriction}...`;
+                policyDocument.Statement[0].Condition["ForAllValues:StringLike"] = {
+                    "dynamodb:LeadingKeys": [
+                        `${kingdomRestriction}_*`
+                    ]
+                };
+            }
+
             await iam.putUserPolicy({
                 UserName: userName,
                 PolicyName: `AutoExpiringDynamoAccess_${expirationDays}Days`,
@@ -223,7 +239,11 @@ class AdminAuthService {
             }).promise();
 
             // 7. Success! Display to user
-            this.tempAwsFeedback.textContent = `✅ Temporary credentials successfully generated and restricted to ${expirationDays} days!`;
+            let successMsg = `✅ Temporary credentials successfully generated and restricted to ${expirationDays} days!`;
+            if (kingdomRestriction) {
+                successMsg += ` (Locked to Kingdom ${kingdomRestriction})`;
+            }
+            this.tempAwsFeedback.textContent = successMsg;
             this.tempAwsFeedback.style.color = "var(--success-color)";
 
             this.tempAccessKeyEl.textContent = accessKeyId;

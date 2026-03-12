@@ -1014,9 +1014,14 @@ Object.assign(UIService.prototype, {
     renderKingdomAnalysis() {
         const data = [];
         const govCountLimit = this.elements.prekvkGovCountSelect ? this.elements.prekvkGovCountSelect.value : 'all';
+        const selectedKingdom = this.elements.prekvkKingdomSelect ? this.elements.prekvkKingdomSelect.value : '';
 
-        this.data.state.loadedKingdoms.forEach(kId => {
+        // If a specific kingdom is selected, only process that one. Otherwise, process all.
+        let kingdomsToProcess = selectedKingdom ? [selectedKingdom] : Array.from(this.data.state.loadedKingdoms);
+
+        kingdomsToProcess.forEach(kId => {
             const kState = this.data.state.kingdoms[kId];
+            if (!kState) return;
             const sourceData = kState.startData.length > 0 ? kState.startData : kState.endData;
             if (!sourceData || sourceData.length === 0) return;
 

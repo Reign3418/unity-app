@@ -12,6 +12,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Initialize App
         (async () => {
             try {
+                // Initialize Theme Controller early
+                window.themeController = new ThemeController();
+
                 await uiService.init();
 
                 try {
@@ -241,8 +244,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                                     // Switch to Results Tab if we have data
                                     try {
                                         if (dataService.state.kingdoms[targetK].calculatedData.length > 0) {
-                                            const resultTab = document.querySelector('.tab-btn[data-tab="all-kingdom-results"]') ||
-                                                document.querySelector('.tab-btn[data-tab="prekvk-analysis"]');
+                                            const resultTab = document.querySelector('.sidebar-menu [data-tab="all-kingdom-results"]') ||
+                                                document.querySelector('.sidebar-menu [data-tab="prekvk-analysis"]');
                                             if (resultTab) resultTab.click();
                                         }
                                     } catch (e) {

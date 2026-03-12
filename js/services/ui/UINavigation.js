@@ -20,30 +20,70 @@ Object.assign(UIService.prototype, {
 
     switchMainTab(tabId) {
         console.log("Switching Main Tab to:", tabId);
-        if (this.elements.mainTabs) {
-            this.elements.mainTabs.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.tab === tabId);
+        
+        // Handle Sidebar Navigation highlighting
+        const sidebarMenu = document.querySelector('.sidebar-menu');
+        if (sidebarMenu) {
+            // Remove active from all sidebar buttons
+            sidebarMenu.querySelectorAll('.nav-btn, .nav-category-btn, .subtab-btn, .kingdom-tab-btn').forEach(btn => {
+                btn.classList.remove('active');
             });
+            
+            // Add active to the clicked button if it's a direct nav link
+            const targetBtn = sidebarMenu.querySelector(`[data-tab="${tabId}"]`);
+            if (targetBtn) {
+                targetBtn.classList.add('active');
+            }
         }
+
+        // Hide all content areas
         document.querySelectorAll('.tab-content').forEach(c => {
             c.classList.remove('active');
-            c.style.display = 'none';
+            c.classList.add('hidden');
+            c.style.display = ''; // Clear inline display, rely on CSS classes
         });
+        
+        // Show target content area
         const targetContent = document.getElementById(tabId);
         if (targetContent) {
-            targetContent.style.display = 'block';
+            targetContent.classList.remove('hidden');
+            
+            // Re-trigger animation by forcing reflow
+            void targetContent.offsetWidth; 
+            targetContent.classList.add('active');
+            
+            // Set current page title in the top bar
+            const titleEl = document.getElementById('current-page-title');
+            if (titleEl) {
+                // Find the human readable title from the clicked button or use fallback
+                const sourceBtn = document.querySelector(`.sidebar-menu [data-tab="${tabId}"]`);
+                if (sourceBtn) {
+                     // Extract text, ignoring icons if present
+                     let titleText = sourceBtn.textContent.trim();
+                     // Basic cleanup for known icons (could be better)
+                     titleText = titleText.replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]\s*/u, '');
+                     titleEl.textContent = titleText;
+                } else {
+                     // Fallback title formatting based on ID
+                     titleEl.textContent = tabId.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+                }
+            }
         }
 
         document.querySelectorAll('.kingdom-content').forEach(c => c.style.display = 'none');
-        if (this.elements.kingdomTabs) this.elements.kingdomTabs.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
 
+        // Dynamic Kingdom Tabs in Header Logic
+        const dynamicTabsContainer = document.getElementById('dynamic-kingdom-tabs');
         const tabsWithSubtabs = ['prekvk-analysis', 'all-kingdom-results', 'prekvk-ranking'];
-        if (this.elements.kingdomTabs) {
-            if (tabsWithSubtabs.includes(tabId) && this.data.state.loadedKingdoms.size > 0) {
-                this.elements.kingdomTabs.classList.remove('hidden');
-            } else {
-                this.elements.kingdomTabs.classList.add('hidden');
-            }
+        
+        if (dynamicTabsContainer) {
+             if (tabsWithSubtabs.includes(tabId) && this.data.state.loadedKingdoms.size > 0) {
+                 dynamicTabsContainer.style.display = 'flex';
+                 // Ensure active state is cleared locally if switching major modes
+                 dynamicTabsContainer.querySelectorAll('.kingdom-tab-btn').forEach(t => t.classList.remove('active'));
+             } else {
+                 dynamicTabsContainer.style.display = 'none';
+             }
         }
 
         if (tabId === 'prekvk-analysis') {
@@ -56,8 +96,18 @@ Object.assign(UIService.prototype, {
             this.updateNPWDDropdown();
         } else if (tabId === 'prekvk-ranking') {
             this.renderPreKVKRanking();
+        }
 
-        } else if (tabId === 'soc') {
+        // Stop race chart if leaving
+        if (window.UIRaceChart && tabId !== 'race-to-glory') {
+            window.UIRaceChart.pause();
+            if (window.UIRaceChart.chart) {
+                window.UIRaceChart.chart.destroy();
+                window.UIRaceChart.chart = null;
+            }
+        }
+
+        if (tabId === 'soc') {
             this.switchSOCSubTab('storm-of-stratagems');
         } else if (tabId === 'race-to-glory') {
             if (window.UIRaceChart) window.UIRaceChart.render();
@@ -76,21 +126,43 @@ Object.assign(UIService.prototype, {
 
     switchKingdom(kingdomId) {
         this.data.state.activeKingdomId = kingdomId;
-        if (this.elements.mainTabs) this.elements.mainTabs.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
-        if (this.elements.kingdomTabs) this.elements.kingdomTabs.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+        
+        // Remove active from Main Tabs (Sidebar Menu)
+        const sidebarMenu = document.querySelector('.sidebar-menu');
+        if (sidebarMenu) {
+            sidebarMenu.querySelectorAll('.nav-btn, .nav-category-btn, .subtab-btn, .kingdom-tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+        }
+        
+        // Remove active from dynamic kingdom tabs
+        if (this.elements['dynamic-kingdom-tabs']) this.elements['dynamic-kingdom-tabs'].querySelectorAll('.kingdom-tab-btn').forEach(t => t.classList.remove('active'));
 
         document.querySelectorAll('.tab-content').forEach(c => {
             c.classList.remove('active');
-            c.style.display = 'none';
+            c.classList.add('hidden');
+            c.style.display = '';
         });
-        document.querySelectorAll('.kingdom-content').forEach(c => c.style.display = 'none');
+        document.querySelectorAll('.kingdom-content').forEach(c => {
+            c.classList.remove('active');
+            c.classList.add('hidden');
+            c.style.display = '';
+        });
 
-        const btn = this.elements.kingdomTabs ? this.elements.kingdomTabs.querySelector(`[data-tab="kingdom-${kingdomId}"]`) : null;
+        const btn = this.elements['dynamic-kingdom-tabs'] ? this.elements['dynamic-kingdom-tabs'].querySelector(`[data-tab="kingdom-${kingdomId}"]`) : null;
         if (btn) btn.classList.add('active');
+
+        // Update the top bar title
+        const titleEl = document.getElementById('current-page-title');
+        if (titleEl) {
+            titleEl.textContent = `Kingdom ${kingdomId}`;
+        }
 
         const content = document.getElementById(`kingdom-${kingdomId}`);
         if (content) {
-            content.style.display = 'block';
+            content.classList.remove('hidden');
+            content.classList.add('active');
+            
             if (!content.querySelector('.subtab-content.active')) {
                 this.switchSubTab(kingdomId, 'overview');
             }
@@ -147,20 +219,25 @@ Object.assign(UIService.prototype, {
     },
 
     renderKingdomTabs() {
-        if (!this.elements.kingdomTabs) return;
-        this.elements.kingdomTabs.innerHTML = '';
+        if (!this.elements['dynamic-kingdom-tabs']) return;
+        this.elements['dynamic-kingdom-tabs'].innerHTML = '';
 
         const kingdoms = Array.from(this.data.state.loadedKingdoms);
-        if (kingdoms.length > 0) this.elements.kingdomTabs.classList.remove('hidden');
-        else this.elements.kingdomTabs.classList.add('hidden');
+        if (kingdoms.length > 0) {
+            this.elements['dynamic-kingdom-tabs'].classList.remove('hidden');
+            this.elements['dynamic-kingdom-tabs'].style.display = 'flex';
+        } else {
+            this.elements['dynamic-kingdom-tabs'].classList.add('hidden');
+            this.elements['dynamic-kingdom-tabs'].style.display = 'none';
+        }
 
         kingdoms.forEach(kId => {
             const btn = document.createElement('button');
-            btn.className = 'tab-btn';
+            btn.className = 'kingdom-tab-btn';
             btn.dataset.tab = `kingdom-${kId}`;
             btn.dataset.tooltip = `Analysis and calculations for Kingdom ${kId}`;
             btn.textContent = `Kingdom ${kId}`;
-            this.elements.kingdomTabs.appendChild(btn);
+            this.elements['dynamic-kingdom-tabs'].appendChild(btn);
 
             if (!document.getElementById(`kingdom-${kId}`)) this.createKingdomContent(kId);
         });
@@ -178,8 +255,7 @@ Object.assign(UIService.prototype, {
         const govCountSelect = this.elements.prekvkGovCountSelect;
 
         if (select) {
-            if (subTabId === 'kingdom-analysis') select.classList.add('hidden');
-            else select.classList.remove('hidden');
+            select.classList.remove('hidden');
         }
         if (govCountSelect) {
             if (subTabId === 'kingdom-analysis') govCountSelect.classList.remove('hidden');

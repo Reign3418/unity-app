@@ -3,20 +3,24 @@
 // ==========================================
 Object.assign(UIService.prototype, {
     setupEventListeners() {
-        // Main Tab Switching
-        if (this.elements.mainTabs) {
-            this.elements.mainTabs.addEventListener('click', (e) => {
-                const btn = e.target.closest('.tab-btn');
-                if (btn) this.switchMainTab(btn.dataset.tab);
+        // Main Tab Switching (Sidebar)
+        const sidebarMenu = document.querySelector('.sidebar-menu');
+        if (sidebarMenu) {
+            sidebarMenu.addEventListener('click', (e) => {
+                const btn = e.target.closest('.nav-btn, .nav-category-btn, .subtab-btn');
+                if (btn && btn.dataset.tab) {
+                    this.switchMainTab(btn.dataset.tab);
+                }
             });
         }
 
-        if (this.elements.kingdomTabs) {
-            this.elements.kingdomTabs.addEventListener('click', (e) => {
-                const btn = e.target.closest('.tab-btn');
-                if (btn) {
-                    const kId = btn.dataset.tab.replace('kingdom-', '');
-                    this.switchKingdom(kId);
+        if (this.elements['dynamic-kingdom-tabs']) {
+            this.elements['dynamic-kingdom-tabs'].addEventListener('click', (e) => {
+                const btn = e.target.closest('.kingdom-tab-btn');
+                if (!btn) return;
+                const tabId = btn.dataset.tab;
+                if (tabId.startsWith('kingdom-')) {
+                    this.switchKingdom(tabId.replace('kingdom-', ''));
                 }
             });
         }
@@ -619,6 +623,7 @@ Object.assign(UIService.prototype, {
                 const activeBtn = document.querySelector('.prekvk-subtabs .subtab-btn.active');
                 if (activeBtn) {
                     const activeSubTab = activeBtn.dataset.subtab;
+                    if (activeSubTab === 'kingdom-analysis') this.renderKingdomAnalysis();
                     if (activeSubTab === 'alliance-analysis') this.renderAllianceAnalysis(kingdomId);
                     if (activeSubTab === 'governor-analysis') this.renderGovernorAnalysis(kingdomId);
                 }

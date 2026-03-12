@@ -11,7 +11,7 @@ class UIService {
     cacheElements() {
         // Cache all IDs for quick access
         const ids = [
-            'mainTabs', 'kingdomTabs', 'kingdomsContainer', 'kingdomContentTemplate',
+            'dynamic-kingdom-tabs', 'kingdomsContainer', 'kingdomContentTemplate',
             'startScanDetails', 'endScanDetails', 'midScanDetails',
             'resetDataBtn', 'prekvkKingdomSelect', 'prekvkGovCountSelect',
             'kingdomAnalysisContainer', 'allianceAnalysisContainer', 'governorAnalysisContainer',

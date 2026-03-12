@@ -150,6 +150,26 @@ class AWSRosterService {
 
     async getActiveKingdoms() {
         if (!this.db || !this.connected) return [];
+        
+        // CHECK IF USING RESTRICTED KEY VIA IAM USERNAME (Foolproof method)
+        try {
+            const sts = new AWS.STS();
+            const identity = await sts.getCallerIdentity().promise();
+            // ARN format: arn:aws:iam::123456789012:user/Unity_Temp_Analyst_ABCDEF_K3701
+            const arn = identity.Arn;
+            const arnParts = arn.split('/');
+            const username = arnParts[arnParts.length - 1]; // e.g. Unity_Temp_Analyst_ABCDEF_K3701
+            
+            const match = username.match(/_K([0-9]+)$/);
+            if (match && match[1]) {
+                const restrictedKingdom = match[1];
+                console.log(`[AWS STS] Auto-detected Kingdom Restriction from IAM Username: ${restrictedKingdom}. Bypassing Global Index.`);
+                return [restrictedKingdom];
+            }
+        } catch (e) {
+            console.warn("Could not check STS Caller Identity for dynamic Kingdom Restrictions:", e.message);
+        }
+
         // DynamoDB is not great at distinct queries.
         // We will store a global index of kingdoms.
         try {
@@ -502,14 +522,50 @@ class AWSRosterService {
         }
     }
 
+    // ------------------------------------------------------------------------
+    // DATABASE MANAGEMENT & WIPES
+    // ------------------------------------------------------------------------
+    
+    _getPrivilegedDocumentClient() {
+        try {
+            const adminConfig = JSON.parse(localStorage.getItem('admin_aws_master_config'));
+            const generalConfig = JSON.parse(localStorage.getItem('aws_dynamo_config')) || {};
+            
+            if (adminConfig && adminConfig.accessKey && adminConfig.secretKey) {
+                return new AWS.DynamoDB.DocumentClient({
+                    accessKeyId: adminConfig.accessKey,
+                    secretAccessKey: adminConfig.secretKey,
+                    region: generalConfig.region || 'us-east-1'
+                });
+            }
+        } catch (e) { console.warn("No admin config found for AWS, falling back to default keys"); }
+        return this.db;
+    }
+
+    _getPrivilegedRawClient() {
+        try {
+            const adminConfig = JSON.parse(localStorage.getItem('admin_aws_master_config'));
+            const generalConfig = JSON.parse(localStorage.getItem('aws_dynamo_config')) || {};
+            
+            if (adminConfig && adminConfig.accessKey && adminConfig.secretKey) {
+                return new AWS.DynamoDB({
+                    accessKeyId: adminConfig.accessKey,
+                    secretAccessKey: adminConfig.secretKey,
+                    region: generalConfig.region || 'us-east-1'
+                });
+            }
+        } catch (e) { console.warn("No admin config found for AWS, falling back to default keys"); }
+        return new AWS.DynamoDB();
+    }
+
     async wipeDatabase() {
         if (!this.db || !this.connected) {
             throw new Error('Not connected to AWS. Please configure your settings.');
         }
 
         try {
-            // Need the raw dynamodb client for table operations, not the DocumentClient
-            const rawDb = new AWS.DynamoDB();
+            // Use the raw privileged dynamodb client for table operations
+            const rawDb = this._getPrivilegedRawClient();
 
             // 1. Delete the table
             await rawDb.deleteTable({ TableName: this.tableName }).promise();
@@ -558,7 +614,8 @@ class AWSRosterService {
                     SK: 'wipeLock'
                 }
             };
-            const result = await this.db.get(params).promise();
+            const privilegedDb = this._getPrivilegedDocumentClient();
+            const result = await privilegedDb.get(params).promise();
             return result.Item ? result.Item.value : null;
         } catch (error) {
             console.error('AWS Fetch Wipe Lock Error:', error);
@@ -569,6 +626,7 @@ class AWSRosterService {
     async setWipeLock(password) {
         if (!this.db || !this.connected) throw new Error('Not connected to AWS.');
         try {
+            const privilegedDb = this._getPrivilegedDocumentClient();
             if (password) {
                 const params = {
                     TableName: this.tableName,
@@ -579,7 +637,7 @@ class AWSRosterService {
                         updatedAt: new Date().toISOString()
                     }
                 };
-                await this.db.put(params).promise();
+                await privilegedDb.put(params).promise();
             } else {
                 const params = {
                     TableName: this.tableName,
@@ -588,7 +646,7 @@ class AWSRosterService {
                         SK: 'wipeLock'
                     }
                 };
-                await this.db.delete(params).promise();
+                await privilegedDb.delete(params).promise();
             }
             return true;
         } catch (error) {
