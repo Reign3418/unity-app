@@ -13,6 +13,29 @@ Object.assign(UIService.prototype, {
                 }
             });
         }
+        
+        // Classic HTML Top Nav Binding
+        const classicTabsContainer = document.getElementById('main-tabs-classic');
+        if (classicTabsContainer) {
+            classicTabsContainer.addEventListener('click', (e) => {
+                const btn = e.target.closest('.tab-btn');
+                if (btn && btn.dataset.tab) {
+                    this.switchMainTab(btn.dataset.tab);
+                }
+            });
+        }
+
+        const classicKingdomTabs = document.getElementById('kingdom-tabs-classic');
+        if (classicKingdomTabs) {
+            classicKingdomTabs.addEventListener('click', (e) => {
+                const btn = e.target.closest('.kingdom-tab-btn');
+                if (!btn) return;
+                const tabId = btn.dataset.tab;
+                if (tabId.startsWith('kingdom-')) {
+                    this.switchKingdom(tabId.replace('kingdom-', ''));
+                }
+            });
+        }
 
         if (this.elements['dynamic-kingdom-tabs']) {
             this.elements['dynamic-kingdom-tabs'].addEventListener('click', (e) => {

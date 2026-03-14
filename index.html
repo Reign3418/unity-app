@@ -139,7 +139,31 @@
 
         <!-- Main Workspace -->
         <div id="main-workspace">
-            <!-- Top Header Bar -->
+            
+            <!-- CLASSIC TOP NAV BAR (Hidden by default, enabled by ThemeController) -->
+            <div class="tabs" id="main-tabs-classic" style="display: none; background: rgba(15, 23, 42, 0.95); padding: 10px; gap: 10px; border-bottom: 1px solid var(--border-color); overflow-x: auto; white-space: nowrap;">
+                <button class="tab-btn active" data-tab="welcome">Welcome</button>
+                <button class="tab-btn" data-tab="upload">Upload Scans</button>
+                <button class="tab-btn" data-tab="prekvk-analysis">Kingdom Analysis</button>
+                <button class="tab-btn" data-tab="all-kingdom-analysis">All Kingdom Analysis 📊</button>
+                <button class="tab-btn" data-tab="prekvk-ranking">PreKVK Ranking</button>
+                <button class="tab-btn" data-tab="new-phone-who-dis">New Phone Who Dis</button>
+                <button class="tab-btn" data-tab="all-kingdom-results">All Kingdom DKP results</button>
+                <button class="tab-btn" data-tab="my-alliance">My Alliance 🛡️</button>
+                <button class="tab-btn" data-tab="recruiting">Recruiting 🎯</button>
+                <button class="tab-btn" data-tab="events">Events 📅</button>
+                <button class="tab-btn" data-tab="mail">Mail Generator ✉️</button>
+                <button class="tab-btn" data-tab="settings">Settings ⚙️</button>
+                <button class="tab-btn" data-tab="race-to-glory">Race to Glory 🏁</button>
+                <button class="tab-btn" data-tab="community">Community Hub 💬</button>
+                <button class="tab-btn" data-tab="calculators">Calculators 🧮</button>
+            </div>
+
+            <!-- CLASSIC KINGDOM TABS (Hidden by default, holds dynamically added Kingdom buttons) -->
+            <div class="tabs" id="kingdom-tabs-classic" style="display: none; background: rgba(15, 23, 42, 0.95); padding: 5px 20px; gap: 10px; border-bottom: 1px solid var(--border-color); overflow-x: auto; white-space: nowrap;">
+            </div>
+
+            <!-- Top Header Bar (Mobile Toggle) -->
             <header id="top-bar">
                 <div class="top-bar-left">
                     <h2 id="current-page-title">Dashboard</h2>
@@ -1381,6 +1405,8 @@
                             <option value="theme-sidebar">Dark Mode - Sidebar Nav (Default)</option>
                             <option value="theme-minimalist">Light Mode - Minimalist Bento</option>
                             <option value="theme-floating">Dark Mode - Floating Mac OS Dock</option>
+                            <option value="theme-classic">Dark Mode - Top Nav (CSS Hack)</option>
+                            <option value="theme-classic-html">Dark Mode - Original HTML Top Bar</option>
                         </select>
                     </div>
                 </div>

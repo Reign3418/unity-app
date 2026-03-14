@@ -1,6 +1,6 @@
 class ThemeController {
     constructor() {
-        this.themes = ['theme-sidebar', 'theme-minimalist', 'theme-floating'];
+        this.themes = ['theme-sidebar', 'theme-minimalist', 'theme-floating', 'theme-classic', 'theme-classic-html'];
         this.currentTheme = localStorage.getItem('unity_ui_theme') || 'theme-sidebar';
         this.themeLink = document.getElementById('theme-stylesheet');
         this.init();

@@ -1,0 +1,80 @@
+/* =========================================
+   Theme: Classic HTML (Original March 4th Top Bar)
+   Description: Hides the modern sidebar and reveals the injected classic #main-tabs-classic
+   ========================================= */
+
+body.theme-classic-html {
+    display: flex;
+    flex-direction: column;
+}
+
+.theme-classic-html #app-container {
+    display: flex;
+    flex-direction: column;
+    width: 100vw;
+    height: 100vh;
+}
+
+/* Hide Modern Sidebar entirely */
+.theme-classic-html #main-sidebar {
+    display: none !important;
+}
+
+/* Hide Top Header Toggle */
+.theme-classic-html #top-bar {
+    display: none !important;
+}
+
+/* Reveal Classic HTML Tabs */
+.theme-classic-html #main-tabs-classic,
+.theme-classic-html #kingdom-tabs-classic {
+    display: flex !important;
+    background: #0f172a;
+    padding: 1rem 2rem;
+    gap: 0.5rem;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    align-items: center;
+    overflow-x: auto;
+    width: 100%;
+    scrollbar-width: thin;
+}
+
+.theme-classic-html .tab-btn,
+.theme-classic-html .kingdom-tab-btn {
+    border: none;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-secondary);
+    padding: 0.75rem 1.25rem;
+    border-radius: 0.5rem;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.theme-classic-html .tab-btn:hover,
+.theme-classic-html .kingdom-tab-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+    transform: translateY(-2px);
+}
+
+.theme-classic-html .tab-btn.active,
+.theme-classic-html .kingdom-tab-btn.active {
+    background: var(--accent-primary);
+    color: white;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.theme-classic-html #content-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 2rem;
+    width: 100%;
+}
+
+.theme-classic-html .tab-content.active {
+    max-width: 1400px;
+    margin: 0 auto;
+}

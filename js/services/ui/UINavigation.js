@@ -36,6 +36,14 @@ Object.assign(UIService.prototype, {
             }
         }
 
+        // Sync HTML Classic Tabs
+        const classicTabs = document.getElementById('main-tabs-classic');
+        if (classicTabs) {
+            classicTabs.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            const targetBtn = classicTabs.querySelector(`[data-tab="${tabId}"]`);
+            if (targetBtn) targetBtn.classList.add('active');
+        }
+
         // Hide all content areas
         document.querySelectorAll('.tab-content').forEach(c => {
             c.classList.remove('active');
@@ -152,6 +160,14 @@ Object.assign(UIService.prototype, {
         const btn = this.elements['dynamic-kingdom-tabs'] ? this.elements['dynamic-kingdom-tabs'].querySelector(`[data-tab="kingdom-${kingdomId}"]`) : null;
         if (btn) btn.classList.add('active');
 
+        // Sync classic kingdom tabs
+        const classicContainer = document.getElementById('kingdom-tabs-classic');
+        if (classicContainer) {
+            classicContainer.querySelectorAll('.kingdom-tab-btn').forEach(b => b.classList.remove('active'));
+            const cBtn = classicContainer.querySelector(`[data-tab="kingdom-${kingdomId}"]`);
+            if (cBtn) cBtn.classList.add('active');
+        }
+
         // Update the top bar title
         const titleEl = document.getElementById('current-page-title');
         if (titleEl) {
@@ -221,23 +237,44 @@ Object.assign(UIService.prototype, {
     renderKingdomTabs() {
         if (!this.elements['dynamic-kingdom-tabs']) return;
         this.elements['dynamic-kingdom-tabs'].innerHTML = '';
+        
+        const classicContainer = document.getElementById('kingdom-tabs-classic');
+        if (classicContainer) classicContainer.innerHTML = '';
 
         const kingdoms = Array.from(this.data.state.loadedKingdoms);
         if (kingdoms.length > 0) {
             this.elements['dynamic-kingdom-tabs'].classList.remove('hidden');
             this.elements['dynamic-kingdom-tabs'].style.display = 'flex';
+            if (classicContainer) {
+                classicContainer.classList.remove('hidden');
+                // The display logic for classicContainer is handled gracefully by theme CSS
+            }
         } else {
             this.elements['dynamic-kingdom-tabs'].classList.add('hidden');
             this.elements['dynamic-kingdom-tabs'].style.display = 'none';
+            if (classicContainer) {
+                classicContainer.classList.add('hidden');
+            }
         }
 
         kingdoms.forEach(kId => {
+            // Sidebar Button
             const btn = document.createElement('button');
             btn.className = 'kingdom-tab-btn';
             btn.dataset.tab = `kingdom-${kId}`;
             btn.dataset.tooltip = `Analysis and calculations for Kingdom ${kId}`;
             btn.textContent = `Kingdom ${kId}`;
             this.elements['dynamic-kingdom-tabs'].appendChild(btn);
+
+            // Classic Top Bar Button
+            if (classicContainer) {
+                const cBtn = document.createElement('button');
+                cBtn.className = 'kingdom-tab-btn';
+                cBtn.dataset.tab = `kingdom-${kId}`;
+                cBtn.dataset.tooltip = `Analysis and calculations for Kingdom ${kId}`;
+                cBtn.textContent = `Kingdom ${kId}`;
+                classicContainer.appendChild(cBtn);
+            }
 
             if (!document.getElementById(`kingdom-${kId}`)) this.createKingdomContent(kId);
         });
