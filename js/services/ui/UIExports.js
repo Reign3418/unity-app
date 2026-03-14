@@ -2,27 +2,62 @@
 // SERVICE: UI EXPORTS & COMMAND CENTER & CLOUD
 // ==========================================
 Object.assign(UIService.prototype, {
-    exportToCSV(kingdomId) {
+    exportToExcel(kingdomId) {
         const data = this.data.state.kingdoms[kingdomId].calculatedData;
         if (!data || data.length === 0) return;
+        
+        if (typeof XLSX === 'undefined') {
+            alert("Excel library is not loaded.");
+            return;
+        }
+
         const headers = ['Governor ID', 'Governor Name', 'Kingdom', 'Starting Power', 'Power +/-', 'Troop Power', 'T1 Kills', 'T2 Kills', 'T3 Kills', 'T4 Kills', 'T5 Kills', 'T4+T5 Combined', 'Kvk Deads', 'KVK KP', 'Target DKP', 'KP % Complete', 'Target Deads', 'Dead% Complete', 'Total DKP %', 'Bonus/Punishment'];
-        const csvContent = [headers.join(','), ...data.map(row => [row.id, `"${row.name}"`, row.kingdom, row.startPower, row.powerDiff, row.troopPowerDiff, row.t1, row.t2, row.t3, row.t4, row.t5, row.t4t5, row.deads, row.kvkKP, row.targetKP, row.kpPercent, row.targetDeads, row.deadPercent, row.totalDKPPercent, row.bonus].join(','))].join('\n');
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(new Blob([csvContent], { type: 'text/csv;charset=utf-8;' }));
-        link.download = `dkp_results_kingdom_${kingdomId}.csv`;
-        document.body.appendChild(link); link.click(); document.body.removeChild(link);
+        
+        const rows = data.map(row => [
+            parseInt(row.id),
+            row.name,
+            row.kingdom,
+            parseInt(row.startPower) || 0,
+            parseInt(row.powerDiff) || 0,
+            parseInt(row.troopPowerDiff) || 0,
+            parseInt(row.t1) || 0,
+            parseInt(row.t2) || 0,
+            parseInt(row.t3) || 0,
+            parseInt(row.t4) || 0,
+            parseInt(row.t5) || 0,
+            parseInt(row.t4t5) || 0,
+            parseInt(row.deads) || 0,
+            parseInt(row.kvkKP) || 0,
+            parseInt(row.targetKP) || 0,
+            parseFloat(row.kpPercent) || 0,
+            parseInt(row.targetDeads) || 0,
+            parseFloat(row.deadPercent) || 0,
+            parseFloat(row.totalDKPPercent) || 0,
+            row.bonus
+        ]);
+
+        const worksheetData = [headers, ...rows];
+        const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "DKP Results");
+        XLSX.writeFile(workbook, `dkp_results_kingdom_${kingdomId}.xlsx`);
     },
 
-    exportOverviewCSV(kingdomId, data) {
+    exportOverviewExcel(kingdomId, data) {
         if (!data || data.length === 0) {
             alert("No data available to export.");
+            return;
+        }
+        
+        if (typeof XLSX === 'undefined') {
+            alert("Excel library is not loaded.");
             return;
         }
 
         // 1. Get Dynamic Headers
         const headers = Object.keys(data[0]).filter(h => h !== '_kingdom' && h !== 'Kingdom');
 
-        // 2. Format Rows (Clean HTML from diffs)
+        // 2. Format Rows (Clean HTML from diffs and parse numbers)
         const rows = data.map(row => {
             return headers.map(header => {
                 let cell = row[header] || '';
@@ -32,20 +67,24 @@ Object.assign(UIService.prototype, {
                     temp.innerHTML = cell;
                     cell = temp.textContent || temp.innerText || '';
                 }
-                // Wrap strings with commas in quotes
-                if (typeof cell === 'string' && cell.includes(',')) {
-                    cell = `"${cell}"`;
+                
+                // If the cleaned cell is a number string (e.g., "123", "-456", "1.5"), parse it
+                // Need to avoid parsing things like "Governor Name" as numbers
+                const isNumeric = !isNaN(parseFloat(cell)) && isFinite(cell.toString().replace(/,/g, ''));
+                if (isNumeric && typeof cell === 'string') {
+                     // Strip commas before parsing if any
+                     return parseFloat(cell.replace(/,/g, ''));
                 }
+                
                 return cell;
-            }).join(',');
+            });
         });
 
-        const csvContent = [headers.join(','), ...rows].join('\n');
-
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(new Blob([csvContent], { type: 'text/csv;charset=utf-8;' }));
-        link.download = `overview_export_kingdom_${kingdomId}.csv`;
-        document.body.appendChild(link); link.click(); document.body.removeChild(link);
+        const worksheetData = [headers, ...rows];
+        const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Kingdom Overview");
+        XLSX.writeFile(workbook, `overview_export_kingdom_${kingdomId}.xlsx`);
     },
 
     updateCommandKingdomDropdown() {

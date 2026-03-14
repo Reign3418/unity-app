@@ -156,7 +156,7 @@ Object.assign(UIService.prototype, {
         }
 
         const exportBtn = clone.querySelector('.export-btn');
-        if (exportBtn) exportBtn.addEventListener('click', () => this.exportToCSV(kingdomId));
+        if (exportBtn) exportBtn.addEventListener('click', () => this.exportToExcel(kingdomId));
 
         const attachSearch = (selector, handler) => {
             const el = clone.querySelector(selector);
@@ -383,7 +383,7 @@ Object.assign(UIService.prototype, {
         if (exportBtn && !exportBtn.dataset.hasListener) {
             exportBtn.addEventListener('click', () => {
                 const currentData = this.getCurrentFilteredOverviewData(kingdomId);
-                this.exportOverviewCSV(kingdomId, currentData);
+                this.exportOverviewExcel(kingdomId, currentData);
             });
             exportBtn.dataset.hasListener = 'true';
         }

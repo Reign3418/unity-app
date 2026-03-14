@@ -25,8 +25,9 @@ class UIActivityTracker {
                         <option value="">(Select a Kingdom)</option>
                     </select>
                 </div>
-                <div class="control-group">
-                    <button id="btn-run-activity" class="action-btn">Run Analysis</button>
+                <div class="control-group" style="display: flex; gap: 12px; align-items: center; width: 100%;">
+                    <button id="btn-run-activity" class="action-btn" style="flex: 1;">Run Analysis</button>
+                    <button id="btn-export-activity" class="action-btn" style="display: none; flex: 1; background: var(--card-bg); border: 1px solid var(--border-hover);">Export Excel</button>
                 </div>
             </div>
 
@@ -83,6 +84,11 @@ class UIActivityTracker {
         if (btn) {
             btn.addEventListener('click', () => this.runAnalysis());
         }
+
+        const btnExport = document.getElementById('btn-export-activity');
+        if (btnExport) {
+            btnExport.addEventListener('click', () => this.exportExcel());
+        }
     }
 
     async runAnalysis() {
@@ -133,11 +139,14 @@ class UIActivityTracker {
             
             if (results.length === 0) {
                 progressEl.innerHTML = `Analysis complete. All governors are present and showing active growth.${datesListHtml}`;
+                document.getElementById('btn-export-activity').style.display = 'none';
                 return;
             }
 
             progressEl.innerHTML = `Analysis complete. Found ${results.length} inactive or missing governors.${datesListHtml}`;
             resultsEl.classList.remove('hidden');
+            document.getElementById('btn-export-activity').style.display = 'inline-block';
+            this.lastResults = results;
 
             const thead = document.querySelector('#activity-table thead tr');
             thead.innerHTML = `
@@ -406,6 +415,68 @@ class UIActivityTracker {
         // Sort by power descending
         results.sort((a, b) => b.lastPower - a.lastPower);
         return results;
+    }
+
+    exportExcel() {
+        if (!this.lastResults || this.lastResults.length === 0) {
+            alert("No results to export. Run analysis first.");
+            return;
+        }
+
+        if (typeof XLSX === 'undefined') {
+            alert("Excel library is not loaded. Please ensure you are connected to the internet.");
+            return;
+        }
+
+        const kingdomId = document.getElementById('activity-kingdom-select').value;
+        const headers = [
+            'Governor ID', 'Name', 'Status Reason', 'Status Note', 
+            'Latest Power', 'Baseline Troop Power', 'Latest Troop Power', 'Troop Growth',
+            'Baseline Cmdr Power', 'Latest Cmdr Power', 'Cmdr Growth',
+            'Baseline Gathered', 'Latest Gathered', 'Gather Growth'
+        ];
+        
+        const rows = this.lastResults.map(gov => {
+            // Remove HTML from status notes using regex
+            const cleanNote = gov.statusNote ? gov.statusNote.replace(/<[^>]*>?/gm, ' - ') : '';
+
+            // Return numbers as actual Numbers so Excel formats them correctly
+            return [
+                parseInt(gov.id),
+                gov.name,
+                gov.reason,
+                cleanNote,
+                parseInt(gov.lastPower || 0),
+                parseInt(gov.baselineTroopPower || 0),
+                parseInt(gov.lastTroopPower || 0),
+                parseInt(gov.troopDelta || 0),
+                parseInt(gov.baselineCmdPower || 0),
+                parseInt(gov.lastCmdPower || 0),
+                parseInt(gov.cmdDelta || 0),
+                parseInt(gov.baselineGathered || 0),
+                parseInt(gov.lastGathered || 0),
+                parseInt(gov.gatherDelta || 0)
+            ];
+        });
+
+        const worksheetData = [headers, ...rows];
+        const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+        
+        // Auto-size columns slightly
+        worksheet['!cols'] = [
+            {wch: 12}, // ID
+            {wch: 20}, // Name
+            {wch: 15}, // Reason
+            {wch: 35}, // Note
+            {wch: 15}, // Power
+            {wch: 15}, {wch: 15}, {wch: 15}, // Troops
+            {wch: 15}, {wch: 15}, {wch: 15}, // Cmdr
+            {wch: 15}, {wch: 15}, {wch: 15}  // Gather
+        ];
+
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Inactivity Report");
+        XLSX.writeFile(workbook, `activity_tracker_kd${kingdomId}.xlsx`);
     }
 }
 
