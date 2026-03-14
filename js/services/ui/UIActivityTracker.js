@@ -171,7 +171,25 @@ class UIActivityTracker {
                     tr.innerHTML = `
                         <td>${safeId}</td>
                         <td>${gov.name}</td>
-                        <td><span style="color: #f59e0b; font-weight: 500;">Asleep</span></td>
+                        <td><span style="color: #64748b; font-weight: 500;">Asleep</span></td>
+                        <td><span style="opacity: 0.8;">${gov.statusNote}</span></td>
+                        <td>${gov.lastPower.toLocaleString()}</td>
+                        <td>
+                            <div style="color: var(--text-secondary)">0</div>
+                            <div style="font-size: 0.8em; opacity: 0.6; margin-top: 4px;">${gov.baselineDate}: ${gov.baselineTroopPower.toLocaleString()}</div>
+                            <div style="font-size: 0.8em; opacity: 0.6;">${gov.lastSeen}: ${gov.lastTroopPower.toLocaleString()}</div>
+                        </td>
+                        <td>
+                            <div style="color: var(--text-secondary)">C: 0 | G: 0</div>
+                            <div style="font-size: 0.8em; opacity: 0.6; margin-top: 4px;">${gov.baselineDate} - C: ${gov.baselineCmdPower.toLocaleString()} | G: ${Utils.formatCompactNumber(gov.baselineGathered)}</div>
+                            <div style="font-size: 0.8em; opacity: 0.6;">${gov.lastSeen} - C: ${gov.lastCmdPower.toLocaleString()} | G: ${Utils.formatCompactNumber(gov.lastGathered)}</div>
+                        </td>
+                    `;
+                } else if (gov.reason === 'Low Activity') {
+                    tr.innerHTML = `
+                        <td>${safeId}</td>
+                        <td>${gov.name}</td>
+                        <td><span style="color: #f59e0b; font-weight: 500;">Low Activity</span></td>
                         <td><span style="opacity: 0.8;">${gov.statusNote}</span></td>
                         <td>${gov.lastPower.toLocaleString()}</td>
                         <td>
@@ -231,6 +249,22 @@ class UIActivityTracker {
                             return;
                         }
 
+                        // Global Name Extraction
+                        const allNames = new Set(gov.historicalNamesArr || []);
+                        historyEntries.forEach(e => {
+                            const n = e[1]['Governor Name'] || e[1]['Name'] || e[1]['name'];
+                            if (n && n !== 'Unknown' && n !== gov.name) {
+                                allNames.add(n);
+                            }
+                        });
+                        
+                        let akaString = '';
+                        if (allNames.size > 0) {
+                            akaString = `<br><span style="font-size: 0.85em; opacity: 0.7; color: var(--accent-hover);">AKA: ${Array.from(allNames).join(', ')}</span>`;
+                        }
+                        
+                        let migrationNote = '';
+
                         if (gov.reason === 'Missing') {
                             // Find the LAST known location anywhere in the world
                             const lastEntry = historyEntries[historyEntries.length - 1];
@@ -241,10 +275,11 @@ class UIActivityTracker {
                             
                             // If their global last seen is NEWER than when they went missing here, AND it's a different kingdom, they migrated!
                             if (globalDate > gov.lastSeen && globalKid !== localKidNum) {
-                                noteCell.innerHTML = `<span style="opacity: 0.8;">${gov.statusNote}</span><br><span style="font-size: 0.85em; color: var(--warning-color); font-weight: 600;">Migrated to KD ${globalKid}</span>`;
-                            } else {
-                                noteCell.innerHTML = `<span style="opacity: 0.8;">${gov.statusNote}</span>`;
+                                migrationNote = `<br><span style="font-size: 0.85em; color: var(--warning-color); font-weight: 600;">Migrated to KD ${globalKid}</span>`;
                             }
+                            gov.statusNote = gov.baseNote + akaString + migrationNote;
+                            noteCell.innerHTML = `<span style="opacity: 0.8;">${gov.baseNote}</span>${akaString}${migrationNote}`;
+                            
                         } else if (gov.reason === 'New') {
                             // Find the chronologically FIRST scan before they appeared here
                             let originKid = null;
@@ -261,10 +296,10 @@ class UIActivityTracker {
                             }
                             
                             if (originKid) {
-                                noteCell.innerHTML = `<span style="opacity: 0.8;">${gov.statusNote}</span><br><span style="font-size: 0.85em; color: var(--success-color); font-weight: 600;">Migrated from KD ${originKid}</span>`;
-                            } else {
-                                noteCell.innerHTML = `<span style="opacity: 0.8;">${gov.statusNote}</span>`;
+                                migrationNote = `<br><span style="font-size: 0.85em; color: var(--success-color); font-weight: 600;">Migrated from KD ${originKid}</span>`;
                             }
+                            gov.statusNote = gov.baseNote + akaString + migrationNote;
+                            noteCell.innerHTML = `<span style="opacity: 0.8;">${gov.baseNote}</span>${akaString}${migrationNote}`;
                         }
                     }).catch(err => {
                         const noteCell = document.getElementById(`gov-note-${safeId}`);
@@ -321,6 +356,7 @@ class UIActivityTracker {
                     govTracker.set(id, {
                         id: id,
                         name: name,
+                        historicalNames: new Set([name]),
                         firstSeen: date,
                         lastSeen: date,
                         lastPower: power,
@@ -345,6 +381,7 @@ class UIActivityTracker {
                     });
                 } else {
                     const rec = govTracker.get(id);
+                    rec.historicalNames.add(name);
                     rec.name = name; // Update to latest known name
                     rec.lastSeen = date;
                     rec.lastPower = power;
@@ -384,6 +421,14 @@ class UIActivityTracker {
 
         const results = [];
         govTracker.forEach(rec => {
+            // Build local AKA string
+            let localAka = '';
+            rec.historicalNames.delete(rec.name); // Remove latest name from AKA list
+            rec.historicalNamesArr = Array.from(rec.historicalNames);
+            if (rec.historicalNamesArr.length > 0) {
+                localAka = `<br><span style="font-size: 0.85em; opacity: 0.7; color: var(--accent-hover);">AKA: ${rec.historicalNamesArr.join(', ')}</span>`;
+            }
+
             // Parse dates to calculate exact hours alive in the kingdom
             const firstDate = new Date(rec.firstSeen.replace('_', ' '));
             const lastDate = new Date(rec.lastSeen.replace('_', ' '));
@@ -392,22 +437,32 @@ class UIActivityTracker {
             // Check 1: Missing Players
             if (rec.lastSeen !== mostRecentDate) {
                 rec.reason = 'Missing';
-                rec.statusNote = `Last seen ${rec.lastSeen}`;
+                rec.baseNote = `Last seen ${rec.lastSeen}`;
+                rec.statusNote = rec.baseNote + localAka;
                 results.push(rec);
             } 
             // Check 2: New Players (Less than 96 hours old in this KD)
             else if (rec.lastSeen === mostRecentDate && hoursAlive <= 96) {
                 rec.reason = 'New';
-                rec.statusNote = `Joined ${rec.firstSeen}`;
+                rec.baseNote = `Joined ${rec.firstSeen}`;
+                rec.statusNote = rec.baseNote + localAka;
                 results.push(rec);
             }
-            // Check 3: True Inactivity (Zero Growth)
+            // Check 3: True Inactivity (Zero Growth or Low Activity)
             else if (rec.lastSeen === mostRecentDate && hoursAlive > 96) {
                 // If their baseline date is older than the most recent scan, they have slept through at least 1 scan interval
                 if (rec.baselineDate !== mostRecentDate) {
-                    rec.reason = 'Zero Growth';
-                    rec.statusNote = `Asleep since ${rec.baselineDate}`;
-                    results.push(rec);
+                    if (rec.troopDelta === 0 && rec.cmdDelta === 0 && rec.gatherDelta === 0) {
+                        rec.reason = 'Zero Growth';
+                        rec.baseNote = `Asleep since ${rec.baselineDate}`;
+                        rec.statusNote = rec.baseNote + localAka;
+                        results.push(rec);
+                    } else {
+                        rec.reason = 'Low Activity';
+                        rec.baseNote = `Minimal gains since ${rec.baselineDate}`;
+                        rec.statusNote = rec.baseNote + localAka;
+                        results.push(rec);
+                    }
                 }
             }
         });
