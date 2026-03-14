@@ -160,7 +160,8 @@ class AWSRosterService {
             const arnParts = arn.split('/');
             const username = arnParts[arnParts.length - 1]; // e.g. Unity_Temp_Analyst_ABCDEF_K3701
             
-            const match = username.match(/_K([0-9]+)$/);
+            // Match the last _K followed by alphanumeric characters for the assigned Kingdom
+            const match = username.match(/_K([A-Za-z0-9]+)$/);
             if (match && match[1]) {
                 const restrictedKingdom = match[1];
                 console.log(`[AWS STS] Auto-detected Kingdom Restriction from IAM Username: ${restrictedKingdom}. Bypassing Global Index.`);

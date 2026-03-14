@@ -343,7 +343,7 @@ Object.assign(UIService.prototype, {
 
             modal.classList.remove('hidden');
             checkboxesContainer.innerHTML = '<div style="padding: 5px; color: var(--text-muted);">Loading Workspaces...</div>';
-            if (dateContainer) dateContainer.style.display = 'none';
+            if (dateContainer) dateContainer.classList.add('hidden');
             confirmBtn.disabled = true;
 
             const kingdoms = await window.uiMyAlliance.rosterService.getActiveKingdoms();
@@ -384,7 +384,7 @@ Object.assign(UIService.prototype, {
                 if (e.target && e.target.classList.contains('firebase-kd-checkbox')) {
                     const selectedOptions = getSelectedKingdoms();
                     if (selectedOptions.length === 0) {
-                        if (dateContainer) dateContainer.style.display = 'none';
+                        if (dateContainer) dateContainer.classList.add('hidden');
                         confirmBtn.disabled = true;
                         return;
                     }
@@ -393,7 +393,7 @@ Object.assign(UIService.prototype, {
                     const kId = selectedOptions[0];
 
                     if (dateContainer && dateSelect) {
-                        dateContainer.style.display = 'block';
+                        dateContainer.classList.remove('hidden');
                         dateSelect.innerHTML = '<option value="">Loading Dates...</option>';
                         confirmBtn.disabled = true;
 
@@ -407,14 +407,13 @@ Object.assign(UIService.prototype, {
                                 dates.forEach(d => {
                                     dateSelect.innerHTML += `<option value="${d}">📅 Historical: ${d}</option>`;
                                 });
+                                // Auto-select the most recent historical scan
+                                dateSelect.value = dates[0];
+                            } else {
+                                // Auto-select "live" so button activates
+                                dateSelect.value = "live";
                             }
-
-                            dateSelect.onchange = () => {
-                                confirmBtn.disabled = !dateSelect.value;
-                            };
-
-                            // Auto-select "live" so button activates
-                            dateSelect.value = "live";
+                            
                             confirmBtn.disabled = false;
 
                         } catch (err) {

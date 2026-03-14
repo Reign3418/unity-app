@@ -227,7 +227,10 @@ class AdminAuthService {
                 this.tempAwsFeedback.textContent = `Attaching ${expirationDays}-day restrictions PLUS Locking to Kingdom ${kingdomRestriction}...`;
                 policyDocument.Statement[0].Condition["ForAllValues:StringLike"] = {
                     "dynamodb:LeadingKeys": [
-                        `${kingdomRestriction}_*`
+                        `ROSTER#${kingdomRestriction}`,
+                        `DATES#${kingdomRestriction}`,
+                        `SCAN#${kingdomRestriction}#*`,
+                        `SCAN_HEADERS#${kingdomRestriction}#*`
                     ]
                 };
             }
