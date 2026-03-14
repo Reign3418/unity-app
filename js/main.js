@@ -113,6 +113,34 @@ document.addEventListener('DOMContentLoaded', async () => {
                         window.firebaseRosterService = awsService; // Polyfill for backwards compat
                         window.awsRosterService = awsService; // Explicitly assign for AWS-specific functions
 
+                        // We need a way to know when AWS successfully connects or fails.
+                        // AWSRosterService uses onStatusCallback for this.
+                        awsService.onStatusCallback = (isConnected, msg) => {
+                            if (isConnected) {
+                                // Initialize Activity Tracker once AWS is ready
+                                try {
+                                    if (window.uiActivityTracker && !window.uiActivityTracker.isInitialized) {
+                                        window.uiActivityTracker.init(dataService);
+                                        window.uiActivityTracker.populateDropdown();
+                                    }
+                                } catch (e) {
+                                    console.error("Activity Tracker Init Failed:", e);
+                                }
+                            }
+                            
+                            // Let the global UI service handle the indicator
+                            const statusEl = document.getElementById('globalConnectionStatus');
+                            if (statusEl) {
+                                if (isConnected) {
+                                    statusEl.textContent = `Cloud: ${activeCloud.toUpperCase()} Connected`;
+                                    statusEl.style.color = 'var(--accent-primary)';
+                                } else {
+                                    statusEl.textContent = `Cloud: Disconnected`;
+                                    statusEl.style.color = '#ef4444';
+                                }
+                            }
+                        };
+
                         try {
                             const awsConfigRaw = localStorage.getItem('aws_dynamo_config');
                             if (awsConfigRaw) awsService.init(awsConfigRaw);

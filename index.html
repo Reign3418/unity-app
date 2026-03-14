@@ -22,6 +22,7 @@
     <script defer src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <script defer src="https://sdk.amazonaws.com/js/aws-sdk-2.1465.0.min.js"></script>
     <script defer src="https://sdk.amazonaws.com/js/aws-sdk-2.1465.0.min.js"></script>
+    <script defer src="js/services/ui/UIActivityTracker.js"></script>
 
 <body class="theme-sidebar">
     <div id="app-container">
@@ -56,6 +57,9 @@
                 </button>
                 <button class="nav-btn" data-tab="new-phone-who-dis" data-tooltip="Global Cloud Timeline & Missing Players Search.">
                     <span class="nav-icon">🔎</span> <span class="nav-text">New Phone Who Dis</span>
+                </button>
+                <button class="nav-btn" data-tab="activity-tracker" data-tooltip="Track historical player inactivity across scans.">
+                    <span class="nav-icon">⏱️</span> <span class="nav-text">Activity Tracker</span>
                 </button>
 
                 <div class="nav-section-title">Community</div>
@@ -148,6 +152,7 @@
                 <button class="tab-btn" data-tab="all-kingdom-analysis">All Kingdom Analysis 📊</button>
                 <button class="tab-btn" data-tab="prekvk-ranking">PreKVK Ranking</button>
                 <button class="tab-btn" data-tab="new-phone-who-dis">New Phone Who Dis</button>
+                <button class="tab-btn" data-tab="activity-tracker">Activity Tracker ⏱️</button>
                 <button class="tab-btn" data-tab="all-kingdom-results">All Kingdom DKP results</button>
                 <button class="tab-btn" data-tab="my-alliance">My Alliance 🛡️</button>
                 <button class="tab-btn" data-tab="recruiting">Recruiting 🎯</button>
@@ -181,6 +186,11 @@
             <!-- Main Content Area where all tabs render -->
             <main id="content-area">
                 <!-- Old header and tabs removed from here -->
+
+            <!-- ==================== ACTIVITY TRACKER ==================== -->
+            <div id="activity-tracker" class="tab-content hidden">
+                <!-- Injected via UIActivityTracker.js -->
+            </div>
 
             <!-- ==================== RECRUITING TAB ==================== -->
             <div id="recruiting" class="tab-content hidden">

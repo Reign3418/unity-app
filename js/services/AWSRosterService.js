@@ -329,6 +329,61 @@ class AWSRosterService {
         }
     }
 
+    // Fetch ALL historical scans for a given kingdom to analyze inactivity
+    async getHistoricalKingdomScans(kingdomId, onProgressCallback = null) {
+        if (!this.db || !this.connected) throw new Error('Not connected to AWS');
+        
+        try {
+            // 1. Get all available dates
+            const dates = await this.getAvailableScanDates(kingdomId);
+            if (!dates || dates.length === 0) return { dates: [], scans: {} };
+
+            const scans = {};
+            let fetchedCount = 0;
+
+            // 2. Fetch each scan sequentially (to avoid hammering DynamoDB read units too hard simultaneously)
+            // or in small chunks. We'll do sequentially for safety.
+            for (const rawDate of dates) {
+                const safeDate = String(rawDate).replace(/[.#$\/\[\]\s]/g, "_");
+
+                if (onProgressCallback) {
+                    onProgressCallback(`Fetching scan ${fetchedCount + 1} of ${dates.length} (${rawDate})...`);
+                }
+
+                const params = {
+                    TableName: this.tableName,
+                    KeyConditionExpression: 'PK = :pk',
+                    ExpressionAttributeValues: {
+                        ':pk': `SCAN#${kingdomId}#${safeDate}`
+                    }
+                };
+
+                // Handle pagination if a scan has > 1MB of data (using ExclusiveStartKey)
+                let items = [];
+                let exclusiveStartKey = null;
+
+                do {
+                    if (exclusiveStartKey) {
+                        params.ExclusiveStartKey = exclusiveStartKey;
+                    }
+                    const result = await this.db.query(params).promise();
+                    if (result.Items) {
+                        items = items.concat(result.Items.map(i => i.attributes));
+                    }
+                    exclusiveStartKey = result.LastEvaluatedKey;
+                } while (exclusiveStartKey);
+
+                scans[rawDate] = items;
+                fetchedCount++;
+            }
+
+            return { dates, scans };
+        } catch (e) {
+            console.error("Error fetching historical kingdom scans:", e);
+            throw e;
+        }
+    }
+
     // Look up a specific Governor ID to pull their entire lifetime history
     // Queries the GOV_HISTORY partition
     async getGovernorHistory(govId) {
